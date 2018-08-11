@@ -9,7 +9,7 @@ using System.Collections.Generic;
 
 namespace GeneralShare.UI
 {
-    public class InputBox : TextBox
+    public class InputBox : TextBoxBase
     {
         private RectangleF _caretRect;
         private Color _visibleCaretColor;
@@ -17,10 +17,12 @@ namespace GeneralShare.UI
         private int _caretIndex;
         private int _maxCharCount;
         private int _totalTextLength;
+        private bool _obscureValue;
+        private char _obscureChar;
         private HashSet<char> _excludedChars;
         private ReadOnlyCollectionWrapper<char> _readonlyExcludedChars;
 
-        private string _prefixText;
+        private string _prefix;
         private bool _prefixExpressions;
         private bool _keepPrefixExpressions;
         private Color _basePrefixColor;
@@ -30,29 +32,31 @@ namespace GeneralShare.UI
         public float CaretBlinkSpeed { get; set; }
         public Color CaretColor { get; set; }
 
-        public string Prefix { get => _prefixText; set => SetPrefix(value); }
+        public string Value { get => _value; set => SetValue(value); }
+        public string Prefix { get => _prefix; set => SetPrefix(value); }
         public bool UsePrefixExpressions { get => _prefixExpressions; set => SetPrefixExp(value); }
         public bool KeepPrefixExpressions { get => _keepPrefixExpressions; set => SetKeepPrefixExp(value); }
         public Color BasePrefixColor { get => _basePrefixColor; set => SetPrefixColor(value); }
 
         public bool AllowNewLine { get; set; }
-        public int MaxCharCount { get => _maxCharCount; set => SetCharCount(value); }
+        public bool ObscureValue { get => _obscureValue; set => SetObscureValue(value); }
+        public char ObscureChar { get => _obscureChar; set => SetObscureChar(value); }
+        public int MaxCharCount { get => _maxCharCount; set => SetMaxCharCount(value); }
         public IEnumerable<char> CharBlacklist =>  _excludedChars;
 
         public InputBox(UIContainer container, BitmapFont font) : base(container, font)
         {
+            _excludedChars = new HashSet<char>();
+            _readonlyExcludedChars = new ReadOnlyCollectionWrapper<char>(_excludedChars);
+
             TriggerMouseEvents = true;
             TriggerKeyEvents = true;
             BlockCursor = true;
             AllowSelection = true;
-            
             UseShadow = true;
-            UseTextExpressions = false;
-            BuildTextQuadTree = true;
+            BuildCharQuadTree = true;
 
-            _excludedChars = new HashSet<char>();
-            _readonlyExcludedChars = new ReadOnlyCollectionWrapper<char>(_excludedChars);
-            SetCharCount(200);
+            SetMaxCharCount(200);
             CaretIndex = 0;
             CaretSize = new Vector2(2, -1);
             CaretBlinkSpeed = 1;
@@ -62,6 +66,16 @@ namespace GeneralShare.UI
             OnMousePress += InputBox_OnMousePress;
             OnTextInput += InputBox_OnTextInput;
             OnKeyPress += InputBox_OnKeyPress;
+        }
+
+        private void SetObscureValue(bool value)
+        {
+            MarkDirtyE(ref _obscureValue, value, DirtMarkType.ObscureValue);
+        }
+
+        private void SetObscureChar(char value)
+        {
+            MarkDirtyE(ref _obscureChar, value, DirtMarkType.ObscureChar);
         }
 
         public bool BlacklistChar(char value)
@@ -74,29 +88,29 @@ namespace GeneralShare.UI
             return _excludedChars.Remove(value);
         }
 
-        private void SetCharCount(int value)
+        private void SetMaxCharCount(int value)
         {
             _maxCharCount = value;
         }
 
         private void SetPrefixColor(Color value)
         {
-            MarkDirtyEquatable(ref _basePrefixColor, value, DirtMarkType.InputPrefix);
+            MarkDirtyE(ref _basePrefixColor, value, DirtMarkType.InputPrefix);
         }
 
         private void SetPrefixExp(bool value)
         {
-            MarkDirtyEquatable(ref _prefixExpressions, value, DirtMarkType.InputPrefix);
+            MarkDirtyE(ref _prefixExpressions, value, DirtMarkType.InputPrefix);
         }
 
         private void SetKeepPrefixExp(bool value)
         {
-            MarkDirtyEquatable(ref _keepPrefixExpressions, value, DirtMarkType.InputPrefix);
+            MarkDirtyE(ref _keepPrefixExpressions, value, DirtMarkType.InputPrefix);
         }
 
         private void SetPrefix(string value)
         {
-            MarkDirtyEquatable(ref _prefixText, value, DirtMarkType.InputPrefix);
+            MarkDirtyE(ref _prefix, value, DirtMarkType.InputPrefix);
         }
 
         private void SetCaretIndex(int value)
@@ -109,13 +123,13 @@ namespace GeneralShare.UI
             lock (_syncRoot)
             {
                 PrepareCaretIndex(ref value);
-                MarkDirtyEquatable(ref _caretIndex, value, DirtMarkType.CaretIndex);
+                MarkDirtyE(ref _caretIndex, value, DirtMarkType.CaretIndex);
             }
         }
 
         private void SetCaretSize(Vector2 value)
         {
-            MarkDirtyEquatable(ref _caretSize, value, DirtMarkType.CaretSize);
+            MarkDirtyE(ref _caretSize, value, DirtMarkType.CaretSize);
         }
 
         private void InputBox_OnKeyPress(Keys key)
@@ -209,9 +223,8 @@ namespace GeneralShare.UI
 
         private void PrepareCaretIndex(ref int index)
         {
-            string value = Value;
-            int valueLength = value == null ? 0 : value.Length;
-            int prefixLength = _prefixText == null ? 0 : _prefixText.Length;
+            int valueLength = Value == null ? 0 : Value.Length;
+            int prefixLength = _prefix == null ? 0 : _prefix.Length;
             _totalTextLength = valueLength + prefixLength;
 
             if (index > _totalTextLength)
@@ -262,7 +275,7 @@ namespace GeneralShare.UI
             {
                 base.Draw(time, batch);
 
-                if (BuildTextQuadTree == false)
+                if (BuildCharQuadTree == false)
                     return;
 
                 if (IsSelected)
@@ -275,7 +288,7 @@ namespace GeneralShare.UI
                     {
                         double totalSec = time.TotalGameTime.TotalSeconds;
                         double sin = Math.Sin(totalSec * CaretBlinkSpeed * Math.PI * 2) + 1;
-                        _visibleCaretColor = new Color(CaretColor, (int)(CaretColor.A * sin * 0.5f));
+                        _visibleCaretColor = new Color(CaretColor, (int)(CaretColor.A * sin * 0.5));
                     }
 
                     if (_caretRect.Width > 0 && _caretRect.Height > 0)
@@ -309,17 +322,22 @@ namespace GeneralShare.UI
             }
         }
 
-        protected override void SpecialTextProcessing()
+        protected override void SpecialBeforeTextProcessing()
         {
-            UseTextExpressions = false;
-            if (UsePrefixExpressions)
+            var colorOutput = _prefixExpressions ? _expressionColors : null;
+            SpecialTextFormat.Format(_prefix, _processedText,
+                _basePrefixColor, _font, _keepPrefixExpressions, colorOutput);
+        }
+
+        protected override void SpecialPostTextProcessing()
+        {
+            if (ObscureValue)
             {
-                TextFormatter.ColorFormat(_prefixText, _processedText,
-                    _basePrefixColor, _font, _keepPrefixExpressions, _expressionColors);
-            }
-            else
-            {
-                _processedText.Append(_prefixText);
+                int length = _processedText.Length - _prefix.Length;
+                for (int i = _prefix.Length; i < length; i++)
+                {
+                    _processedText[i] = _obscureChar;
+                }
             }
         }
 

@@ -19,11 +19,11 @@ namespace GeneralShare.UI
         private int _barThickness;
         private float _value;
         private Range<float> _range;
-        private Point _bounds;
+        private Vector2 _bounds;
         private Vector2 _headPos;
 
         public int BackgroundBarThickness { get => _barThickness; set => SetThickness(value); }
-        public Point Bounds { get => _bounds; set => SetBounds(value); }
+        public Vector2 Bounds { get => _bounds; set => SetBounds(value); }
         public override RectangleF Boundaries { get { SetBoundaries(); return _size; } }
         public Vector2 BarHeadPosition { get { GetMainRect(); return _headPos; } }
         public BarDirection Direction { get => _direction; set => SetDirection(value); }
@@ -54,19 +54,19 @@ namespace GeneralShare.UI
 
         }
 
-        private void SetMainColor(Color value)
+        private void SetMainColor(in Color value)
         {
             _mainSprite.SetColor(value);
         }
 
-        private void SetBackColor(Color value)
+        private void SetBackColor(in Color value)
         {
             _backSprite.SetColor(value);
         }
 
         private void SetThickness(int value)
         {
-            MarkDirtyEquatable(ref _barThickness, value, DirtMarkType.BarThickness);
+            MarkDirtyE(ref _barThickness, value, DirtMarkType.BarThickness);
         }
 
         private void SetDirection(BarDirection value)
@@ -74,19 +74,19 @@ namespace GeneralShare.UI
             MarkDirty(ref _direction, value, DirtMarkType.BarDirection);
         }
 
-        private void SetBounds(Point value)
+        private void SetBounds(in Vector2 value)
         {
-            MarkDirtyEquatable(ref _bounds, value, DirtMarkType.Bounds);
+            MarkDirtyE(ref _bounds, value, DirtMarkType.Bounds);
         }
 
         private void SetValue(float value)
         {
-            MarkDirtyEquatable(ref _value, MathHelper.Clamp(value, _range.Min, _range.Max), DirtMarkType.Value);
+            MarkDirtyE(ref _value, MathHelper.Clamp(value, _range.Min, _range.Max), DirtMarkType.Value);
         }
         
-        private void SetRange(Range<float> value)
+        private void SetRange(in Range<float> value)
         {
-            MarkDirtyEquatable(ref _range, value, DirtMarkType.Range);
+            MarkDirtyE(ref _range, value, DirtMarkType.Range);
         }
 
         public void CalculateRectangles()

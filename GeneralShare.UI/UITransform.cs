@@ -75,9 +75,9 @@ namespace GeneralShare.UI
             return (DirtMarks & flags) != 0;
         }
 
-        private void SetPosition(Vector3 value)
+        private void SetPosition(in Vector3 value)
         {
-            MarkDirtyEquatable(ref _position, value, DirtMarkType.Position | DirtMarkType.Transform);
+            MarkDirtyE(ref _position, value, DirtMarkType.Position | DirtMarkType.Transform);
         }
 
         private void SetPositionF(float x, float y, float z)
@@ -87,17 +87,17 @@ namespace GeneralShare.UI
 
         private void SetRotation(float value)
         {
-            MarkDirtyEquatable(ref _rotation, value, DirtMarkType.Rotation | DirtMarkType.Transform);
+            MarkDirtyE(ref _rotation, value, DirtMarkType.Rotation | DirtMarkType.Transform);
         }
 
-        private void SetScale(Vector2 value)
+        private void SetScale(in Vector2 value)
         {
-            MarkDirtyEquatable(ref _scale, value, DirtMarkType.Scale | DirtMarkType.Transform);
+            MarkDirtyE(ref _scale, value, DirtMarkType.Scale | DirtMarkType.Transform);
         }
 
-        private void SetOrigin(Vector2 value)
+        private void SetOrigin(in Vector2 value)
         {
-            MarkDirtyEquatable(ref _origin, value, DirtMarkType.Origin | DirtMarkType.Transform);
+            MarkDirtyE(ref _origin, value, DirtMarkType.Origin | DirtMarkType.Transform);
         }
 
         protected void ClearDirtMarks(DirtMarkType marks)
@@ -110,18 +110,7 @@ namespace GeneralShare.UI
             DirtMarks = 0;
         }
 
-        protected bool MarkDirtyEquatable<T>(ref T oldValue, T newValue, DirtMarkType type) where T : IEquatable<T>
-        {
-            if (!(oldValue is IEquatable<T> equatable) || equatable.Equals(newValue) == false)
-            {
-                oldValue = newValue;
-                MarkDirty(type);
-                return true;
-            }
-            return false;
-        }
-
-        protected bool MarkDirty<T>(ref T oldValue, T newValue, DirtMarkType type)
+        protected bool MarkDirtyE<T>(ref T oldValue, in T newValue, DirtMarkType type) where T : IEquatable<T>
         {
             if (oldValue == null || oldValue.Equals(newValue) == false)
             {
@@ -132,8 +121,19 @@ namespace GeneralShare.UI
             return false;
         }
 
-        protected bool MarkDirty<T>(ref T oldValue, T newValue,
-            DirtMarkType type, IEqualityComparer<T> comparer)
+        protected bool MarkDirty<T>(ref T oldValue, in T newValue, DirtMarkType type)
+        {
+            if (oldValue == null || oldValue.Equals(newValue) == false)
+            {
+                oldValue = newValue;
+                MarkDirty(type);
+                return true;
+            }
+            return false;
+        }
+
+        protected bool MarkDirty<T>(ref T oldValue, in T newValue,
+            DirtMarkType type, in IEqualityComparer<T> comparer)
         {
             if (oldValue == null || comparer.Equals(oldValue, newValue) == false)
             {
