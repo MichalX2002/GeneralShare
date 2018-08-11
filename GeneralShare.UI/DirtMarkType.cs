@@ -46,6 +46,8 @@ namespace GeneralShare.UI
         Color = 1 << 21,
         Transform = 1 << 22,
         Value = 1 << 23,
-        ValueProcessed = 1 << 24
+        ValueProcessed = 1 << 24,
+        ObscureValue = 1 << 25,
+        ObscureChar = 1 << 26,
     }
 }
