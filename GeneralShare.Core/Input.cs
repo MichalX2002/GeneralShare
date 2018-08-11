@@ -50,9 +50,14 @@ namespace GeneralShare
             KeysReleased = _keysReleased.AsReadOnly();
         }
 
-        public static void Initialize(GameWindow window)
+        public static void AddWindow(GameWindow window)
         {
             window.TextInput += Window_TextInput;
+        }
+
+        public static void RemoveWindow(GameWindow window)
+        {
+            window.TextInput -= Window_TextInput;
         }
 
         private static void Window_TextInput(object s, TextInputEventArgs e)

@@ -7,7 +7,7 @@ using MonoGame.Extended.BitmapFonts;
 
 namespace GeneralShare.UI
 {
-    public static class TextFormatter
+    public static class SpecialTextFormat
     {
         [ThreadStatic]
         private static byte[] __colorBuffer;
@@ -48,26 +48,31 @@ namespace GeneralShare.UI
             string input, Color startColor, BitmapFont font, ICollection<Color> output)
         {
             var outputB = new StringBuilder(input.Length);
-            ColorFormat(input, outputB, startColor, font, true, output);
+            Format(input, outputB, startColor, font, true, output);
             return outputB;
         }
 
-        public static void ColorFormat(
+        public static void Format(
             string textInput, StringBuilder textOutput,
             Color baseColor, BitmapFont font,
             bool keepSequences, ICollection<Color> outputColors)
         {
-            int inputLength = textInput.Length;
             Color currentColor = baseColor;
-            bool inSequence = false;
+            bool processColor = outputColors != null;
 
             void AddCurrent(int index)
             {
-                if (font.GetCharacterRegion(textInput[index], out var reg))
-                    outputColors.Add(currentColor);
+                if (processColor)
+                {
+                    if (font.GetCharacterRegion(textInput[index], out var reg))
+                        outputColors.Add(currentColor);
+                }
+
                 textOutput.Append(textInput[index]);
             }
-            
+
+            bool inSequence = false;
+            int inputLength = textInput.Length;
             for (int i = 0; i < inputLength; i++)
             {
                 if (textInput[i] == '§')
@@ -92,7 +97,9 @@ namespace GeneralShare.UI
                                 if (tailOffset > 0)
                                 {
                                     inSequence = true;
-                                    currentColor = seq[0] == '#' ? GetHexColor(seq) : GetRgb(seq);
+
+                                    if(processColor)
+                                        currentColor = seq[0] == '#' ? GetHexColor(seq) : GetRgb(seq);
 
                                     if (keepSequences == false)
                                         i = tailOffset + 1;
@@ -107,9 +114,9 @@ namespace GeneralShare.UI
         }
 
         // Think of adding a font selecting char as first char in a sequence
-        // and use StackedFont instead of BitmapFont (in TextBox).
+        // and use a font collection instead of BitmapFont (in TextBox).
         // Switching fonts while building will need some work,
-        // but special format application should be the same.
+        // but special color format application should be the same.
         private static int GetSequence(string chars, int start, out StringBuilder sequence)
         {
             int tail = start;
