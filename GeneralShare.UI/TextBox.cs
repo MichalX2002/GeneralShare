@@ -13,5 +13,9 @@ namespace GeneralShare.UI
             UseTextExpressions = true;
             KeepTextExpressions = false;
         }
+
+        public TextBox(BitmapFont font) : this(null, font)
+        {
+        }
     }
 }
