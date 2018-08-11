@@ -227,6 +227,8 @@ namespace GeneralShare.UI
                     _processedText.Clear();
 
                     SpecialBeforeTextProcessing();
+                    SpecialProcessedTextLength = _processedText.Length;
+
                     if (_value != null)
                     {
                         var colorOutput = _valueExpressions ? _expressionColors : null;
@@ -235,7 +237,6 @@ namespace GeneralShare.UI
                     }
 
                     SpecialPostTextProcessing();
-                    SpecialProcessedTextLength = _processedText.Length;
 
                     _measure = _font.MeasureString(_processedText);
                     UpdateScaledMeasure();
