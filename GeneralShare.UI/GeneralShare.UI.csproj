@@ -32,17 +32,20 @@
     <LangVersion>7.2</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MonoGame.Extended">
+    <Reference Include="MonoGame.Extended, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Binaries\MonoGame.Extended\MonoGame.Extended.dll</HintPath>
     </Reference>
     <Reference Include="MonoGame.Framework, Version=3.6.0.1625, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Binaries\MonoGame\DesktopGL\MonoGame.Framework.dll</HintPath>
     </Reference>
-    <Reference Include="MonoGame.Imaging">
+    <Reference Include="MonoGame.Imaging, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Binaries\MonoGame\MonoGame.Imaging.dll</HintPath>
     </Reference>
-    <Reference Include="MonoGame.Utilities">
+    <Reference Include="MonoGame.Utilities, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Binaries\MonoGame\MonoGame.Utilities.dll</HintPath>
     </Reference>
     <Reference Include="System" />
@@ -68,9 +71,9 @@
     <Compile Include="UITransform.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\GeneralShare\GeneralShare.csproj">
+    <ProjectReference Include="..\GeneralShare.Core\GeneralShare.Core.csproj">
       <Project>{5c2de6a1-31de-4b78-9808-547dd294f55c}</Project>
-      <Name>GeneralShare</Name>
+      <Name>GeneralShare.Core</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
