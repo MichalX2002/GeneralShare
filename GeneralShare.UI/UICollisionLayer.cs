@@ -10,7 +10,7 @@ namespace GeneralShare.UI
         public override RectangleF Boundaries => _rect;
         public RectangleF Bounds { get => _bounds; set => SetBounds(value); }
 
-        public UICollisionLayer(UIContainer container) : base(container)
+        public UICollisionLayer(UIManager manager) : base(manager)
         {
             MarkedDirty += UILayer_MarkedDirty;
         }

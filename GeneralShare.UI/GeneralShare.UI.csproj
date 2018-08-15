@@ -64,6 +64,7 @@
     <Compile Include="SpecialTextFormat.cs" />
     <Compile Include="TextBox.cs" />
     <Compile Include="TextBoxBase.cs" />
+    <Compile Include="UICollisionLayer.cs" />
     <Compile Include="UIManager.cs" />
     <Compile Include="UIDepthComparer.cs" />
     <Compile Include="UIElement.cs" />
