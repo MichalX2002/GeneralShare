@@ -53,7 +53,7 @@ namespace GeneralShare.UI
         public ReadOnlyQuadTree<float> CharQuadTree => _textQuadTree.CurrentTree.AsReadOnly();
         public int SpecialProcessedTextLength { get; private set; }
 
-        public TextBoxBase(UIContainer container, BitmapFont font) : base(container)
+        public TextBoxBase(UIManager manager, BitmapFont font) : base(manager)
         {
             _value = string.Empty;
             _textCache = new ListArray<CharDrawSprite>();
@@ -67,8 +67,8 @@ namespace GeneralShare.UI
 
             SetShadowRadius(5, 0);
             ShadowColor = new Color(Color.Gray, 0.5f);
-            if (container != null)
-                ShadowTexture = container.WhitePixelRegion;
+            if (manager != null)
+                ShadowTexture = manager.WhitePixelRegion;
         }
 
         public TextBoxBase(BitmapFont font) : this(null, font) { }

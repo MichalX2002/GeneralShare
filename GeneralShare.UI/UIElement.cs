@@ -27,7 +27,7 @@ namespace GeneralShare.UI
         public event GenericKeyboardDelegate OnKeyRelease;
         public event Input.TextInputDelegate OnTextInput;
 
-        private UIContainer _container;
+        private UIManager _manager;
         private bool _hasContent;
 
         public readonly int ComponentKey;
@@ -41,8 +41,9 @@ namespace GeneralShare.UI
         public bool IsSelected { get; internal set; }
         public bool AllowSelection { get; set; }
         public abstract RectangleF Boundaries { get; }
+        public SamplingMode PreferredSamplingMode { get; set; }
 
-        public UIElement(string name, UIContainer container)
+        public UIElement(string name, UIManager manager)
         {
             ComponentKey = Interlocked.Increment(ref _lastElementKey);
             Name = name ?? string.Empty;
@@ -50,19 +51,23 @@ namespace GeneralShare.UI
             TriggerKeyEvents = false;
             BlockCursor = true;
 
-            if (container != null)
+            if (manager != null)
             {
-                if (_syncRoot == null)
-                    throw new Exception();
+                if (SyncRoot == null)
+                    throw new InvalidOperationException($"This {nameof(UITransform)}.{nameof(SyncRoot)} was null.");
 
-                _container = container;
-                _container.AddElement(this);
+                _manager = manager;
+                _manager.AddElement(this);
+
+                PreferredSamplingMode = _manager.PreferredSamplingMode;
+            }
+            else
+            {
+                PreferredSamplingMode = SamplingMode.LinearClamp;
             }
         }
 
-        public UIElement(UIContainer container) : this(null, container) { }
-
-        public UIElement() : this(null) { }
+        public UIElement(UIManager manager) : this(null, manager) { }
 
         private void TriggerMouseHoverEvent(in MouseState mouseState, MouseHoverDelegate action)
         {
@@ -148,8 +153,8 @@ namespace GeneralShare.UI
             {
                 if (disposing)
                 {
-                    if (_container != null)
-                        _container.RemoveElement(this);
+                    if (_manager != null)
+                        _manager.RemoveElement(this);
                 }
 
                 Disposed = true;

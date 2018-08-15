@@ -44,7 +44,7 @@ namespace GeneralShare.UI
         public int MaxCharCount { get => _maxCharCount; set => SetMaxCharCount(value); }
         public IEnumerable<char> CharBlacklist =>  _excludedChars;
 
-        public InputBox(UIContainer container, BitmapFont font) : base(container, font)
+        public InputBox(UIManager manager, BitmapFont font) : base(manager, font)
         {
             _excludedChars = new HashSet<char>();
             _readonlyExcludedChars = new ReadOnlyCollectionWrapper<char>(_excludedChars);

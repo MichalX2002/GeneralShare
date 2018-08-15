@@ -9,22 +9,24 @@ using System.Collections.Generic;
 
 namespace GeneralShare.UI
 {
-    public class UIContainer : IDisposable
+    public class UIManager : IDisposable
     {
         public delegate void ElementListSortedDelegate();
-        private static TextureRegion2D _grayscaleRegion;
 
-        private bool _disposed;
-        private ListArray<UIElement> _uiElements;
+        public event ElementListSortedDelegate ElementListSorted;
+
+        private static TextureRegion2D _grayscaleRegion;
         private UIElement __selectedElement;
 
-        public TextureRegion2D WhitePixelRegion { get; set; }
         public TextureRegion2D GrayscaleRegion { get; set; }
+        public TextureRegion2D WhitePixelRegion { get; set; }
 
+        public bool Disposed { get; private set; }
         public object SyncRoot { get; private set; }
-        public event ElementListSortedDelegate ElementListSorted;
+        public SamplingMode PreferredSamplingMode { get; set; }
         public bool ElementsNeedSorting { get; private set; }
-        public ListArray<UIElement> Elements => GetElements();
+        public ListArray<UIElement> Elements { get; }
+
         public UIElement SelectedElement
         {
             get
@@ -43,7 +45,36 @@ namespace GeneralShare.UI
             }
         }
 
-        public UIContainer(GraphicsDevice device) : this(GetRegion(device))
+        /// <summary>
+        /// Constructs a <see cref="UIManager"/> instance using an existing grayscale region.
+        /// </summary>
+        /// <param name="grayscaleRegion">
+        /// A <see cref="TextureRegion2D"/> containing a 1x1 white pixel
+        /// at (X:0,Y:0) and a 1x1 gray pixel at (X:0,Y:1).
+        /// </param>
+        public UIManager(TextureRegion2D grayscaleRegion)
+        {
+            GrayscaleRegion = grayscaleRegion ?? throw new ArgumentNullException(nameof(grayscaleRegion));
+            if (GrayscaleRegion.Width != 1) throw new ArgumentException();
+            if (GrayscaleRegion.Height != 2) throw new ArgumentException();
+
+            WhitePixelRegion = new TextureRegion2D(grayscaleRegion.Texture, 0, 0, 1, 1);
+
+            SyncRoot = new object();
+            Elements = new ListArray<UIElement>();
+            Elements.Changed += Elements_Changed;
+
+            Input.TextInput += Input_TextInput;
+        }
+
+        /// <summary>
+        /// Constructs a <see cref="UIManager"/> instance with a static grayscale texture.
+        /// </summary>
+        /// <param name="device">
+        /// The <see cref="GraphicsDevice"/> to use for creating a
+        /// grayscale texture if the existing static texture is null.
+        /// </param>
+        public UIManager(GraphicsDevice device) : this(GetRegion(device))
         {
         }
 
@@ -59,18 +90,6 @@ namespace GeneralShare.UI
             return _grayscaleRegion;
         }
 
-        public UIContainer(TextureRegion2D grayscaleRegion)
-        {
-            SyncRoot = new object();
-            GrayscaleRegion = grayscaleRegion ?? throw new ArgumentNullException(nameof(grayscaleRegion));
-            WhitePixelRegion = new TextureRegion2D(grayscaleRegion.Texture, 0, 0, 1, 1);
-
-            _uiElements = new ListArray<UIElement>();
-            _uiElements.Changed += Elements_Changed;
-
-            Input.TextInput += Input_TextInput;
-        }
-
         private void Elements_Changed(int oldVersion, int newVersion)
         {
             FlagForSort();
@@ -78,16 +97,20 @@ namespace GeneralShare.UI
 
         private void Input_TextInput(TextInputEventArgs e)
         {
-            lock (SyncRoot)
+            if (Disposed == false)
             {
-                if (SelectedElement != null)
-                    SelectedElement.TriggerOnTextInput(e);
+                lock (SyncRoot)
+                {
+                    if (SelectedElement != null)
+                        SelectedElement.TriggerOnTextInput(e);
+                }
             }
         }
 
         private void FlagForSort()
         {
-            ElementsNeedSorting = true;
+            if (Disposed == false)
+                ElementsNeedSorting = true;
         }
 
         public void SortElements()
@@ -96,7 +119,7 @@ namespace GeneralShare.UI
             {
                 if (ElementsNeedSorting)
                 {
-                    _uiElements.Sort(UIDepthComparer.Instance);
+                    Elements.Sort(UIDepthComparer.Instance);
                     ElementListSorted?.Invoke();
                     ElementsNeedSorting = false;
                 }
@@ -107,9 +130,9 @@ namespace GeneralShare.UI
         {
             lock (SyncRoot)
             {
-                for (int i = 0, length = _uiElements.Count; i < length; i++)
+                for (int i = 0, length = Elements.Count; i < length; i++)
                 {
-                    UIElement item = _uiElements[i];
+                    UIElement item = Elements[i];
                     if (item.Boundaries.Contains(new Point2(x, y)))
                     {
                         output = item;
@@ -153,7 +176,7 @@ namespace GeneralShare.UI
         {
             lock (SyncRoot)
             {
-                _uiElements.Add(component);
+                Elements.Add(component);
                 component.MarkedDirty += Component_MarkedDirty;
                 FlagForSort();
             }
@@ -163,27 +186,30 @@ namespace GeneralShare.UI
         {
             lock (SyncRoot)
             {
-                int index = _uiElements.FindIndex((x) => x == element);
+                int index = Elements.FindIndex((x) => x == element);
                 if (index == -1)
                 {
                     return false;
                 }
                 else
                 {
-                    _uiElements[index].MarkedDirty -= Component_MarkedDirty;
-                    _uiElements.RemoveAt(index);
+                    Elements[index].MarkedDirty -= Component_MarkedDirty;
+                    Elements.RemoveAt(index);
                     
                     return true;
                 }
             }
         }
 
-        public ListArray<UIElement> GetElements()
+        public ListArray<UIElement> GetSortedElements()
         {
+            if (Disposed)
+                throw new ObjectDisposedException(nameof(UIManager));
+
             lock (SyncRoot)
             {
                 SortElements();
-                return _uiElements;
+                return Elements;
             }
         }
 
@@ -191,7 +217,7 @@ namespace GeneralShare.UI
         {
             lock (SyncRoot)
             {
-                ListArray<UIElement> elements = GetElements();
+                ListArray<UIElement> elements = GetSortedElements();
                 for (int i = 0, length = elements.Count; i < length; i++)
                 {
                     UIElement element = elements[i];
@@ -271,22 +297,22 @@ namespace GeneralShare.UI
 
         protected virtual void Dispose(bool disposing)
         {
-            if(_disposed == false)
+            if(Disposed == false)
             {
                 if (disposing)
                 {
                     lock (SyncRoot)
                     {
-                        for (int i = _uiElements.Count; i-- > 0;)
+                        for (int i = Elements.Count; i-- > 0;)
                         {
-                            _uiElements[i]?.Dispose();
+                            Elements[i]?.Dispose();
                         }
                     }
                 }
 
                 Input.TextInput -= Input_TextInput;
 
-                _disposed = true;
+                Disposed = true;
             }
         }
 
@@ -296,7 +322,7 @@ namespace GeneralShare.UI
             GC.SuppressFinalize(this);
         }
 
-        ~UIContainer()
+        ~UIManager()
         {
             Dispose(false);
         }

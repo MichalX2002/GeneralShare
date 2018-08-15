@@ -22,7 +22,7 @@ namespace GeneralShare.UI
         private Vector2 _bounds;
         private Vector2 _headPos;
 
-        public int BackgroundBarThickness { get => _barThickness; set => SetThickness(value); }
+        public int BackBarThickness { get => _barThickness; set => SetThickness(value); }
         public Vector2 Bounds { get => _bounds; set => SetBounds(value); }
         public override RectangleF Boundaries { get { SetBoundaries(); return _size; } }
         public Vector2 BarHeadPosition { get { GetMainRect(); return _headPos; } }
@@ -35,17 +35,21 @@ namespace GeneralShare.UI
         public Color MainColor { get => _mainSprite.TL.Color; set => SetMainColor(value); }
         public Color BackgroundColor { get => _backSprite.TL.Color; set => SetBackColor(value); }
 
-        public ProgressBar(UIContainer container, TextureRegion2D mainBarRegion,
-            TextureRegion2D backBarRegion) : base(container)
+        public ProgressBar(UIManager manager, TextureRegion2D mainBarRegion,
+            TextureRegion2D backBarRegion) : base(manager)
         {
             _mainBarRegion = mainBarRegion;
             _backBarRegion = backBarRegion;
 
             MainColor = Color.White;
             BackgroundColor = Color.White;
-            BackgroundBarThickness = 1;
+            BackBarThickness = 1;
             Range = new Range<float>(0, 1);
             _direction = BarDirection.ToRight;
+        }
+
+        public ProgressBar(UIManager manager) : this(manager, manager.GrayscaleRegion, manager.WhitePixelRegion)
+        {
         }
         
         public ProgressBar(TextureRegion2D mainBarRegion, TextureRegion2D backBarRegion) :
@@ -104,20 +108,17 @@ namespace GeneralShare.UI
             SetValue(value);
         }
 
-        private Vector2 SetBoundaries()
+        private void SetBoundaries()
         {
-            var scale = new Vector2(_scale.X * _bounds.X, _scale.Y * _bounds.Y);
             _size.X = _position.X;
             _size.Y = _position.Y;
-            _size.Width = scale.X;
-            _size.Height = scale.Y;
-            return scale;
+            _size.Width = _scale.X * _bounds.X / _backBarRegion.Width;
+            _size.Height = _scale.Y * _bounds.Y / _backBarRegion.Height;
         }
 
         private void CalculateBackSprite()
         {
-            var size = SetBoundaries();
-            var matrix = Matrix2.CreateFrom(_position.ToVector2(), _rotation, size, _origin);
+            var matrix = Matrix2.CreateFrom(_position.ToVector2(), _rotation, Boundaries.Size, _origin);
             _backSprite.SetTransform(matrix, _backBarRegion.Bounds.Size);
             _backSprite.SetDepth(_position.Z);
             _backSprite.SetTexCoords(_backBarRegion);
@@ -142,6 +143,7 @@ namespace GeneralShare.UI
         private RectangleF GetMainRect()
         {
             float w = _bounds.X * FillPercentage;
+            float h = _bounds.Y / _mainBarRegion.Height;
             switch (_direction)
             {
                 //TODO: Add more directions
@@ -149,15 +151,14 @@ namespace GeneralShare.UI
                 case BarDirection.ToRight:
                     {
                         _headPos = new Vector2(w, 0);
-                        return new RectangleF(
-                            _position.X, _position.Y, w, _bounds.Y);
+                        return new RectangleF(_position.X, _position.Y, w, h);
                     }
 
                 case BarDirection.ToLeft:
                     {
                         float hPos = _position.X + _bounds.X - w;
                         _headPos = new Vector2(hPos, 0);
-                        return new RectangleF(hPos, _position.Y, w, _bounds.Y);
+                        return new RectangleF(hPos, _position.Y, w, h);
                     }
 
                 default:
@@ -173,7 +174,7 @@ namespace GeneralShare.UI
                 Dirty = false;
             }
 
-            if (BackgroundBarThickness >= 0)
+            if (BackBarThickness >= 0)
                 batch.Draw(_backBarRegion.Texture, _backSprite, _position.Z);
             batch.Draw(_mainBarRegion.Texture, _mainSprite, _position.Z);
         }

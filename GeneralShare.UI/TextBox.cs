@@ -8,7 +8,7 @@ namespace GeneralShare.UI
         public bool KeepTextExpressions { get => _keepExpressions; set => SetKeepExp(value); }
         public string Text { get => _value; set => SetValue(value); }
 
-        public TextBox(UIContainer container, BitmapFont font) : base(container, font)
+        public TextBox(UIManager manager, BitmapFont font) : base(manager, font)
         {
             UseTextExpressions = true;
             KeepTextExpressions = false;
