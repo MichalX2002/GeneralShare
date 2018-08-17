@@ -2,15 +2,11 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended;
-using System;
-using System.Threading;
 
 namespace GeneralShare.UI
 {
-    public abstract class UIElement : UITransform, IDisposable
+    public abstract class UIElement : UITransform
     {
-        private static int _lastElementKey;
-
         public delegate void ContentStateDelegate(bool hadContentBefore);
         public delegate void MouseHoverDelegate(in MouseState mouseState);
         public delegate void GenericMouseDelegate(in MouseState mouseState, MouseButton buttons);
@@ -27,11 +23,8 @@ namespace GeneralShare.UI
         public event GenericKeyboardDelegate OnKeyRelease;
         public event Input.TextInputDelegate OnTextInput;
 
-        private UIManager _manager;
         private bool _hasContent;
 
-        public readonly int ComponentKey;
-        public bool Disposed { get; private set; } = false;
         public string Name { get; private set; }
         public bool HasContent { get => _hasContent; protected set => SetContentState(value); }
         public bool TriggerMouseEvents { get; set; }
@@ -43,9 +36,8 @@ namespace GeneralShare.UI
         public abstract RectangleF Boundaries { get; }
         public SamplingMode PreferredSamplingMode { get; set; }
 
-        public UIElement(string name, UIManager manager)
+        public UIElement(string name, UIManager manager) : base(manager)
         {
-            ComponentKey = Interlocked.Increment(ref _lastElementKey);
             Name = name ?? string.Empty;
             TriggerMouseEvents = false;
             TriggerKeyEvents = false;
@@ -53,13 +45,7 @@ namespace GeneralShare.UI
 
             if (manager != null)
             {
-                if (SyncRoot == null)
-                    throw new InvalidOperationException($"This {nameof(UITransform)}.{nameof(SyncRoot)} was null.");
-
-                _manager = manager;
-                _manager.AddElement(this);
-
-                PreferredSamplingMode = _manager.PreferredSamplingMode;
+                PreferredSamplingMode = manager.PreferredSamplingMode;
             }
             else
             {
@@ -143,33 +129,6 @@ namespace GeneralShare.UI
             }
         }
 
-        public virtual void Update(GameTime time) { }
-
         public virtual void Draw(GameTime time, SpriteBatch batch) { }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!Disposed)
-            {
-                if (disposing)
-                {
-                    if (_manager != null)
-                        _manager.RemoveElement(this);
-                }
-
-                Disposed = true;
-            }
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        ~UIElement()
-        {
-            Dispose(false);
-        }
     }
 }

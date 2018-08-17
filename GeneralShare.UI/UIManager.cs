@@ -17,15 +17,18 @@ namespace GeneralShare.UI
 
         private static TextureRegion2D _grayscaleRegion;
         private UIElement __selectedElement;
+        internal Viewport _lastViewport;
 
+        public GraphicsDevice GraphicsDevice { get; }
         public TextureRegion2D GrayscaleRegion { get; set; }
         public TextureRegion2D WhitePixelRegion { get; set; }
 
         public bool Disposed { get; private set; }
         public object SyncRoot { get; private set; }
         public SamplingMode PreferredSamplingMode { get; set; }
+        public Viewport Viewport => _lastViewport;
         public bool ElementsNeedSorting { get; private set; }
-        public ListArray<UIElement> Elements { get; }
+        public ListArray<UITransform> Transforms { get; }
 
         public UIElement SelectedElement
         {
@@ -52,17 +55,18 @@ namespace GeneralShare.UI
         /// A <see cref="TextureRegion2D"/> containing a 1x1 white pixel
         /// at (X:0,Y:0) and a 1x1 gray pixel at (X:0,Y:1).
         /// </param>
-        public UIManager(TextureRegion2D grayscaleRegion)
+        public UIManager(GraphicsDevice device, TextureRegion2D grayscaleRegion)
         {
             GrayscaleRegion = grayscaleRegion ?? throw new ArgumentNullException(nameof(grayscaleRegion));
             if (GrayscaleRegion.Width != 1) throw new ArgumentException();
             if (GrayscaleRegion.Height != 2) throw new ArgumentException();
 
             WhitePixelRegion = new TextureRegion2D(grayscaleRegion.Texture, 0, 0, 1, 1);
+            GraphicsDevice = device;
 
             SyncRoot = new object();
-            Elements = new ListArray<UIElement>();
-            Elements.Changed += Elements_Changed;
+            Transforms = new ListArray<UITransform>();
+            Transforms.Changed += Elements_Changed;
 
             Input.TextInput += Input_TextInput;
         }
@@ -74,7 +78,7 @@ namespace GeneralShare.UI
         /// The <see cref="GraphicsDevice"/> to use for creating a
         /// grayscale texture if the existing static texture is null.
         /// </param>
-        public UIManager(GraphicsDevice device) : this(GetRegion(device))
+        public UIManager(GraphicsDevice device) : this(device, GetRegion(device))
         {
         }
 
@@ -119,7 +123,7 @@ namespace GeneralShare.UI
             {
                 if (ElementsNeedSorting)
                 {
-                    Elements.Sort(UIDepthComparer.Instance);
+                    Transforms.Sort(new UIDepthComparer());
                     ElementListSorted?.Invoke();
                     ElementsNeedSorting = false;
                 }
@@ -130,13 +134,16 @@ namespace GeneralShare.UI
         {
             lock (SyncRoot)
             {
-                for (int i = 0, length = Elements.Count; i < length; i++)
+                for (int i = 0, length = Transforms.Count; i < length; i++)
                 {
-                    UIElement item = Elements[i];
-                    if (item.Boundaries.Contains(new Point2(x, y)))
+                    UITransform item = Transforms[i];
+                    if (item is UIElement element)
                     {
-                        output = item;
-                        return true;
+                        if (element.Boundaries.Contains(new Point2(x, y)))
+                        {
+                            output = element;
+                            return true;
+                        }
                     }
                 }
             }
@@ -166,42 +173,42 @@ namespace GeneralShare.UI
             return GetElement(position.X, position.Y);
         }
 
-        private void Component_MarkedDirty(DirtMarkType type)
+        private void Transform_MarkedDirty(DirtMarkType type)
         {
             if (type.HasFlagF(DirtMarkType.Position))
                 FlagForSort();
         }
 
-        public void AddElement(UIElement component)
+        public void AddElement(UITransform transform)
         {
             lock (SyncRoot)
             {
-                Elements.Add(component);
-                component.MarkedDirty += Component_MarkedDirty;
+                Transforms.Add(transform);
+                transform.MarkedDirty += Transform_MarkedDirty;
                 FlagForSort();
             }
         }
 
-        public bool RemoveElement(UIElement element)
+        public bool RemoveElement(UITransform transform)
         {
             lock (SyncRoot)
             {
-                int index = Elements.FindIndex((x) => x == element);
+                int index = Transforms.FindIndex((x) => x == transform);
                 if (index == -1)
                 {
                     return false;
                 }
                 else
                 {
-                    Elements[index].MarkedDirty -= Component_MarkedDirty;
-                    Elements.RemoveAt(index);
+                    Transforms[index].MarkedDirty -= Transform_MarkedDirty;
+                    Transforms.RemoveAt(index);
                     
                     return true;
                 }
             }
         }
 
-        public ListArray<UIElement> GetSortedElements()
+        public ListArray<UITransform> GetSortedTransforms()
         {
             if (Disposed)
                 throw new ObjectDisposedException(nameof(UIManager));
@@ -209,7 +216,7 @@ namespace GeneralShare.UI
             lock (SyncRoot)
             {
                 SortElements();
-                return Elements;
+                return Transforms;
             }
         }
 
@@ -217,18 +224,31 @@ namespace GeneralShare.UI
         {
             lock (SyncRoot)
             {
-                ListArray<UIElement> elements = GetSortedElements();
-                for (int i = 0, length = elements.Count; i < length; i++)
+                ListArray<UITransform> transforms = GetSortedTransforms();
+                for (int i = 0, length = transforms.Count; i < length; i++)
                 {
-                    UIElement element = elements[i];
-                    if (element.BlockCursor || element.TriggerMouseEvents)
+                    UITransform transform = transforms[i];
+                    if (transform.Enabled == false)
+                        continue;
+
+                    if(transform is UIElement element)
+                    if (IsElementInputSensitive(element))
                         yield return element;
                 }
             }
         }
 
-        public void Update()
+        public bool IsElementInputSensitive(UIElement element)
         {
+            return element.BlockCursor || element.TriggerMouseEvents;
+        }
+
+        public void Update(GameTime time)
+        {
+            Viewport freshViewport = GraphicsDevice.Viewport;
+            bool viewportChanged = Viewport.EqualsTo(freshViewport);
+            _lastViewport = freshViewport;
+
             bool anyDown = Input.IsAnyMouseDown(out var down);
             bool anyPressed = Input.IsAnyMousePressed(out var pressed);
             bool anyReleased = Input.IsAnyMouseReleased(out var released);
@@ -238,57 +258,72 @@ namespace GeneralShare.UI
 
             lock (SyncRoot)
             {
-                foreach (var senseElement in GetInputSensitiveElements())
+                ListArray<UITransform> transforms = GetSortedTransforms();
+                for (int i = 0, count = transforms.Count; i < count; i++)
                 {
-                    lock (senseElement.SyncRoot)
+                    var transform = transforms[i];
+                    if (transform.Enabled == false)
+                        continue;
+
+                    if (viewportChanged)
+                        transform.OnViewportChange(freshViewport);
+
+                    transform.Update(time);
+
+                    if (transform is UIElement element)
                     {
-                        senseElement.IsMouseHovering = senseElement.Boundaries.Contains(mousePos);
-                        if (senseElement.IsMouseHovering)
+                        if (IsElementInputSensitive(element) == false)
+                            continue;
+                        lock (element.SyncRoot)
                         {
-                            if (senseElement.TriggerMouseEvents)
+                            element.IsMouseHovering = element.Boundaries.Contains(mousePos);
+                            if (element.IsMouseHovering)
                             {
-                                if (anyDown)
-                                    senseElement.TriggerOnMouseDown(state, pressed);
+                                if (element.TriggerMouseEvents)
+                                {
+                                    if (anyDown)
+                                        element.TriggerOnMouseDown(state, pressed);
 
-                                if (anyPressed)
-                                    senseElement.TriggerOnMousePress(state, pressed);
+                                    if (anyPressed)
+                                        element.TriggerOnMousePress(state, pressed);
 
-                                if (anyReleased)
-                                    senseElement.TriggerOnMouseRelease(state, released);
+                                    if (anyReleased)
+                                        element.TriggerOnMouseRelease(state, released);
+                                }
+
+                                if (element.AllowSelection)
+                                {
+                                    if (Input.IsAnyMouseDown(out var temp))
+                                        SelectedElement = element;
+                                }
+
+                                if (element.BlockCursor == true)
+                                    break;
                             }
-
-                            if (senseElement.AllowSelection)
-                            {
-                                if (Input.IsAnyMouseDown(out var temp))
-                                    SelectedElement = senseElement;
-                            }
-
-                            if (senseElement.BlockCursor == true)
-                                break;
                         }
                     }
                 }
 
-                var element = SelectedElement;
-                if (element != null)
+                var selectedE = SelectedElement;
+                if (selectedE != null)
                 {
-                    lock (element.SyncRoot)
+                    lock (selectedE.SyncRoot)
                     {
-                        element.IsSelected = true;
-                        if (element.TriggerKeyEvents)
+                        selectedE.IsSelected = true;
+                        if (selectedE.TriggerKeyEvents)
                         {
                             var keysDown = Input.KeysDown;
                             var keysPressed = Input.KeysPressed;
                             var keysReleased = Input.KeysReleased;
 
                             for (int d = 0; d < keysDown.Count; d++)
-                                element.TriggerOnKeyDown(keysDown[d]);
+                                selectedE.TriggerOnKeyDown(keysDown[d]);
 
                             for (int p = 0; p < keysPressed.Count; p++)
-                                element.TriggerOnKeyPress(keysPressed[p]);
+                                selectedE.TriggerOnKeyPress(keysPressed[p]);
 
                             for (int r = 0; r < keysReleased.Count; r++)
-                                element.TriggerOnKeyRelease(keysReleased[r]);
+                                selectedE.TriggerOnKeyRelease(keysReleased[r]);
                         }
                     }
                 }
@@ -303,9 +338,9 @@ namespace GeneralShare.UI
                 {
                     lock (SyncRoot)
                     {
-                        for (int i = Elements.Count; i-- > 0;)
+                        for (int i = Transforms.Count; i-- > 0;)
                         {
-                            Elements[i]?.Dispose();
+                            Transforms[i]?.Dispose();
                         }
                     }
                 }

@@ -2,11 +2,9 @@
 
 namespace GeneralShare.UI
 {
-    public struct UIDepthComparer : IComparer<UIElement>
+    public struct UIDepthComparer : IComparer<UITransform>
     {
-        public static readonly UIDepthComparer Instance;
-
-        public int Compare(UIElement x, UIElement y)
+        public int Compare(UITransform x, UITransform y)
         {
             if (x.Z == y.Z)
                 return 0;

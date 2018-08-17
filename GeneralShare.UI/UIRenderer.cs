@@ -27,16 +27,22 @@ namespace GeneralShare.UI
         {
             lock (Manager.SyncRoot)
             {
-                var elements = Manager.GetSortedElements();
-                for (int i = 0; i < elements.Count; i++)
+                var transforms = Manager.GetSortedTransforms();
+                for (int i = 0, count = transforms.Count; i < count; i++)
                 {
-                    var element = elements[i];
-                    if (_elementQueue.TryGetValue(element.PreferredSamplingMode, out var list) == false)
+                    var transform = transforms[i];
+                    if (transform.Enabled == false)
+                        continue;
+
+                    if (transform is UIElement element)
                     {
-                        list = new List<UIElement>();
-                        _elementQueue.Add(element.PreferredSamplingMode, list);
+                        if (_elementQueue.TryGetValue(element.PreferredSamplingMode, out var list) == false)
+                        {
+                            list = new List<UIElement>();
+                            _elementQueue.Add(element.PreferredSamplingMode, list);
+                        }
+                        list.Add(element);
                     }
-                    list.Add(element);
                 }
             }
         }

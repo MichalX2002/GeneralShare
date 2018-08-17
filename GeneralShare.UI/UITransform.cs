@@ -1,11 +1,15 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace GeneralShare.UI
 {
-    public class UITransform
+    public class UITransform : IDisposable
     {
+        private static int _lastTransformKey;
+
         public delegate void MarkedDirtyDelegate(DirtMarkType type);
         public delegate void MarkedCleanDelegate();
 
@@ -13,22 +17,28 @@ namespace GeneralShare.UI
         public event MarkedCleanDelegate MarkedClean;
 
         protected readonly object _syncRoot;
+        private bool _updateViewportOnEnable;
         private bool _dirty;
+        private bool _enabled;
         protected Vector3 _position;
         protected Vector2 _scale;
         protected float _rotation;
         protected Vector2 _origin;
 
+        public readonly int TransformKey;
+        public bool Disposed { get; private set; }
+        public bool Enabled { get => _enabled; set { SetEnabled(value); } }
         public object SyncRoot => _syncRoot;
         public DirtMarkType DirtMarks { get; private set; }
-        public Vector3 Position { get => _position; set => SetPosition(value); }
-        public float X { get => _position.X; set => SetPositionF(value, _position.Y, _position.Z); }
-        public float Y { get => _position.Y; set => SetPositionF(_position.X, value, _position.Z); }
-        public float Z { get => _position.Z; set => SetPositionF(_position.X, _position.Y, value); }
+        public UIManager Manager { get; }
 
         public Vector2 Scale { get => _scale; set => SetScale(value); }
         public float Rotation { get => _rotation; set => SetRotation(value); }
         public Vector2 Origin { get => _origin; set => SetOrigin(value); }
+        public Vector3 Position { get => _position; set => SetPosition(value); }
+        public float X { get => _position.X; set => SetPositionF(value, _position.Y, _position.Z); }
+        public float Y { get => _position.Y; set => SetPositionF(_position.X, value, _position.Z); }
+        public float Z { get => _position.Z; set => SetPositionF(_position.X, _position.Y, value); }
 
         public bool Dirty
         {
@@ -46,16 +56,62 @@ namespace GeneralShare.UI
             }
         }
 
-        public UITransform(Vector3 position, Vector2 scale, float rotation, Vector2 origin)
+        private UITransform(UIManager manager, Vector2 scale)
         {
+            TransformKey = Interlocked.Increment(ref _lastTransformKey);
             _syncRoot = new object();
-            _position = position;
             _scale = scale;
+
+            if (manager != null)
+            {
+                Manager = manager;
+                Manager.AddElement(this);
+            }
+
+            Enabled = true;
+        }
+
+        public UITransform(UIManager manager) : this(manager, Vector2.One)
+        {
+        }
+
+        public UITransform() : this(null)
+        {
+        }
+
+        public UITransform(Vector3 position, Vector2 scale, float rotation, Vector2 origin) : this(null, scale)
+        {
+            _position = position;
             _rotation = rotation;
             _origin = origin;
         }
 
-        public UITransform() : this(Vector3.Zero, Vector2.One, 0, Vector2.Zero)
+        private void SetEnabled(bool value)
+        {
+            if (Manager != null)
+            {
+                if (!_enabled && value && _updateViewportOnEnable)
+                {
+                    ViewportChanged(Manager._lastViewport);
+                    _updateViewportOnEnable = false;
+                }
+            }
+            _enabled = value;
+        }
+
+        public virtual void Update(GameTime time)
+        {
+        }
+
+        internal void OnViewportChange(in Viewport viewport)
+        {
+            if (_enabled == false)
+                _updateViewportOnEnable = true;
+            else
+                ViewportChanged(viewport);
+        }
+
+        public virtual void ViewportChanged(in Viewport viewport)
         {
         }
 
@@ -159,6 +215,31 @@ namespace GeneralShare.UI
         protected void MarkDirty(DirtMarkType type)
         {
             MarkDirty(type, false);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!Disposed)
+            {
+                if (disposing)
+                {
+                    if (Manager != null)
+                        Manager.RemoveElement(this);
+                }
+
+                Disposed = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        ~UITransform()
+        {
+            Dispose(false);
         }
     }
 }
