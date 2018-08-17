@@ -16,6 +16,10 @@ namespace GeneralShare.UI
         public UIAnchor(UIManager manager) : base(manager)
         {
         }
+       
+        public UIAnchor() : base()
+        {
+        }
 
         private void SetPivot(PivotPosition value)
         {
