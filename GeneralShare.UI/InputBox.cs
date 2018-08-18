@@ -120,7 +120,7 @@ namespace GeneralShare.UI
 
         private void SetCaretIndexInternal(int value)
         {
-            lock (_syncRoot)
+            lock (SyncRoot)
             {
                 PrepareCaretIndex(ref value);
                 MarkDirtyE(ref _caretIndex, value, DirtMarkType.CaretIndex);
@@ -134,7 +134,7 @@ namespace GeneralShare.UI
 
         private void InputBox_OnKeyPress(Keys key)
         {
-            lock (_syncRoot)
+            lock (SyncRoot)
             {
                 switch (key)
                 {
@@ -153,7 +153,7 @@ namespace GeneralShare.UI
 
         private void InputBox_OnTextInput(TextInputEventArgs e)
         {
-            lock (_syncRoot)
+            lock (SyncRoot)
             {
                 void Insert(char value)
                 {
@@ -205,7 +205,7 @@ namespace GeneralShare.UI
 
         private void InputBox_OnMousePress(in MouseState mouseState, MouseButton buttons)
         {
-            lock (_syncRoot)
+            lock (SyncRoot)
             {
                 float sizeX = _scale.X * _font.LineHeight * 0.9f;
                 float sizeY = _scale.Y * _font.LineHeight;
@@ -243,7 +243,7 @@ namespace GeneralShare.UI
 
         private RectangleF GetCaretPosition()
         {
-            lock (_syncRoot)
+            lock (SyncRoot)
             {
                 RectangleF output = new RectangleF
                 {
@@ -271,7 +271,7 @@ namespace GeneralShare.UI
 
         public override void Draw(GameTime time, SpriteBatch batch)
         {
-            lock (_syncRoot)
+            lock (SyncRoot)
             {
                 base.Draw(time, batch);
 

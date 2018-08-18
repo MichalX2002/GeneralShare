@@ -15,9 +15,10 @@ namespace GeneralShare.UI
 
         public UIAnchor(UIManager manager) : base(manager)
         {
+            _pivot = PivotPosition.Default;
         }
        
-        public UIAnchor() : base()
+        public UIAnchor() : this(null)
         {
         }
 
@@ -48,38 +49,37 @@ namespace GeneralShare.UI
         private void UpdatePivotPosition()
         {
             Rectangle rect = Manager != null ? Manager._lastViewport.Bounds : _viewport.Bounds;
-
-            Vector3 baseVec = new Vector3(rect.X + _pivotOffset.X, rect.Y + _pivotOffset.Y, _pivotOffset.Z);
+            Vector3 basePos = new Vector3(rect.X + _pivotOffset.X, rect.Y + _pivotOffset.Y, _pivotOffset.Z);
             switch (_pivot)
             {
                 // Bottom
                 case PivotPosition.BottomLeft:
-                    baseVec.Y += rect.Height;
+                    basePos.Y += rect.Height;
                     break;
 
                 case PivotPosition.BottomRight:
-                    baseVec.X += rect.Width;
-                    baseVec.Y += rect.Height;
+                    basePos.X += rect.Width;
+                    basePos.Y += rect.Height;
                     break;
 
                 case PivotPosition.Bottom:
-                    baseVec.X += rect.Width / 2;
-                    baseVec.Y += rect.Height;
+                    basePos.X += rect.Width / 2;
+                    basePos.Y += rect.Height;
                     break;
 
                 // Center
                 case PivotPosition.Left:
-                    baseVec.Y += rect.Height / 2;
+                    basePos.Y += rect.Height / 2;
                     break;
 
                 case PivotPosition.Right:
-                    baseVec.X += rect.Width;
-                    baseVec.Y += rect.Height / 2;
+                    basePos.X += rect.Width;
+                    basePos.Y += rect.Height / 2;
                     break;
 
                 case PivotPosition.Center:
-                    baseVec.X += rect.Width / 2;
-                    baseVec.Y += rect.Height / 2;
+                    basePos.X += rect.Width / 2;
+                    basePos.Y += rect.Height / 2;
                     break;
 
                 // Top
@@ -87,14 +87,19 @@ namespace GeneralShare.UI
                     break;
 
                 case PivotPosition.TopRight:
-                    baseVec.X += rect.Width;
+                    basePos.X += rect.Width;
                     break;
 
                 case PivotPosition.Top:
-                    baseVec.X += rect.Width / 2;
+                    basePos.X += rect.Width / 2;
+                    break;
+
+                default:
+                    basePos = Vector3.Zero;
                     break;
             }
-            Position = baseVec;
+            Position = basePos;
+            InvokeMarkedDirty(DirtMarkType.PivotPosition);
         }
     }
 }

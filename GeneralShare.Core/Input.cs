@@ -193,10 +193,10 @@ namespace GeneralShare
             NumLock = Keyboard.Modifiers.HasFlags(KeyModifier.NumLock);
             CapsLock = Keyboard.Modifiers.HasFlags(KeyModifier.CapsLock);
             
-            _oldKeysDown.Clear();
+            _oldKeysDown.Clear(false);
             _oldKeysDown.AddRange(_keysDown);
 
-            _keysDown.Clear();
+            _keysDown.Clear(false);
             _keysDown.AddRange(Keyboard.KeyList);
 
             GetKeyDifferences(_keysPressed, _keysDown, _oldKeysDown);
@@ -206,7 +206,7 @@ namespace GeneralShare
         private static void GetKeyDifferences(
             ListArray<Keys> output, ListArray<Keys> keys1, ListArray<Keys> keys2)
         {
-            output.Clear();
+            output.Clear(false);
             for (int i = 0; i < keys1.Count; i++)
             {
                 Keys key = keys1[i];

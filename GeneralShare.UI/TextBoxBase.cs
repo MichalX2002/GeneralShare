@@ -18,6 +18,8 @@ namespace GeneralShare.UI
         protected StringBuilder _processedText;
         protected bool _buildTextTree;
         protected PooledQuadTree<float> _textQuadTree;
+        protected ListArray<LineInfo> _lines;
+        protected UIAnchor _anchor;
 
         protected bool _valueExpressions;
         protected bool _keepExpressions;
@@ -27,6 +29,7 @@ namespace GeneralShare.UI
         protected Rectangle? _clipRect;
         protected RectangleF _textBounds;
         protected RectangleF _totalBoundaries;
+        private TextAlignment _align;
 
         protected bool _useShadow;
         protected BatchedSprite _shadowSprite;
@@ -35,23 +38,28 @@ namespace GeneralShare.UI
         protected Point _shadowTexSrc;
         protected Color _shadowColor;
         protected bool _shadowAvailable;
-
-        public BitmapFont Font { get => _font; set => SetFont(value); }
-        public StringBuilder ProcessedText { get { ProcessTextIfNeeded(); return _processedText; } }
-
+        
         public Color BaseColor { get => _baseColor; set => SetColor(value); }
+        public BitmapFont Font { get => _font; set => SetFont(value); }
         public Rectangle? ClippingRectangle { get => _clipRect; set => SetClipRect(value); }
+        public StringBuilder ProcessedText { get { ProcessTextIfNeeded(); return _processedText; } }
+        public int SpecialProcessedTextLength { get; private set; }
 
-        public override RectangleF Boundaries { get { ProcessTextIfNeeded(); return _totalBoundaries; } }
-        public RectangleF TextBoundaries { get { ProcessTextIfNeeded(); return _textBounds; } }
-        public SizeF Measure { get { ProcessTextIfNeeded(); return _scaledMeasure; } }
         public TextureRegion2D ShadowTexture { get => _shadowTex; set => SetShadowTex(value); }
         public Color ShadowColor { get => _shadowColor; set => SetShadowColor(value); }
         public bool UseShadow { get => _useShadow; set => SetUseShadow(value); }
         public RectangleF ShadowOffset { get => _shadowOffset; set => SetShadowOffset(value); }
+
         public bool BuildCharQuadTree { get => _buildTextTree; set => SetBuildTextTree(value); }
         public ReadOnlyQuadTree<float> CharQuadTree => _textQuadTree.CurrentTree.AsReadOnly();
-        public int SpecialProcessedTextLength { get; private set; }
+        public override RectangleF Boundaries { get { ProcessTextIfNeeded(); return _totalBoundaries; } }
+        public RectangleF TextBoundaries { get { ProcessTextIfNeeded(); return _textBounds; } }
+        public SizeF Measure { get { ProcessTextIfNeeded(); return _scaledMeasure; } }
+        public TextAlignment Alignment { get => _align; set => SetAlign(value); }
+
+        public UIAnchor Anchor => GetAnchor();
+        public PivotPosition Pivot { get => GetPivot(); set => Anchor.Pivot = value; }
+        public Vector3 PivotOffset { get => GetPivotOffset(); set => Anchor.PivotOffset = value; }
 
         public TextBoxBase(UIManager manager, BitmapFont font) : base(manager)
         {
@@ -60,6 +68,7 @@ namespace GeneralShare.UI
             _expressionColors = new ListArray<Color>();
             _processedText = new StringBuilder();
             _textQuadTree = new PooledQuadTree<float>(Rectangle.Empty, 2, true);
+            _lines = new ListArray<LineInfo>();
 
             Font = font;
             BaseColor = Color.White;
@@ -72,6 +81,32 @@ namespace GeneralShare.UI
         }
 
         public TextBoxBase(BitmapFont font) : this(null, font) { }
+
+        private UIAnchor GetAnchor()
+        {
+            if (_anchor == null)
+                _anchor = new UIAnchor(Manager);
+            return _anchor;
+        }
+
+        private PivotPosition GetPivot()
+        {
+            if (_anchor == null)
+                return PivotPosition.None;
+            return _anchor.Pivot;
+        }
+
+        private Vector3 GetPivotOffset()
+        {
+            if (_anchor == null)
+                return Vector3.Zero;
+            return Anchor.PivotOffset;
+        }
+
+        protected void SetAlign(TextAlignment align)
+        {
+            MarkDirty(ref _align, align, DirtMarkType.TextAlignment);
+        }
 
         protected void SetBuildTextTree(bool value)
         {
@@ -149,7 +184,6 @@ namespace GeneralShare.UI
             if (Dirty == true)
             {
                 BuildGraphics();
-                ClearDirtMarks();
                 Dirty = false;
             }
         }
@@ -158,21 +192,13 @@ namespace GeneralShare.UI
         {
             ProcessTextIfNeeded();
 
-            lock (_syncRoot)
+            lock (SyncRoot)
             {
-                if (HasDirtMarks(DirtMarkType.BuildTextTree))
-                {
-                    if (_buildTextTree == false)
-                        _textQuadTree.ClearPool();
-
-                    ClearDirtMarks(DirtMarkType.BuildTextTree);
-                }
-
-                DirtMarkType dirtyGraphics =
+                bool hadDirtyGraphics = HasDirtMarks(
                     DirtMarkType.ValueProcessed | DirtMarkType.Transform |
-                    DirtMarkType.Font | DirtMarkType.ClipRectangle;
+                    DirtMarkType.Font | DirtMarkType.ClipRectangle);
 
-                if (HasDirtMarks(dirtyGraphics))
+                if (hadDirtyGraphics)
                 {
                     if (_processedText.Length > 0 && _font != null)
                     {
@@ -187,18 +213,129 @@ namespace GeneralShare.UI
                         _textBounds.Y = (int)_position.Y;
 
                         if (_buildTextTree)
-                            BuildTextTree();
+                            PrepareTextTree();
 
-                        UpdateScaledMeasure();
+                        int expressionCount = _expressionColors.Count;
+                        int itemCount = _textCache.Count;
+                        for (int i = 0; i < itemCount; i++)
+                        {
+                            ref var sprite = ref _textCache.GetReferenceAt(i);
+                            if (_buildTextTree)
+                                AddTextQuadItem(ref sprite);
 
-                        if(_valueExpressions)
-                            ApplyExpressionColors();
+                            if (_valueExpressions && i < expressionCount)
+                            {
+                                Color color = _expressionColors.GetReferenceAt(i);
+                                sprite.SetColor(color);
+                            }
+                        }
+
+                        if (_align == TextAlignment.Center || _align == TextAlignment.Right)
+                        {
+                            // TODO: something that uses the largest line width
+
+                            float width = 0;
+                            //float largestW = 0;
+                            BitmapFontRegion previousReg = null;
+                            int pTextLength = _processedText.Length;
+
+                            void AddLine(int index)
+                            {
+                                float scaledWidth = width *_scale.X;
+                                _lines.Add(new LineInfo(
+                                    scaledWidth,
+                                    index - _lines.Count // pretend that newline chars don't exist
+                                ));
+
+                                //if (largestW < scaledWidth)
+                                //    largestW = scaledWidth;
+                                width = 0;
+                            }
+
+                            for (int i = 0; i < pTextLength; i++)
+                            {
+                                if (_processedText[i] == '\n')
+                                {
+                                    AddLine(i);
+                                    continue;
+                                }
+                                
+                                int character = char.IsHighSurrogate(_processedText[i]) && ++i < pTextLength
+                                    ? char.ConvertToUtf32(_processedText[i - 1], _processedText[i])
+                                    : _processedText[i];
+                                
+                                if (_font.GetCharacterRegion(character, out var fontRegion))
+                                {
+                                    if (previousReg != null && BitmapFont.UseKernings)
+                                    {
+                                        if (previousReg.Kernings.TryGetValue(character, out int amount))
+                                            width += amount;
+                                    }
+                                
+                                    width += fontRegion.XAdvance + _font.LetterSpacing;
+                                    previousReg = fontRegion;
+                                }
+                            }
+                            AddLine(pTextLength - 1);
+                            //largestW *= Scale.X;
+                            
+                            void TranslateSprite(float xOffset, ref BatchedSprite sprite)
+                            {
+                                sprite.TL.Position.X += xOffset;
+                                sprite.TR.Position.X += xOffset;
+                                sprite.BL.Position.X += xOffset;
+                                sprite.BR.Position.X += xOffset;
+                            }
+
+                            float GetXOffset(float lineWidth)
+                            {
+                                switch (_align)
+                                {
+                                    case TextAlignment.Center:
+                                        return -lineWidth / 2;
+
+                                    case TextAlignment.Right:
+                                        return -lineWidth;
+
+                                    default:
+                                        return 0;
+                                }
+                            }
+
+                            int lastBreak = 0;
+                            int lineCount = _lines.Count;
+                            for (int i = 0; i < lineCount; i++)
+                            {
+                                int breakIndex = _lines[i].BreakIndex;
+                                int charCount = i == lineCount - 1 ? breakIndex + 1 : breakIndex;
+                                for (int j = lastBreak; j < charCount; j++)
+                                {
+                                    float xOffset = GetXOffset(_lines[i].Width);
+                                    TranslateSprite(xOffset, ref _textCache.GetReferenceAt(j).Sprite);
+                                }
+                                lastBreak = breakIndex;
+                            }
+                            _lines.Clear(false);
+                        }
 
                         MarkDirty(DirtMarkType.ShadowMath, true);
                         HasContent = _textCache.Count > 0;
                     }
                     else
                         HasContent = false;
+                }
+
+                if (HasDirtMarks(DirtMarkType.BuildTextTree))
+                {
+                    if (_buildTextTree)
+                    {
+                        if (!hadDirtyGraphics)
+                            BuildTextTree();
+                    }
+                    else
+                        _textQuadTree.ClearPool();
+
+                    ClearDirtMarks(DirtMarkType.BuildTextTree);
                 }
 
                 if (HasDirtMarks(DirtMarkType.ShadowColor))
@@ -208,8 +345,10 @@ namespace GeneralShare.UI
                 SpecialBoundaryUpdate(_totalBoundaries, out _totalBoundaries);
 
                 if (HasDirtMarks(DirtMarkType.ShadowMath))
-                    UpdateShadow();
+                    UpdateShadowSprite();
                 _shadowAvailable = _useShadow && _shadowTex != null;
+
+                ClearDirtMarks();
             }
         }
 
@@ -219,7 +358,7 @@ namespace GeneralShare.UI
                 DirtMarkType.Color | DirtMarkType.Value | DirtMarkType.UseTextExpressions |
                 DirtMarkType.Font | DirtMarkType.InputPrefix | DirtMarkType.KeepTextExpressions;
 
-            lock (_syncRoot)
+            lock (SyncRoot)
             {
                 if (HasDirtMarks(needsProcess))
                 {
@@ -264,32 +403,38 @@ namespace GeneralShare.UI
             output = input;
         }
 
+        protected void PrepareTextTree()
+        {
+            _textQuadTree.ClearTree();
+            _textQuadTree.Resize(_textBounds);
+        }
+
         protected void BuildTextTree()
         {
-            _textQuadTree.CurrentTree.Clear();
-            _textQuadTree.Resize(_textBounds);
-
+            PrepareTextTree();
             for (int i = 0, count = _textCache.Count; i < count; i++)
             {
-                ref CharDrawSprite item = ref _textCache.GetReferenceAt(i);
-                ref BatchedSprite sprite = ref item.Sprite;
-
-                float yDiff = sprite.TL.Position.Y - _position.Y;
-                int line = (int)Math.Floor(yDiff / _scale.Y / _font.LineHeight);
-
-                float x = (float)Math.Floor(sprite.TL.Position.X);
-                float y = (float)Math.Floor(_position.Y) + line * _font.LineHeight * _scale.Y;
-                float w = (float)Math.Floor(sprite.BR.Position.X - x) * 0.5f;
-                float h = _font.LineHeight * _scale.Y * 0.5f;
-
-                float o = 0.001f;
-                var node = new RectangleF(x + o, y + h * 0.5f, w - o, h);
-
-                _textQuadTree.CurrentTree.Insert(node, item.Index);
-
-                node.X += w;
-                _textQuadTree.CurrentTree.Insert(node, item.Index + 0.5f);
+                AddTextQuadItem(ref _textCache.GetReferenceAt(i));
             }
+        }
+
+        protected void AddTextQuadItem(ref CharDrawSprite item)
+        {
+            float yDiff = item.Sprite.TL.Position.Y - _position.Y;
+            int line = (int)Math.Floor(yDiff / _scale.Y / _font.LineHeight);
+
+            float x = (float)Math.Floor(item.Sprite.TL.Position.X);
+            float y = (float)Math.Floor(_position.Y) + line * _font.LineHeight * _scale.Y;
+            float w = (float)Math.Floor(item.Sprite.BR.Position.X - x) * 0.5f;
+            float h = _font.LineHeight * _scale.Y * 0.5f;
+
+            float o = 0.001f;
+            var node = new RectangleF(x + o, y + h * 0.5f, w - o, h);
+
+            _textQuadTree.CurrentTree.Insert(node, item.Index);
+
+            node.X += w;
+            _textQuadTree.CurrentTree.Insert(node, item.Index + 0.5f);
         }
 
         protected void UpdateTotalBoundaries()
@@ -302,7 +447,7 @@ namespace GeneralShare.UI
             _scaledMeasure = _measure * _scale;
         }
 
-        protected void UpdateShadow()
+        protected void UpdateShadowSprite()
         {
             if (_shadowTexSrc.X <= 0 || _shadowTexSrc.Y <= 0)
                 return;
@@ -315,28 +460,16 @@ namespace GeneralShare.UI
             _shadowSprite.SetTexCoords(_shadowTex);
         }
 
-        protected void ApplyExpressionColors()
-        {
-            int expressionCount = _expressionColors.Count;
-            if (expressionCount > 0)
-            {
-                int count = _textCache.Count;
-                if (count > expressionCount)
-                    count = expressionCount;
-
-                for (int i = 0; i < count; i++)
-                {
-                    ref var item = ref _textCache.GetReferenceAt(i);
-                    ref var color = ref _expressionColors.GetReferenceAt(i);
-                    item.SetColor(color);
-                }
-            }
-        }
-
         public override void Draw(GameTime time, SpriteBatch batch)
         {
-            lock (_syncRoot)
+            lock (SyncRoot)
             {
+                if (_anchor != null)
+                {
+                    if (_anchor.Pivot != PivotPosition.None)
+                        Position = _anchor.Position;
+                }
+
                 BuildGraphicsIfNeeded();
 
                 if (HasContent)
@@ -346,6 +479,18 @@ namespace GeneralShare.UI
 
                     batch.DrawString(_textCache);
                 }
+            }
+        }
+
+        protected struct LineInfo
+        {
+            public float Width;
+            public int BreakIndex;
+
+            public LineInfo(float width, int breakIndex)
+            {
+                Width = width;
+                BreakIndex = breakIndex;
             }
         }
     }

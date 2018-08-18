@@ -28,6 +28,7 @@ namespace GeneralShare.UI
         UseShadow = 1 << 9,
         ShadowMath = 1 << 10,
         BuildTextTree = 1 << 11,
+        TextAlignment = 1 << 27,
 
         // ProgressBar
         BackgroundColor = 1 << 12,
@@ -49,5 +50,6 @@ namespace GeneralShare.UI
         ValueProcessed = 1 << 24,
         ObscureValue = 1 << 25,
         ObscureChar = 1 << 26,
+        PivotPosition = 1 << 28
     }
 }

@@ -213,11 +213,26 @@ namespace GeneralShare.Collections
 
         public void Clear()
         {
+            Clear(true);
+        }
+
+        /// <summary>
+        /// Clears the list with the option to make all elements their default (to null if <typeparamref name="T"/> is a class).
+        /// </summary>
+        /// <param name="clearInnerArray">
+        /// <see langword="true"/> to clear the <see cref="InnerArray"/>
+        /// (only available if <typeparamref name="T"/> is a value type).
+        /// </param>
+        public void Clear(bool clearInnerArray)
+        {
             CheckAccessibility();
 
             if (Count > 0)
             {
-                Array.Clear(InnerArray, 0, Count);
+                if (clearInnerArray || !typeof(T).IsValueType)
+                {
+                    Array.Clear(InnerArray, 0, Count);
+                }
                 Count = 0;
                 Version++;
             }

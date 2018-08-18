@@ -7,6 +7,7 @@ namespace GeneralShare.Collections
 {
     public class QuadTree<T>
     {
+        private ReadOnlyQuadTree<T> _readonlyTree;
         private readonly Func<ListArray<Item>> _getListFunc;
 
         public RectangleF Boundary { get; private set; }
@@ -57,7 +58,9 @@ namespace GeneralShare.Collections
         
         public ReadOnlyQuadTree<T> AsReadOnly()
         {
-            return new ReadOnlyQuadTree<T>(this);
+            if(_readonlyTree == null)
+                _readonlyTree = new ReadOnlyQuadTree<T>(this);
+            return _readonlyTree;
         }
         
         public Item QueryNearest(RectangleF range, Vector2 start)

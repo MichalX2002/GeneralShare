@@ -118,7 +118,7 @@ namespace GeneralShare.UI
 
         private void SetContentState(bool hasContent)
         {
-            lock (_syncRoot)
+            lock (SyncRoot)
             {
                 if (_hasContent != hasContent)
                 {

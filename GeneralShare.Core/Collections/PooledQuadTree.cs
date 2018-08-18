@@ -33,6 +33,11 @@ namespace GeneralShare.Collections
             _pool.Clear();
         }
 
+        public void ClearTree()
+        {
+            CurrentTree.Clear();
+        }
+
         public void Resize(RectangleF boundary, int threshold, bool allowOverflow)
         {
             var oldTree = CurrentTree;
