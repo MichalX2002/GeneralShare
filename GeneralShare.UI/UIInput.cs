@@ -9,7 +9,7 @@ using System.Collections.Generic;
 
 namespace GeneralShare.UI
 {
-    public class InputBox : TextBoxBase
+    public class UIInput : UITextBase
     {
         private RectangleF _caretRect;
         private Color _visibleCaretColor;
@@ -44,7 +44,7 @@ namespace GeneralShare.UI
         public int MaxCharCount { get => _maxCharCount; set => SetMaxCharCount(value); }
         public IEnumerable<char> CharBlacklist =>  _excludedChars;
 
-        public InputBox(UIManager manager, BitmapFont font) : base(manager, font)
+        public UIInput(UIManager manager, BitmapFont font) : base(manager, font)
         {
             _excludedChars = new HashSet<char>();
             _readonlyExcludedChars = new ReadOnlyCollectionWrapper<char>(_excludedChars);
@@ -348,6 +348,15 @@ namespace GeneralShare.UI
 
             RectangleF.Union(input, _caretRect, out output);
             MarkDirty(DirtMarkType.ShadowMath);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            OnMousePress -= InputBox_OnMousePress;
+            OnTextInput -= InputBox_OnTextInput;
+            OnKeyPress -= InputBox_OnKeyPress;
+
+            base.Dispose(disposing);
         }
     }
 }

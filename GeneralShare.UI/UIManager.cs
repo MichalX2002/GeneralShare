@@ -11,9 +11,9 @@ namespace GeneralShare.UI
 {
     public class UIManager : IDisposable
     {
-        public delegate void ElementListSortedDelegate();
+        public delegate void TransformListSortedDelegate();
 
-        public event ElementListSortedDelegate ElementListSorted;
+        public event TransformListSortedDelegate TransformListSorted;
 
         private static TextureRegion2D _grayscaleRegion;
         private UIElement __selectedElement;
@@ -27,7 +27,7 @@ namespace GeneralShare.UI
         public object SyncRoot { get; private set; }
         public SamplingMode PreferredSamplingMode { get; set; }
         public Viewport Viewport => _lastViewport;
-        public bool ElementsNeedSorting { get; private set; }
+        public bool TransformsNeedSorting { get; private set; }
         public ListArray<UITransform> Transforms { get; }
 
         public UIElement SelectedElement
@@ -66,7 +66,7 @@ namespace GeneralShare.UI
 
             SyncRoot = new object();
             Transforms = new ListArray<UITransform>();
-            Transforms.Changed += Elements_Changed;
+            Transforms.Changed += Transforms_Changed;
 
             Input.TextInput += Input_TextInput;
         }
@@ -94,7 +94,7 @@ namespace GeneralShare.UI
             return _grayscaleRegion;
         }
 
-        private void Elements_Changed(int oldVersion, int newVersion)
+        private void Transforms_Changed(int oldVersion, int newVersion)
         {
             FlagForSort();
         }
@@ -114,18 +114,18 @@ namespace GeneralShare.UI
         private void FlagForSort()
         {
             if (Disposed == false)
-                ElementsNeedSorting = true;
+                TransformsNeedSorting = true;
         }
 
-        public void SortElements()
+        public void SortTransforms()
         {
             lock (SyncRoot)
             {
-                if (ElementsNeedSorting)
+                if (TransformsNeedSorting)
                 {
                     Transforms.Sort(new UIDepthComparer());
-                    ElementListSorted?.Invoke();
-                    ElementsNeedSorting = false;
+                    TransformListSorted?.Invoke();
+                    TransformsNeedSorting = false;
                 }
             }
         }
@@ -175,11 +175,11 @@ namespace GeneralShare.UI
 
         private void Transform_MarkedDirty(DirtMarkType type)
         {
-            if (type.HasFlagF(DirtMarkType.Position))
+            if (type.HasFlags(DirtMarkType.Position))
                 FlagForSort();
         }
 
-        public void AddElement(UITransform transform)
+        public void Add(UITransform transform)
         {
             lock (SyncRoot)
             {
@@ -189,7 +189,7 @@ namespace GeneralShare.UI
             }
         }
 
-        public bool RemoveElement(UITransform transform)
+        public bool Remove(UITransform transform)
         {
             lock (SyncRoot)
             {
@@ -215,7 +215,7 @@ namespace GeneralShare.UI
 
             lock (SyncRoot)
             {
-                SortElements();
+                SortTransforms();
                 return Transforms;
             }
         }

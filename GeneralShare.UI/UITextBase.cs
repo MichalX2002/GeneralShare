@@ -9,10 +9,10 @@ using System.Text;
 
 namespace GeneralShare.UI
 {
-    public abstract class TextBoxBase : UIElement
+    public abstract class UITextBase : UIElement
     {
         protected BitmapFont _font;
-        protected ListArray<CharDrawSprite> _textCache;
+        protected ListArray<GlyphBatchedSprite> _textCache;
         protected ListArray<Color> _expressionColors;
         protected string _value;
         protected StringBuilder _processedText;
@@ -61,10 +61,10 @@ namespace GeneralShare.UI
         public PivotPosition Pivot { get => GetPivot(); set => Anchor.Pivot = value; }
         public Vector3 PivotOffset { get => GetPivotOffset(); set => Anchor.PivotOffset = value; }
 
-        public TextBoxBase(UIManager manager, BitmapFont font) : base(manager)
+        public UITextBase(UIManager manager, BitmapFont font) : base(manager)
         {
             _value = string.Empty;
-            _textCache = new ListArray<CharDrawSprite>();
+            _textCache = new ListArray<GlyphBatchedSprite>();
             _expressionColors = new ListArray<Color>();
             _processedText = new StringBuilder();
             _textQuadTree = new PooledQuadTree<float>(Rectangle.Empty, 2, true);
@@ -80,7 +80,7 @@ namespace GeneralShare.UI
                 ShadowTexture = manager.WhitePixelRegion;
         }
 
-        public TextBoxBase(BitmapFont font) : this(null, font) { }
+        public UITextBase(BitmapFont font) : this(null, font) { }
 
         private UIAnchor GetAnchor()
         {
@@ -418,7 +418,7 @@ namespace GeneralShare.UI
             }
         }
 
-        protected void AddTextQuadItem(ref CharDrawSprite item)
+        protected void AddTextQuadItem(ref GlyphBatchedSprite item)
         {
             float yDiff = item.Sprite.TL.Position.Y - _position.Y;
             int line = (int)Math.Floor(yDiff / _scale.Y / _font.LineHeight);

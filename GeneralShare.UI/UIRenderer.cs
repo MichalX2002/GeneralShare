@@ -51,7 +51,7 @@ namespace GeneralShare.UI
         {
             foreach (var entry in _elementQueue)
             {
-                spriteBatch.Begin(samplerState: GetSamplerState(entry.Key));
+                spriteBatch.Begin(samplerState: GetSamplerState(entry.Key), blendState: BlendState.NonPremultiplied);
                 var list = entry.Value;
                 for (int i = 0, count = list.Count; i < count; i++)
                 {

@@ -63,12 +63,12 @@
     <Compile Include="Collections\ReadOnlyQuadTree.cs" />
     <Compile Include="DebugUtils.cs" />
     <Compile Include="Delegates.cs" />
-    <Compile Include="EnumConverter.cs" />
+    <Compile Include="Helpers\EnumConverter.cs" />
     <Compile Include="Helpers\DirectoryInfoExtensions.cs" />
     <Compile Include="EventBasedReporter.cs" />
     <Compile Include="Helpers\FileInfoExtensions.cs" />
     <Compile Include="Helpers\ArrayHelper.cs" />
-    <Compile Include="Helpers\EnumHelper.cs" />
+    <Compile Include="Helpers\EnumExtensions.cs" />
     <Compile Include="Helpers\IPEndPointParser.cs" />
     <Compile Include="Helpers\PathHelper.cs" />
     <Compile Include="Helpers\SecureStringHelper.cs" />

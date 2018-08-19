@@ -64,7 +64,7 @@ namespace GeneralShare.UI
             if (manager != null)
             {
                 Manager = manager;
-                Manager.AddElement(this);
+                Manager.Add(this);
             }
 
             Enabled = true;
@@ -227,7 +227,7 @@ namespace GeneralShare.UI
                 if (disposing)
                 {
                     if (Manager != null)
-                        Manager.RemoveElement(this);
+                        Manager.Remove(this);
                 }
 
                 Disposed = true;

@@ -6,7 +6,7 @@ using System;
 
 namespace GeneralShare.UI
 {
-    public class ProgressBar : UIElement, IProgress<float>
+    public class UIProgressBar : UIElement, IProgress<float>
     {
         private TextureRegion2D _mainBarRegion;
         private TextureRegion2D _backBarRegion;
@@ -35,7 +35,7 @@ namespace GeneralShare.UI
         public Color MainColor { get => _mainSprite.TL.Color; set => SetMainColor(value); }
         public Color BackgroundColor { get => _backSprite.TL.Color; set => SetBackColor(value); }
 
-        public ProgressBar(UIManager manager, TextureRegion2D mainBarRegion,
+        public UIProgressBar(UIManager manager, TextureRegion2D mainBarRegion,
             TextureRegion2D backBarRegion) : base(manager)
         {
             _mainBarRegion = mainBarRegion;
@@ -48,11 +48,11 @@ namespace GeneralShare.UI
             _direction = BarDirection.ToRight;
         }
 
-        public ProgressBar(UIManager manager) : this(manager, manager.GrayscaleRegion, manager.WhitePixelRegion)
+        public UIProgressBar(UIManager manager) : this(manager, manager.GrayscaleRegion, manager.WhitePixelRegion)
         {
         }
         
-        public ProgressBar(TextureRegion2D mainBarRegion, TextureRegion2D backBarRegion) :
+        public UIProgressBar(TextureRegion2D mainBarRegion, TextureRegion2D backBarRegion) :
             this(null, mainBarRegion, backBarRegion)
         {
 
@@ -136,7 +136,6 @@ namespace GeneralShare.UI
             var matrix = Matrix2.CreateFrom(mainDst.Position, _rotation, size, _origin);
             
             _mainSprite.SetTransform(matrix, _mainBarRegion.Bounds.Size);
-            _mainSprite.SetDepth(_position.Z);
             _mainSprite.SetTexCoords(_mainBarRegion);
         }
 
@@ -175,8 +174,8 @@ namespace GeneralShare.UI
             }
 
             if (BackBarThickness >= 0)
-                batch.Draw(_backBarRegion.Texture, _backSprite, _position.Z);
-            batch.Draw(_mainBarRegion.Texture, _mainSprite, _position.Z);
+                batch.Draw(_backBarRegion.Texture, _backSprite);
+            batch.Draw(_mainBarRegion.Texture, _mainSprite);
         }
 
         public enum BarDirection

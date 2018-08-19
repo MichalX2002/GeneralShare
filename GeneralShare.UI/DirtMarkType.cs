@@ -2,14 +2,6 @@
 
 namespace GeneralShare.UI
 {
-    public static class DirtMarkTypeExtensions
-    {
-        public static bool HasFlagF(this DirtMarkType mark, DirtMarkType comparison)
-        {
-            return (mark & comparison) == comparison;
-        }
-    }
-
     [Flags]
     public enum DirtMarkType
     {
