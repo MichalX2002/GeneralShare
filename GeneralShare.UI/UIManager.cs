@@ -231,16 +231,16 @@ namespace GeneralShare.UI
                     if (transform.Enabled == false)
                         continue;
 
-                    if(transform is UIElement element)
-                    if (IsElementInputSensitive(element))
-                        yield return element;
+                    if (transform is UIElement element)
+                        if (IsElementInputSensitive(element))
+                            yield return element;
                 }
             }
         }
 
         public bool IsElementInputSensitive(UIElement element)
         {
-            return element.BlockCursor || element.TriggerMouseEvents;
+            return element.InterceptCursor || element.TriggerMouseEvents;
         }
 
         public void Update(GameTime time)
@@ -253,15 +253,19 @@ namespace GeneralShare.UI
             bool anyPressed = Input.IsAnyMousePressed(out var pressed);
             bool anyReleased = Input.IsAnyMouseReleased(out var released);
 
-            MouseState state = Input.NewMouseState;
-            Point mousePos = state.Position;
+            MouseState mouseState = Input.NewMouseState;
+            Point mousePos = mouseState.Position;
 
             lock (SyncRoot)
             {
+                bool interceptionBroken = false;
+                // a state used instead of 'break'ing (the loop) as processing the 
+                // mouse hover events "Enter" and "Leave" is pretty important
+
                 ListArray<UITransform> transforms = GetSortedTransforms();
                 for (int i = 0, count = transforms.Count; i < count; i++)
                 {
-                    var transform = transforms[i];
+                    UITransform transform = transforms[i];
                     if (transform.Enabled == false)
                         continue;
 
@@ -272,23 +276,40 @@ namespace GeneralShare.UI
 
                     if (transform is UIElement element)
                     {
+                        element.IsSelected = false;
                         if (IsElementInputSensitive(element) == false)
                             continue;
+
                         lock (element.SyncRoot)
                         {
+                            bool lastIsHovering = element.IsMouseHovering;
                             element.IsMouseHovering = element.Boundaries.Contains(mousePos);
+
+                            if (element.IsMouseHovering != lastIsHovering)
+                            {
+                                if (element.IsMouseHovering && lastIsHovering == false)
+                                    element.TriggerOnMouseEnter(mouseState);
+                                else
+                                    element.TriggerOnMouseLeave(mouseState);
+                            }
+
+                            if (interceptionBroken)
+                                continue;
+
                             if (element.IsMouseHovering)
                             {
                                 if (element.TriggerMouseEvents)
                                 {
+                                    element.TriggerOnMouseHover(mouseState);
+
                                     if (anyDown)
-                                        element.TriggerOnMouseDown(state, pressed);
+                                        element.TriggerOnMouseDown(mouseState, pressed);
 
                                     if (anyPressed)
-                                        element.TriggerOnMousePress(state, pressed);
+                                        element.TriggerOnMousePress(mouseState, pressed);
 
                                     if (anyReleased)
-                                        element.TriggerOnMouseRelease(state, released);
+                                        element.TriggerOnMouseRelease(mouseState, released);
                                 }
 
                                 if (element.AllowSelection)
@@ -297,8 +318,8 @@ namespace GeneralShare.UI
                                         SelectedElement = element;
                                 }
 
-                                if (element.BlockCursor == true)
-                                    break;
+                                if (element.InterceptCursor == true)
+                                    interceptionBroken = true; // instead of a 'break'
                             }
                         }
                     }
@@ -342,10 +363,10 @@ namespace GeneralShare.UI
                         {
                             Transforms[i]?.Dispose();
                         }
+
+                        Input.TextInput -= Input_TextInput;
                     }
                 }
-
-                Input.TextInput -= Input_TextInput;
 
                 Disposed = true;
             }

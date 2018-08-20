@@ -28,7 +28,7 @@ namespace GeneralShare.UI
 
         private void UpdateSprite()
         {
-            if (DirtMarks.HasAnyFlags(DirtMarkType.Transform, DirtMarkType.Value))
+            if (DirtMarks.HasFlags(DirtMarkType.Transform, DirtMarkType.Value))
             {
                 _boundaries = new RectangleF(X, Y, Texture.Width * Scale.X, Texture.Height * Scale.Y);
 

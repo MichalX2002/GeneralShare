@@ -51,7 +51,7 @@ namespace GeneralShare.UI
 
             TriggerMouseEvents = true;
             TriggerKeyEvents = true;
-            BlockCursor = true;
+            InterceptCursor = true;
             AllowSelection = true;
             UseShadow = true;
             BuildCharQuadTree = true;
@@ -203,7 +203,7 @@ namespace GeneralShare.UI
             }
         }
 
-        private void InputBox_OnMousePress(in MouseState mouseState, MouseButton buttons)
+        private void InputBox_OnMousePress(MouseState mouseState, MouseButton buttons)
         {
             lock (SyncRoot)
             {

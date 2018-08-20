@@ -31,6 +31,10 @@ namespace GeneralShare
         public static Point MousePosition => _newMS.Position;
         public static Point MouseVelocity => new Point(_newMS.X - _oldMS.X, _newMS.Y - _oldMS.Y);
         public static float MouseScroll => _newMS.ScrollWheelValue - _oldMS.ScrollWheelValue;
+        
+        public static KeyModifier ModifiersDown { get; private set; }
+        public static bool AltDown { get; private set; }
+        public static bool CtrlDown { get; private set; }
         public static bool ShiftDown { get; private set; }
         public static bool NumLock { get; private set; }
         public static bool CapsLock { get; private set; }
@@ -188,19 +192,31 @@ namespace GeneralShare
         {
             _oldMS = _newMS;
             _newMS = Mouse.GetState();
-
-            ShiftDown = Keyboard.Modifiers.HasFlags(KeyModifier.Shift);
-            NumLock = Keyboard.Modifiers.HasFlags(KeyModifier.NumLock);
-            CapsLock = Keyboard.Modifiers.HasFlags(KeyModifier.CapsLock);
             
             _oldKeysDown.Clear(false);
             _oldKeysDown.AddRange(_keysDown);
 
             _keysDown.Clear(false);
             _keysDown.AddRange(Keyboard.KeyList);
+            // getting the KeyList updates it's internal keyboard state (and updates the Modifiers property)
+            // (getting the KeyList to update the internal state is only required on DirectX,
+            //  on DesktopGL, the KeyList and Modifiers properties are updated constantly by the SDL loop)
+            
+            // therefore update Modifiers after getting Keyboard.KeyList
+            UpdateModifiers(); 
 
             GetKeyDifferences(_keysPressed, _keysDown, _oldKeysDown);
             GetKeyDifferences(_keysReleased, _oldKeysDown, _keysDown);
+        }
+
+        private static void UpdateModifiers()
+        {
+            ModifiersDown = Keyboard.Modifiers;
+            CtrlDown = ModifiersDown.HasFlags(KeyModifier.Ctrl, KeyModifier.LeftCtrl, KeyModifier.RightCtrl);
+            AltDown = ModifiersDown.HasFlags(KeyModifier.Alt, KeyModifier.LeftAlt, KeyModifier.RightAlt);
+            ShiftDown = ModifiersDown.HasFlags(KeyModifier.Shift, KeyModifier.LeftShift, KeyModifier.RightShift);
+            NumLock = ModifiersDown.HasFlags(KeyModifier.NumLock);
+            CapsLock = ModifiersDown.HasFlags(KeyModifier.CapsLock);
         }
 
         private static void GetKeyDifferences(

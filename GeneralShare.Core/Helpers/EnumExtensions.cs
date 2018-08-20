@@ -29,7 +29,7 @@ namespace GeneralShare
         /// <returns>
         ///  <c>true</c> if the specified value has any flag; otherwise, <c>false</c>.
         /// </returns>
-        public static bool HasAnyFlags<TEnum>(this TEnum value, params TEnum[] flags) where TEnum : Enum
+        public static bool HasFlags<TEnum>(this TEnum value, params TEnum[] flags) where TEnum : Enum
         {
             for (int i = 0; i < flags.Length; i++)
             {

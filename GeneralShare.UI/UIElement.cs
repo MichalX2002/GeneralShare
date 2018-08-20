@@ -8,8 +8,8 @@ namespace GeneralShare.UI
     public abstract class UIElement : UITransform
     {
         public delegate void ContentStateDelegate(bool hadContentBefore);
-        public delegate void MouseHoverDelegate(in MouseState mouseState);
-        public delegate void GenericMouseDelegate(in MouseState mouseState, MouseButton buttons);
+        public delegate void MouseHoverDelegate(MouseState mouseState);
+        public delegate void GenericMouseDelegate(MouseState mouseState, MouseButton buttons);
         public delegate void GenericKeyboardDelegate(Keys key);
 
         public event ContentStateDelegate ContentStateChanged;
@@ -17,6 +17,7 @@ namespace GeneralShare.UI
         public event GenericMouseDelegate OnMousePress;
         public event GenericMouseDelegate OnMouseRelease;
         public event MouseHoverDelegate OnMouseEnter;
+        public event MouseHoverDelegate OnMouseHover;
         public event MouseHoverDelegate OnMouseLeave;
         public event GenericKeyboardDelegate OnKeyDown;
         public event GenericKeyboardDelegate OnKeyPress;
@@ -29,7 +30,7 @@ namespace GeneralShare.UI
         public bool HasContent { get => _hasContent; protected set => SetContentState(value); }
         public bool TriggerMouseEvents { get; set; }
         public bool TriggerKeyEvents { get; set; }
-        public bool BlockCursor { get; set; }
+        public bool InterceptCursor { get; set; }
         public bool IsMouseHovering { get; internal set; }
         public bool IsSelected { get; internal set; }
         public bool AllowSelection { get; set; }
@@ -41,7 +42,7 @@ namespace GeneralShare.UI
             Name = name ?? string.Empty;
             TriggerMouseEvents = false;
             TriggerKeyEvents = false;
-            BlockCursor = true;
+            InterceptCursor = true;
 
             if (manager != null)
             {
@@ -55,13 +56,13 @@ namespace GeneralShare.UI
 
         public UIElement(UIManager manager) : this(null, manager) { }
 
-        private void TriggerMouseHoverEvent(in MouseState mouseState, MouseHoverDelegate action)
+        private void TriggerMouseHoverEvent(MouseState mouseState, MouseHoverDelegate action)
         {
             action?.Invoke(mouseState);
         }
 
-        private void TriggerGenericMouseEvent(in MouseState state,
-            MouseButton buttons, GenericMouseDelegate action)
+        private void TriggerGenericMouseEvent(
+            MouseState state, MouseButton buttons, GenericMouseDelegate action)
         {
             action?.Invoke(state, buttons);
         }
@@ -76,27 +77,32 @@ namespace GeneralShare.UI
             OnTextInput?.Invoke(e);
         }
 
-        internal void TriggerOnMouseDown(in MouseState state, MouseButton buttons)
+        internal void TriggerOnMouseDown(MouseState state, MouseButton buttons)
         {
             TriggerGenericMouseEvent(state, buttons, OnMouseDown);
         }
 
-        internal void TriggerOnMousePress(in MouseState state, MouseButton buttons)
+        internal void TriggerOnMousePress(MouseState state, MouseButton buttons)
         {
             TriggerGenericMouseEvent(state, buttons, OnMousePress);
         }
 
-        internal void TriggerOnMouseRelease(in MouseState state, MouseButton buttons)
+        internal void TriggerOnMouseRelease(MouseState state, MouseButton buttons)
         {
             TriggerGenericMouseEvent(state, buttons, OnMouseRelease);
         }
 
-        internal void TriggerOnMouseEnter(in MouseState state)
+        internal void TriggerOnMouseEnter(MouseState state)
         {
             TriggerMouseHoverEvent(state, OnMouseEnter);
         }
 
-        internal void TriggerOnMouseLeave(in MouseState state)
+        internal void TriggerOnMouseHover(MouseState state)
+        {
+            TriggerMouseHoverEvent(state, OnMouseHover);
+        }
+
+        internal void TriggerOnMouseLeave(MouseState state)
         {
             TriggerMouseHoverEvent(state, OnMouseLeave);
         }
