@@ -24,9 +24,9 @@ namespace GeneralShare.UI
         public TextureRegion2D WhitePixelRegion { get; set; }
 
         public bool Disposed { get; private set; }
-        public object SyncRoot { get; private set; }
         public SamplingMode PreferredSamplingMode { get; set; }
         public Viewport Viewport => _lastViewport;
+        public object SyncRoot { get; private set; }
         public bool TransformsNeedSorting { get; private set; }
         public ListArray<UITransform> Transforms { get; }
 
@@ -52,14 +52,16 @@ namespace GeneralShare.UI
         /// Constructs a <see cref="UIManager"/> instance using an existing grayscale region.
         /// </summary>
         /// <param name="grayscaleRegion">
-        /// A <see cref="TextureRegion2D"/> containing a 1x1 white pixel
-        /// at (X:0,Y:0) and a 1x1 gray pixel at (X:0,Y:1).
+        /// A <see cref="TextureRegion2D"/> containing at least 1x1 white pixel
+        /// at (X:0,Y:0) and a 1x1 gray pixel at (X:0,Y:1) 
+        /// (this can be larger as linear filtering can stretch the texture).
+        /// This texture is mostly used for better shading on elements.
         /// </param>
         public UIManager(GraphicsDevice device, TextureRegion2D grayscaleRegion)
         {
             GrayscaleRegion = grayscaleRegion ?? throw new ArgumentNullException(nameof(grayscaleRegion));
-            if (GrayscaleRegion.Width != 1) throw new ArgumentException();
-            if (GrayscaleRegion.Height != 2) throw new ArgumentException();
+            if (GrayscaleRegion.Width < 1) throw new ArgumentException();
+            if (GrayscaleRegion.Height < 2) throw new ArgumentException();
 
             WhitePixelRegion = new TextureRegion2D(grayscaleRegion.Texture, 0, 0, 1, 1);
             GraphicsDevice = device;
@@ -86,9 +88,18 @@ namespace GeneralShare.UI
         {
             if (_grayscaleRegion == null)
             {
-                var tex = new Texture2D(device, 1, 2);
-                tex.SetData(new Color[] { Color.White, Color.Gray });
-                _grayscaleRegion = new TextureRegion2D(tex, 0, 0, 1, 2);
+                var tex = new Texture2D(device, 3, 6);
+                Color[] colors = new Color[3 * 6];
+                for (int i = 0; i < 9; i++)
+                {
+                    colors[i] = Color.White;
+                }
+                for (int i = 0; i < 9; i++)
+                {
+                    colors[i + 9] = Color.LightGray;
+                }
+                tex.SetData(colors);
+                _grayscaleRegion = new TextureRegion2D(tex, 1, 2, 1, 2);
             }
 
             return _grayscaleRegion;
