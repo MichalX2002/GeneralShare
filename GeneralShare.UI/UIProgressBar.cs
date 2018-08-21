@@ -11,7 +11,7 @@ namespace GeneralShare.UI
         private TextureRegion2D _mainBarRegion;
         private TextureRegion2D _backBarRegion;
         
-        private RectangleF _size;
+        private RectangleF _boundaries;
         private BatchedSprite _backSprite;
         private BatchedSprite _mainSprite;
 
@@ -21,11 +21,14 @@ namespace GeneralShare.UI
         private Range<float> _range;
         private Vector2 _bounds;
         private Vector2 _headPos;
+        private RectangleF _mainRect;
+        private bool _needsSpriteUpdate;
 
+        public override RectangleF Boundaries { get { UpdateBar(); return _boundaries; } }
         public int BackBarThickness { get => _barThickness; set => SetThickness(value); }
         public Vector2 Bounds { get => _bounds; set => SetBounds(value); }
-        public override RectangleF Boundaries { get { SetBoundaries(); return _size; } }
-        public Vector2 BarHeadPosition { get { GetMainRect(); return _headPos; } }
+        public RectangleF MainBarRect { get { UpdateBar(); return _mainRect; } }
+        public Vector2 BarHeadPosition { get { UpdateBar(); return _headPos; } }
         public BarDirection Direction { get => _direction; set => SetDirection(value); }
 
         public Range<float> Range { get => _range; set => SetRange(value); }
@@ -35,8 +38,9 @@ namespace GeneralShare.UI
         public Color MainColor { get => _mainSprite.TL.Color; set => SetMainColor(value); }
         public Color BackgroundColor { get => _backSprite.TL.Color; set => SetBackColor(value); }
 
-        public UIProgressBar(UIManager manager, TextureRegion2D mainBarRegion,
-            TextureRegion2D backBarRegion) : base(manager)
+        public UIProgressBar(
+            UIManager manager, TextureRegion2D mainBarRegion, TextureRegion2D backBarRegion) :
+            base(manager)
         {
             _mainBarRegion = mainBarRegion;
             _backBarRegion = backBarRegion;
@@ -48,22 +52,22 @@ namespace GeneralShare.UI
             _direction = BarDirection.ToRight;
         }
 
-        public UIProgressBar(UIManager manager) : this(manager, manager.GrayscaleRegion, manager.WhitePixelRegion)
+        public UIProgressBar(UIManager manager) :
+            this(manager, manager.GrayscaleRegion, manager.WhitePixelRegion)
         {
         }
         
         public UIProgressBar(TextureRegion2D mainBarRegion, TextureRegion2D backBarRegion) :
             this(null, mainBarRegion, backBarRegion)
         {
-
         }
 
-        private void SetMainColor(in Color value)
+        private void SetMainColor(Color value)
         {
             _mainSprite.SetColor(value);
         }
 
-        private void SetBackColor(in Color value)
+        private void SetBackColor(Color value)
         {
             _backSprite.SetColor(value);
         }
@@ -78,7 +82,7 @@ namespace GeneralShare.UI
             MarkDirty(ref _direction, value, DirtMarkType.BarDirection);
         }
 
-        private void SetBounds(in Vector2 value)
+        private void SetBounds(Vector2 value)
         {
             MarkDirtyE(ref _bounds, value, DirtMarkType.Bounds);
         }
@@ -88,34 +92,16 @@ namespace GeneralShare.UI
             MarkDirtyE(ref _value, MathHelper.Clamp(value, _range.Min, _range.Max), DirtMarkType.Value);
         }
         
-        private void SetRange(in Range<float> value)
+        private void SetRange(Range<float> value)
         {
             MarkDirtyE(ref _range, value, DirtMarkType.Range);
-        }
-
-        public void CalculateRectangles()
-        {
-            CalculateMainSprite();
-
-            if (DirtMarks != DirtMarkType.BarThickness)
-                CalculateBackSprite();
-
-            ClearDirtMarks();
         }
 
         public void Report(float value)
         {
             SetValue(value);
         }
-
-        private void SetBoundaries()
-        {
-            _size.X = _position.X;
-            _size.Y = _position.Y;
-            _size.Width = _scale.X * _bounds.X / _backBarRegion.Width;
-            _size.Height = _scale.Y * _bounds.Y / _backBarRegion.Height;
-        }
-
+        
         private void CalculateBackSprite()
         {
             var matrix = Matrix2.CreateFrom(_position.ToVector2(), _rotation, Boundaries.Size, _origin);
@@ -124,9 +110,8 @@ namespace GeneralShare.UI
             _backSprite.SetTexCoords(_backBarRegion);
         }
 
-        private void CalculateMainSprite()
+        private void CalculateMainSprite(RectangleF mainDst)
         {
-            var mainDst = GetMainRect();
             mainDst.X += _barThickness;
             mainDst.Y += _barThickness;
             mainDst.Width -= _barThickness * 2;
@@ -139,7 +124,7 @@ namespace GeneralShare.UI
             _mainSprite.SetTexCoords(_mainBarRegion);
         }
 
-        private RectangleF GetMainRect()
+        private void UpdateMainRect()
         {
             float w = _bounds.X * FillPercentage;
             float h = _bounds.Y / _mainBarRegion.Height;
@@ -148,29 +133,50 @@ namespace GeneralShare.UI
                 //TODO: Add more directions
 
                 case BarDirection.ToRight:
-                    {
-                        _headPos = new Vector2(w, 0);
-                        return new RectangleF(_position.X, _position.Y, w, h);
-                    }
+
+                    _headPos = new Vector2(w, 0);
+                    _mainRect = new RectangleF(_position.X, _position.Y, w, h);
+                    break;
 
                 case BarDirection.ToLeft:
-                    {
-                        float hPos = _position.X + _bounds.X - w;
-                        _headPos = new Vector2(hPos, 0);
-                        return new RectangleF(hPos, _position.Y, w, h);
-                    }
+                    float hPos = _position.X + _bounds.X - w;
+                    _headPos = new Vector2(hPos, 0);
+                    _mainRect = new RectangleF(hPos, _position.Y, w, h);
+                    break;
 
                 default:
                     throw new NotImplementedException();
             }
         }
 
-        public override void Draw(GameTime time, SpriteBatch batch)
+        private void UpdateBar()
         {
             if (Dirty)
             {
-                CalculateRectangles();
+                UpdateMainRect();
+
+                _boundaries.X = _position.X;
+                _boundaries.Y = _position.Y;
+                _boundaries.Width = _scale.X * _bounds.X / _backBarRegion.Width;
+                _boundaries.Height = _scale.Y * _bounds.Y / _backBarRegion.Height;
+                InvokeMarkedDirty(DirtMarkType.Boundaries);
+
+                _needsSpriteUpdate = true;
+
+                ClearDirtMarks();
                 Dirty = false;
+            }
+        }
+
+        public override void Draw(GameTime time, SpriteBatch batch)
+        {
+            if (_needsSpriteUpdate)
+            {
+                CalculateMainSprite(_mainRect);
+                if (DirtMarks != DirtMarkType.BarThickness)
+                    CalculateBackSprite();
+
+                _needsSpriteUpdate = false;
             }
 
             if (BackBarThickness >= 0)

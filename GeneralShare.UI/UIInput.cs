@@ -20,7 +20,7 @@ namespace GeneralShare.UI
         private bool _obscureValue;
         private char _obscureChar;
         private HashSet<char> _excludedChars;
-        private ReadOnlyCollectionWrapper<char> _readonlyExcludedChars;
+        private ReadOnlyWrapper<char> _readonlyExcludedChars;
 
         private string _prefix;
         private bool _prefixExpressions;
@@ -47,7 +47,7 @@ namespace GeneralShare.UI
         public UIInput(UIManager manager, BitmapFont font) : base(manager, font)
         {
             _excludedChars = new HashSet<char>();
-            _readonlyExcludedChars = new ReadOnlyCollectionWrapper<char>(_excludedChars);
+            _readonlyExcludedChars = new ReadOnlyWrapper<char>(_excludedChars);
 
             TriggerMouseEvents = true;
             TriggerKeyEvents = true;

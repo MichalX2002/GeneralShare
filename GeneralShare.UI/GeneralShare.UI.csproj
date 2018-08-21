@@ -57,6 +57,7 @@
   <ItemGroup>
     <Compile Include="DirtMarkType.cs" />
     <Compile Include="DrawExtensions.cs" />
+    <Compile Include="UIContainer.cs" />
     <Compile Include="UIInput.cs" />
     <Compile Include="PivotPosition.cs" />
     <Compile Include="UIProgressBar.cs" />

@@ -59,8 +59,9 @@
     <Compile Include="Collections\ListArray.cs" />
     <Compile Include="Collections\PooledQuadTree.cs" />
     <Compile Include="Collections\QuadTree.cs" />
-    <Compile Include="Collections\ReadOnlyCollectionWrapper.cs" />
+    <Compile Include="Collections\ReadOnlyGenericCollection.cs" />
     <Compile Include="Collections\ReadOnlyQuadTree.cs" />
+    <Compile Include="Collections\ReadOnlySet.cs" />
     <Compile Include="DebugUtils.cs" />
     <Compile Include="Delegates.cs" />
     <Compile Include="Helpers\EnumConverter.cs" />

@@ -24,7 +24,6 @@ namespace GeneralShare.UI
 
         // ProgressBar
         BackgroundColor = 1 << 12,
-        Bounds = 1 << 13,
         Range = 1 << 14,
         BarDirection = 1 << 15,
         BarThickness = 1 << 16,
@@ -42,6 +41,8 @@ namespace GeneralShare.UI
         ValueProcessed = 1 << 24,
         ObscureValue = 1 << 25,
         ObscureChar = 1 << 26,
-        PivotPosition = 1 << 28
+        PivotPosition = 1 << 28,
+        Boundaries = 1 << 29,
+        Bounds = 1 << 13,
     }
 }

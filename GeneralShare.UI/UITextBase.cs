@@ -343,6 +343,7 @@ namespace GeneralShare.UI
 
                 UpdateTotalBoundaries();
                 SpecialBoundaryUpdate(_totalBoundaries, out _totalBoundaries);
+                InvokeMarkedDirty(DirtMarkType.Boundaries);
 
                 if (HasDirtMarks(DirtMarkType.ShadowMath))
                     UpdateShadowSprite();

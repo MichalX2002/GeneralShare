@@ -31,6 +31,7 @@ namespace GeneralShare.UI
             if (DirtMarks.HasFlags(DirtMarkType.Transform, DirtMarkType.Value))
             {
                 _boundaries = new RectangleF(X, Y, Texture.Width * Scale.X, Texture.Height * Scale.Y);
+                InvokeMarkedDirty(DirtMarkType.Boundaries);
 
                 var pos = _position.ToVector2();
                 var srcSize = _texture.Bounds.Size.ToVector2();
@@ -44,10 +45,13 @@ namespace GeneralShare.UI
 
         public override void Draw(GameTime time, SpriteBatch batch)
         {
-            if (Dirty)
+            lock (SyncRoot)
             {
-                UpdateSprite();
-                Dirty = false;
+                if (Dirty)
+                {
+                    UpdateSprite();
+                    Dirty = false;
+                }
             }
             batch.Draw(_texture.Texture, _sprite);
         }

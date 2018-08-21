@@ -88,18 +88,16 @@ namespace GeneralShare.UI
         {
             if (_grayscaleRegion == null)
             {
-                var tex = new Texture2D(device, 3, 6);
-                Color[] colors = new Color[3 * 6];
-                for (int i = 0; i < 9; i++)
+                Color[] colors = new Color[6];
+                for (int i = 0; i < 3; i++)
                 {
                     colors[i] = Color.White;
                 }
-                for (int i = 0; i < 9; i++)
-                {
-                    colors[i + 9] = Color.LightGray;
-                }
+                colors[3] = Color.LightGray;
+
+                var tex = new Texture2D(device, 1, 4);
                 tex.SetData(colors);
-                _grayscaleRegion = new TextureRegion2D(tex, 1, 2, 1, 2);
+                _grayscaleRegion = new TextureRegion2D(tex, 0, 2, 1, 2);
             }
 
             return _grayscaleRegion;
