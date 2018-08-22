@@ -1,7 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace GeneralShare.Collections
 {
@@ -9,8 +8,8 @@ namespace GeneralShare.Collections
     {
         private readonly QuadTree<T> _tree;
 
-        public IReadOnlyList<QuadTree<T>.Item> Items => _tree.Items.AsReadOnly();
         public bool Divided => _tree.Divided;
+        public IReadOnlyList<QuadTree<T>.Item> Items => _tree.Items.AsReadOnly();
         public ReadOnlyQuadTree<T> TopLeft => _tree.TopLeft.AsReadOnly();
         public ReadOnlyQuadTree<T> TopRight => _tree.TopRight.AsReadOnly();
         public ReadOnlyQuadTree<T> BottomLeft => _tree.BottomLeft.AsReadOnly();

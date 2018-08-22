@@ -104,9 +104,9 @@ namespace GeneralShare.UI
         
         private void CalculateBackSprite()
         {
-            var matrix = Matrix2.CreateFrom(_position.ToVector2(), _rotation, Boundaries.Size, _origin);
+            var matrix = Matrix2.CreateFrom(Position.ToVector2(), Rotation, Boundaries.Size, Origin);
             _backSprite.SetTransform(matrix, _backBarRegion.Bounds.Size);
-            _backSprite.SetDepth(_position.Z);
+            _backSprite.SetDepth(Position.Z);
             _backSprite.SetTexCoords(_backBarRegion);
         }
 
@@ -117,8 +117,8 @@ namespace GeneralShare.UI
             mainDst.Width -= _barThickness * 2;
             mainDst.Height -= _barThickness * 2;
 
-            var size = new Vector2(_scale.X * mainDst.Width, _scale.Y * mainDst.Height);
-            var matrix = Matrix2.CreateFrom(mainDst.Position, _rotation, size, _origin);
+            var size = new Vector2(Scale.X * mainDst.Width, Scale.Y * mainDst.Height);
+            var matrix = Matrix2.CreateFrom(mainDst.Position, Rotation, size, Origin);
             
             _mainSprite.SetTransform(matrix, _mainBarRegion.Bounds.Size);
             _mainSprite.SetTexCoords(_mainBarRegion);
@@ -135,13 +135,13 @@ namespace GeneralShare.UI
                 case BarDirection.ToRight:
 
                     _headPos = new Vector2(w, 0);
-                    _mainRect = new RectangleF(_position.X, _position.Y, w, h);
+                    _mainRect = new RectangleF(Position.X, Position.Y, w, h);
                     break;
 
                 case BarDirection.ToLeft:
-                    float hPos = _position.X + _bounds.X - w;
+                    float hPos = Position.X + _bounds.X - w;
                     _headPos = new Vector2(hPos, 0);
-                    _mainRect = new RectangleF(hPos, _position.Y, w, h);
+                    _mainRect = new RectangleF(hPos, Position.Y, w, h);
                     break;
 
                 default:
@@ -155,10 +155,10 @@ namespace GeneralShare.UI
             {
                 UpdateMainRect();
 
-                _boundaries.X = _position.X;
-                _boundaries.Y = _position.Y;
-                _boundaries.Width = _scale.X * _bounds.X / _backBarRegion.Width;
-                _boundaries.Height = _scale.Y * _bounds.Y / _backBarRegion.Height;
+                _boundaries.X = Position.X;
+                _boundaries.Y = Position.Y;
+                _boundaries.Width = Scale.X * _bounds.X / _backBarRegion.Width;
+                _boundaries.Height = Scale.Y * _bounds.Y / _backBarRegion.Height;
                 InvokeMarkedDirty(DirtMarkType.Boundaries);
 
                 _needsSpriteUpdate = true;

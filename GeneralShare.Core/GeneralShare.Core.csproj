@@ -61,7 +61,6 @@
     <Compile Include="Collections\QuadTree.cs" />
     <Compile Include="Collections\ReadOnlyGenericCollection.cs" />
     <Compile Include="Collections\ReadOnlyQuadTree.cs" />
-    <Compile Include="Collections\ReadOnlySet.cs" />
     <Compile Include="DebugUtils.cs" />
     <Compile Include="Delegates.cs" />
     <Compile Include="Helpers\EnumConverter.cs" />

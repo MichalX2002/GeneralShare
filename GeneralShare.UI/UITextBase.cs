@@ -206,11 +206,11 @@ namespace GeneralShare.UI
                         if (_textCache.Capacity < _processedText.Length)
                             _textCache.Capacity = _processedText.Length;
 
-                        _font.GetGlyphSprites(_textCache, _processedText, _position.ToVector2(),
-                            _baseColor, _rotation, _origin, _scale, _position.Z, _clipRect);
+                        _font.GetGlyphSprites(_textCache, _processedText, Position.ToVector2(),
+                            _baseColor, Rotation, Origin, Scale, Position.Z, _clipRect);
 
-                        _textBounds.X = (int)_position.X;
-                        _textBounds.Y = (int)_position.Y;
+                        _textBounds.X = Position.X;
+                        _textBounds.Y = Position.Y;
 
                         if (_buildTextTree)
                             PrepareTextTree();
@@ -241,7 +241,7 @@ namespace GeneralShare.UI
 
                             void AddLine(int index)
                             {
-                                float scaledWidth = width *_scale.X;
+                                float scaledWidth = width * Scale.X;
                                 _lines.Add(new LineInfo(
                                     scaledWidth,
                                     index - _lines.Count // pretend that newline chars don't exist
@@ -421,13 +421,13 @@ namespace GeneralShare.UI
 
         protected void AddTextQuadItem(ref GlyphBatchedSprite item)
         {
-            float yDiff = item.Sprite.TL.Position.Y - _position.Y;
-            int line = (int)Math.Floor(yDiff / _scale.Y / _font.LineHeight);
+            float yDiff = item.Sprite.TL.Position.Y - Position.Y;
+            int line = (int)Math.Floor(yDiff / Scale.Y / _font.LineHeight);
 
             float x = (float)Math.Floor(item.Sprite.TL.Position.X);
-            float y = (float)Math.Floor(_position.Y) + line * _font.LineHeight * _scale.Y;
+            float y = (float)Math.Floor(Position.Y) + line * _font.LineHeight * Scale.Y;
             float w = (float)Math.Floor(item.Sprite.BR.Position.X - x) * 0.5f;
-            float h = _font.LineHeight * _scale.Y * 0.5f;
+            float h = _font.LineHeight * Scale.Y * 0.5f;
 
             float o = 0.001f;
             var node = new RectangleF(x + o, y + h * 0.5f, w - o, h);
@@ -445,7 +445,7 @@ namespace GeneralShare.UI
 
         protected void UpdateScaledMeasure()
         {
-            _scaledMeasure = _measure * _scale;
+            _scaledMeasure = _measure * Scale;
         }
 
         protected void UpdateShadowSprite()
@@ -454,10 +454,10 @@ namespace GeneralShare.UI
                 return;
 
             Matrix2 matrix = BatchedSprite.GetMatrixFromRect(
-                _totalBoundaries, _origin, _rotation, _shadowTexSrc);
+                _totalBoundaries, Origin, Rotation, _shadowTexSrc);
 
             _shadowSprite.SetTransform(matrix, _shadowTexSrc);
-            _shadowSprite.SetDepth(_position.Z);
+            _shadowSprite.SetDepth(Position.Z);
             _shadowSprite.SetTexCoords(_shadowTex);
         }
 

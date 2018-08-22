@@ -10,10 +10,10 @@ namespace GeneralShare.Collections
         private ReadOnlyQuadTree<T> _readonlyTree;
         private readonly Func<ListArray<Item>> _getListFunc;
 
-        public RectangleF Boundary { get; private set; }
-        public int Threshold { get; private set; }
-        public ListArray<Item> Items { get; private set; }
-        public bool AllowOverflow { get; private set; }
+        public RectangleF Boundary { get; }
+        public int Threshold { get; }
+        public ListArray<Item> Items { get; }
+        public bool AllowOverflow { get;  }
 
         public bool Divided { get; private set; }
         public QuadTree<T> TopLeft { get; private set; }
@@ -21,41 +21,46 @@ namespace GeneralShare.Collections
         public QuadTree<T> BottomLeft { get; private set; }
         public QuadTree<T> BottomRight { get; private set; }
 
-        public QuadTree(RectangleF boundary, int threshold, bool allowOverflow,
-            Func<ListArray<Item>> getListFunc)
+        public QuadTree(
+            RectangleF boundary, int threshold, bool allowOverflow,
+            ListArray<Item> items, Func<ListArray<Item>> getListFunc)
         {
             Boundary = boundary;
             Threshold = threshold;
             AllowOverflow = allowOverflow;
             _getListFunc = getListFunc ?? throw new ArgumentNullException(nameof(getListFunc));
-            Items = _getListFunc();
+            Items = items;
         }
 
-        public QuadTree(RectangleF boundary, int threshold, bool allowOverflow)
+        public QuadTree(
+            RectangleF boundary, int threshold, bool allowOverflow, Func<ListArray<Item>> getListFunc) :
+            this(boundary, threshold, allowOverflow, getListFunc(), getListFunc)
         {
-            Boundary = boundary;
-            Threshold = threshold;
-            AllowOverflow = allowOverflow;
-            _getListFunc = () => new ListArray<Item>(Threshold);
-            Items = _getListFunc();
         }
 
-        public QuadTree(RectangleF boundary, int threshold, bool allowOverflow,
-            ListArray<Item> existingList)
+        public QuadTree(RectangleF boundary, int threshold, bool allowOverflow) :
+            this(boundary, threshold, allowOverflow, DefaultGetList(threshold), () => DefaultGetList(threshold))
         {
-            Boundary = boundary;
-            Threshold = threshold;
-            AllowOverflow = allowOverflow;
-            _getListFunc = () => new ListArray<Item>(Threshold);
-            Items = existingList;
         }
 
-        public QuadTree(float x, float y, float width, float height,
+        public QuadTree(
+            RectangleF boundary, int threshold, bool allowOverflow, ListArray<Item> existingList) :
+            this(boundary, threshold, allowOverflow, existingList, () => DefaultGetList(threshold))
+        {
+        }
+
+        public QuadTree(
+            float x, float y, float width, float height,
             int threshold, bool allowOverflow, ListArray<Item> existingList) :
             this(new RectangleF(x, y, width, height), threshold, allowOverflow, existingList)
         {
         }
         
+        private static ListArray<Item> DefaultGetList(int threshold)
+        {
+            return new ListArray<Item>(threshold);
+        }
+
         public ReadOnlyQuadTree<T> AsReadOnly()
         {
             if(_readonlyTree == null)
@@ -121,7 +126,7 @@ namespace GeneralShare.Collections
             else
             {
                 if (Divided == false)
-                    Subdivide(_getListFunc);
+                    Subdivide();
 
                 if (TopLeft.Insert(item) == true)
                     return true;
@@ -143,7 +148,7 @@ namespace GeneralShare.Collections
         }
 
         /// <summary>
-        /// Retreives all items in this <see cref="QuadTree"/> 
+        /// Retreives all items in this <see cref="QuadTree{T}"/> 
         /// including items from the <see cref="Items"/> list.
         /// </summary>
         /// <returns>Retreives all items from this instance.</returns>
@@ -169,7 +174,7 @@ namespace GeneralShare.Collections
         }
 
         /// <summary>
-        /// Retreives all the lists in this <see cref="QuadTree"/> 
+        /// Retreives all the lists in this <see cref="QuadTree{T}"/> 
         /// including the <see cref="Items"/> list.
         /// </summary>
         /// <returns>Retreives all lists from this instance.</returns>
@@ -213,7 +218,7 @@ namespace GeneralShare.Collections
                 list.Clear();
         }
 
-        private void Subdivide(Func<ListArray<Item>> getListFunc)
+        private void Subdivide()
         {
             float x = Boundary.X;
             float y = Boundary.Y;
@@ -221,10 +226,10 @@ namespace GeneralShare.Collections
             float h = Boundary.Height / 2f;
             int t = Items.Capacity;
 
-            TopLeft = new QuadTree<T>(x, y, w, h, t, AllowOverflow, getListFunc());
-            TopRight = new QuadTree<T>(x + w, y, w, h, t, AllowOverflow, getListFunc());
-            BottomLeft = new QuadTree<T>(x, y + h, w, h, t, AllowOverflow, getListFunc());
-            BottomRight = new QuadTree<T>(x + w, y + h, w, h, t, AllowOverflow, getListFunc());
+            TopLeft = new QuadTree<T>(x, y, w, h, t, AllowOverflow, _getListFunc());
+            TopRight = new QuadTree<T>(x + w, y, w, h, t, AllowOverflow, _getListFunc());
+            BottomLeft = new QuadTree<T>(x, y + h, w, h, t, AllowOverflow, _getListFunc());
+            BottomRight = new QuadTree<T>(x + w, y + h, w, h, t, AllowOverflow, _getListFunc());
 
             Divided = true;
         }

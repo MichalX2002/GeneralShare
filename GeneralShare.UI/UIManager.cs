@@ -88,7 +88,7 @@ namespace GeneralShare.UI
         {
             if (_grayscaleRegion == null)
             {
-                Color[] colors = new Color[6];
+                Color[] colors = new Color[4];
                 for (int i = 0; i < 3; i++)
                 {
                     colors[i] = Color.White;
@@ -275,7 +275,7 @@ namespace GeneralShare.UI
                 for (int i = 0, count = transforms.Count; i < count; i++)
                 {
                     UITransform transform = transforms[i];
-                    if (transform.Enabled == false)
+                    if (transform.Active == false)
                         continue;
 
                     if (viewportChanged)

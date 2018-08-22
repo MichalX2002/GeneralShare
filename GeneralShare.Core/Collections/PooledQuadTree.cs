@@ -6,6 +6,7 @@ namespace GeneralShare.Collections
     {
         private readonly ListArray<ListArray<QuadTree<T>.Item>> _pool;
 
+        public int Count => _pool.Count;
         public QuadTree<T> CurrentTree { get; private set; }
 
         public PooledQuadTree(RectangleF boundary, int threshold, bool allowOverflow)

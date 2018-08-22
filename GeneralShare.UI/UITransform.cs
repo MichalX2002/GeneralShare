@@ -10,7 +10,7 @@ namespace GeneralShare.UI
     {
         private static int _lastTransformKey;
 
-        public delegate void MarkedDirtyDelegate(DirtMarkType type);
+        public delegate void MarkedDirtyDelegate(DirtMarkType marks);
         public delegate void MarkedCleanDelegate();
 
         public event MarkedDirtyDelegate MarkedDirty;
@@ -19,25 +19,28 @@ namespace GeneralShare.UI
         private bool _updateViewportOnEnable;
         private bool _dirty;
         private bool _enabled;
-        protected Vector3 _position;
-        protected Vector2 _scale;
-        protected float _rotation;
-        protected Vector2 _origin;
+        private Vector3 _position;
+        private Vector2 _scale;
+        private float _rotation;
+        private Vector2 _origin;
+        private UIContainer _container;
 
         public readonly int TransformKey;
         public bool Disposed { get; private set; }
         public bool Enabled { get => _enabled; set { SetEnabled(value); } }
+        public bool Active => _enabled && (_container == null ? true : _container.Enabled);
         public object SyncRoot { get; }
         public DirtMarkType DirtMarks { get; private set; }
         public UIManager Manager { get; }
+        public UIContainer Container { get => _container; set => SetContainer(value); }
 
-        public Vector2 Scale { get => _scale; set => SetScale(value); }
-        public float Rotation { get => _rotation; set => SetRotation(value); }
-        public Vector2 Origin { get => _origin; set => SetOrigin(value); }
-        public Vector3 Position { get => _position; set => SetPosition(value); }
-        public float X { get => _position.X; set => SetPositionF(value, _position.Y, _position.Z); }
-        public float Y { get => _position.Y; set => SetPositionF(_position.X, value, _position.Z); }
-        public float Z { get => _position.Z; set => SetPositionF(_position.X, _position.Y, value); }
+        public Vector2 Scale { get => GetScale(); set => SetScale(value); }
+        public float Rotation { get => GetRotation(); set => SetRotation(value); }
+        public Vector2 Origin { get => GetOrigin(); set => SetOrigin(value); }
+        public Vector3 Position { get => GetPosition(); set => SetPosition(value); }
+        public float X { get => Position.X; set => SetPositionF(value, _position.Y, _position.Z); }
+        public float Y { get => Position.Y; set => SetPositionF(_position.X, value, _position.Z); }
+        public float Z { get => Position.Z; set => SetPositionF(_position.X, _position.Y, value); }
 
         public bool Dirty
         {
@@ -83,6 +86,33 @@ namespace GeneralShare.UI
             _position = position;
             _rotation = rotation;
             _origin = origin;
+        }
+
+        public void SetContainer(UIContainer container)
+        {
+            MarkDirty(ref container, container, DirtMarkType.Transform |
+                DirtMarkType.Position | DirtMarkType.Origin |
+                DirtMarkType.Scale | DirtMarkType.Rotation);
+        }
+
+        private Vector2 GetScale()
+        {
+            return Container == null ? _scale : _scale + Container.Scale;
+        }
+
+        private float GetRotation()
+        {
+            return Container == null ? _rotation : _rotation + Container.Rotation;
+        }
+
+        private Vector2 GetOrigin()
+        {
+            return Container == null ? _origin : _origin + Container.Origin;
+        }
+        
+        public Vector3 GetPosition()
+        {
+            return Container == null ? _position : _position + Container.Position;
         }
 
         private void SetEnabled(bool value)
@@ -165,7 +195,8 @@ namespace GeneralShare.UI
             DirtMarks = 0;
         }
 
-        protected bool MarkDirtyE<T>(ref T oldValue, in T newValue, DirtMarkType types) where T : IEquatable<T>
+        protected bool MarkDirtyE<T>(ref T oldValue, T newValue, DirtMarkType types)
+            where T : IEquatable<T>
         {
             if (oldValue == null || oldValue.Equals(newValue) == false)
             {
@@ -176,7 +207,7 @@ namespace GeneralShare.UI
             return false;
         }
 
-        protected bool MarkDirty<T>(ref T oldValue, in T newValue, DirtMarkType types)
+        protected bool MarkDirty<T>(ref T oldValue, T newValue, DirtMarkType types)
         {
             if (oldValue == null || oldValue.Equals(newValue) == false)
             {
@@ -187,8 +218,8 @@ namespace GeneralShare.UI
             return false;
         }
 
-        protected bool MarkDirty<T>(ref T oldValue, in T newValue,
-            DirtMarkType types, in IEqualityComparer<T> comparer)
+        protected bool MarkDirty<T>(
+            ref T oldValue, T newValue, DirtMarkType types, IEqualityComparer<T> comparer)
         {
             if (oldValue == null || comparer.Equals(oldValue, newValue) == false)
             {

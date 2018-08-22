@@ -30,8 +30,8 @@ namespace GeneralShare.UI
                 var transforms = Manager.GetSortedTransforms();
                 for (int i = 0, count = transforms.Count; i < count; i++)
                 {
-                    var transform = transforms[i];
-                    if (transform.Enabled == false)
+                    UITransform transform = transforms[i];
+                    if (transform.Active == false)
                         continue;
 
                     if (transform is UIElement element)

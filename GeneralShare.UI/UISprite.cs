@@ -33,11 +33,11 @@ namespace GeneralShare.UI
                 _boundaries = new RectangleF(X, Y, Texture.Width * Scale.X, Texture.Height * Scale.Y);
                 InvokeMarkedDirty(DirtMarkType.Boundaries);
 
-                var pos = _position.ToVector2();
+                var pos = Position.ToVector2();
                 var srcSize = _texture.Bounds.Size.ToVector2();
 
-                _sprite.SetTransform(pos, _rotation, _scale, _origin * srcSize, srcSize);
-                _sprite.SetDepth(_position.Z);
+                _sprite.SetTransform(pos, Rotation, Scale, Origin * srcSize, srcSize);
+                _sprite.SetDepth(Position.Z);
                 _sprite.SetTexCoords(_texture);
             }
             ClearDirtMarks();

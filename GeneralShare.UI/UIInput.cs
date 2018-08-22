@@ -207,8 +207,8 @@ namespace GeneralShare.UI
         {
             lock (SyncRoot)
             {
-                float sizeX = _scale.X * _font.LineHeight * 0.9f;
-                float sizeY = _scale.Y * _font.LineHeight;
+                float sizeX = Scale.X * _font.LineHeight * 0.9f;
+                float sizeY = Scale.Y * _font.LineHeight;
                 var pos = mouseState.Position;
                 var range = new RectangleF(pos.X - sizeX, pos.Y - sizeY, sizeX * 2, sizeY * 2);
 
@@ -247,19 +247,19 @@ namespace GeneralShare.UI
             {
                 RectangleF output = new RectangleF
                 {
-                    X = _position.X,
-                    Y = _position.Y,
-                    Width = _caretSize.X * _scale.X,
-                    Height = (_caretSize.Y < 0 ? Font.LineHeight : _caretSize.Y) * _scale.Y
+                    X = Position.X,
+                    Y = Position.Y,
+                    Width = _caretSize.X * Scale.X,
+                    Height = (_caretSize.Y < 0 ? Font.LineHeight : _caretSize.Y) * Scale.Y
                 };
 
                 PrepareCaretIndex(ref _caretIndex);
                 if (_caretIndex > 0 && _caretIndex <= _totalTextLength)
                 {
                     Vector3 lastPos = _textCache.GetReferenceAt(_caretIndex - 1).Sprite.TR.Position;
-                    double rawDistance = (lastPos.Y - _position.Y) / Font.LineHeight;
-                    double line = Math.Floor(rawDistance / _scale.Y);
-                    double yOffset = Math.Round(_position.Y + line * Font.LineHeight * _scale.Y - 0.5f);
+                    double rawDistance = (lastPos.Y - Position.Y) / Font.LineHeight;
+                    double line = Math.Floor(rawDistance / Scale.Y);
+                    double yOffset = Math.Round(Position.Y + line * Font.LineHeight * Scale.Y - 0.5f);
 
                     output.X = lastPos.X;
                     output.Y = (float)yOffset;

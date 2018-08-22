@@ -24,10 +24,10 @@ namespace GeneralShare.UI
         {
             if (type.HasFlags(DirtMarkType.Transform, DirtMarkType.Bounds))
             {
-                float x = _position.X + _bounds.X - _origin.X * _scale.X;
-                float y = _position.Y + _bounds.Y - _origin.Y * _scale.Y;
-                float w = Bounds.Width * _scale.X;
-                float h = Bounds.Height * _scale.Y;
+                float x = Position.X + _bounds.X - Origin.X * Scale.X;
+                float y = Position.Y + _bounds.Y - Origin.Y * Scale.Y;
+                float w = Bounds.Width * Scale.X;
+                float h = Bounds.Height * Scale.Y;
                 _boundaries = new RectangleF(x, y, w, h);
 
                 InvokeMarkedDirty(DirtMarkType.Boundaries);
