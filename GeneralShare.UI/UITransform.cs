@@ -8,6 +8,10 @@ namespace GeneralShare.UI
 {
     public class UITransform : IDisposable
     {
+        internal const DirtMarkType FULL_TRANSFORM_UPDATE =
+            DirtMarkType.Transform | DirtMarkType.Position |
+            DirtMarkType.Origin | DirtMarkType.Scale | DirtMarkType.Rotation;
+
         private static int _lastTransformKey;
 
         public delegate void MarkedDirtyDelegate(DirtMarkType marks);
@@ -26,13 +30,13 @@ namespace GeneralShare.UI
         private UIContainer _container;
 
         public readonly int TransformKey;
-        public bool Disposed { get; private set; }
-        public bool Enabled { get => _enabled; set { SetEnabled(value); } }
-        public bool Active => _enabled && (_container == null ? true : _container.Enabled);
+        public bool IsDisposed { get; private set; }
+        public bool IsEnabled { get => _enabled; set { SetEnabled(value); } }
+        public bool IsActive => _enabled && (_container == null ? true : _container.IsEnabled);
         public object SyncRoot { get; }
         public DirtMarkType DirtMarks { get; private set; }
         public UIManager Manager { get; }
-        public UIContainer Container { get => _container; set => SetContainer(value); }
+        public UIContainer Container => _container;
 
         public Vector2 Scale { get => GetScale(); set => SetScale(value); }
         public float Rotation { get => GetRotation(); set => SetRotation(value); }
@@ -70,7 +74,7 @@ namespace GeneralShare.UI
                 Manager.Add(this);
             }
 
-            Enabled = true;
+            IsEnabled = true;
         }
 
         public UITransform(UIManager manager) : this(manager, Vector2.One)
@@ -88,16 +92,14 @@ namespace GeneralShare.UI
             _origin = origin;
         }
 
-        public void SetContainer(UIContainer container)
+        internal void SetContainer(UIContainer container)
         {
-            MarkDirty(ref container, container, DirtMarkType.Transform |
-                DirtMarkType.Position | DirtMarkType.Origin |
-                DirtMarkType.Scale | DirtMarkType.Rotation);
+            MarkDirty(ref _container, container, FULL_TRANSFORM_UPDATE);
         }
 
         private Vector2 GetScale()
         {
-            return Container == null ? _scale : _scale + Container.Scale;
+            return Container == null ? _scale : _scale * Container.Scale;
         }
 
         private float GetRotation()
@@ -132,7 +134,7 @@ namespace GeneralShare.UI
         {
         }
 
-        internal void OnViewportChange(in Viewport viewport)
+        internal void OnViewportChange(Viewport viewport)
         {
             if (_enabled == false)
                 _updateViewportOnEnable = true;
@@ -144,20 +146,20 @@ namespace GeneralShare.UI
         {
         }
 
-        public bool HasDirtMarks(params DirtMarkType[] types)
+        public bool HasDirtMarks(params DirtMarkType[] marks)
         {
             var src = DirtMarks;
-            for (int i = 0; i < types.Length; i++)
+            for (int i = 0; i < marks.Length; i++)
             {
-                if ((src & types[i]) != 0)
+                if ((src & marks[i]) != 0)
                     return true;
             }
             return false;
         }
 
-        public bool HasDirtMarks(DirtMarkType types)
+        public bool HasDirtMarks(DirtMarkType marks)
         {
-            return (DirtMarks & types) != 0;
+            return (DirtMarks & marks) != 0;
         }
 
         private void SetPosition(in Vector3 value)
@@ -185,9 +187,9 @@ namespace GeneralShare.UI
             MarkDirtyE(ref _origin, value, DirtMarkType.Origin | DirtMarkType.Transform);
         }
 
-        protected void ClearDirtMarks(DirtMarkType types)
+        protected void ClearDirtMarks(DirtMarkType marks)
         {
-            DirtMarks &= ~types;
+            DirtMarks &= ~marks;
         }
 
         protected void ClearDirtMarks()
@@ -195,65 +197,70 @@ namespace GeneralShare.UI
             DirtMarks = 0;
         }
 
-        protected bool MarkDirtyE<T>(ref T oldValue, T newValue, DirtMarkType types)
+        protected bool MarkDirtyE<T>(ref T oldValue, T newValue, DirtMarkType marks)
             where T : IEquatable<T>
         {
             if (oldValue == null || oldValue.Equals(newValue) == false)
             {
                 oldValue = newValue;
-                MarkDirty(types);
+                MarkDirty(marks);
                 return true;
             }
             return false;
         }
 
-        protected bool MarkDirty<T>(ref T oldValue, T newValue, DirtMarkType types)
+        protected bool MarkDirty<T>(ref T oldValue, T newValue, DirtMarkType marks)
         {
             if (oldValue == null || oldValue.Equals(newValue) == false)
             {
                 oldValue = newValue;
-                MarkDirty(types);
+                MarkDirty(marks);
                 return true;
             }
             return false;
         }
 
         protected bool MarkDirty<T>(
-            ref T oldValue, T newValue, DirtMarkType types, IEqualityComparer<T> comparer)
+            ref T oldValue, T newValue, DirtMarkType marks, IEqualityComparer<T> comparer)
         {
             if (oldValue == null || comparer.Equals(oldValue, newValue) == false)
             {
                 oldValue = newValue;
-                MarkDirty(types);
+                MarkDirty(marks);
                 return true;
             }
             return false;
         }
 
-        protected void MarkDirty(DirtMarkType types, bool onlyMarkFlag)
+        protected void MarkDirty(DirtMarkType marks, bool onlyMarkFlags)
         {
-            if (onlyMarkFlag == false)
+            if (onlyMarkFlags == false)
                 _dirty = true;
-            DirtMarks |= types;
-            InvokeMarkedDirty(types);
+            DirtMarks |= marks;
+            InvokeMarkedDirty(marks);
         }
 
-        protected void MarkDirty(DirtMarkType types)
+        protected void MarkDirty(DirtMarkType marks)
         {
-            MarkDirty(types, false);
+            MarkDirty(marks, false);
         }
 
-        protected void InvokeMarkedDirty(DirtMarkType types)
+        protected void InvokeMarkedDirty(DirtMarkType marks)
         {
             lock (SyncRoot)
             {
-                MarkedDirty?.Invoke(types);
+                MarkedDirty?.Invoke(marks);
             }
+        }
+
+        internal void InvokeMarkedDirtyInternal(DirtMarkType marks)
+        {
+            MarkDirty(marks);
         }
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!Disposed)
+            if (!IsDisposed)
             {
                 if (disposing)
                 {
@@ -261,7 +268,7 @@ namespace GeneralShare.UI
                         Manager.Remove(this);
                 }
 
-                Disposed = true;
+                IsDisposed = true;
             }
         }
 

@@ -31,7 +31,7 @@ namespace GeneralShare.UI
                 for (int i = 0, count = transforms.Count; i < count; i++)
                 {
                     UITransform transform = transforms[i];
-                    if (transform.Active == false)
+                    if (transform.IsActive == false)
                         continue;
 
                     if (transform is UIElement element)

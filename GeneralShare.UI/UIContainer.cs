@@ -1,4 +1,5 @@
 ﻿using GeneralShare.Collections;
+using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 using System.Collections.Generic;
 
@@ -8,14 +9,16 @@ namespace GeneralShare.UI
     {
         private ListArray<UITransform> _transforms;
         private RectangleF _bounds;
+        private bool _needsBoundsUpdate;
 
-        public override RectangleF Boundaries => _bounds;
+        public override RectangleF Boundaries => GetBounds();
         public ReadOnlyWrapper<UITransform> Children { get; }
         
         public UIContainer(UIManager manager) : base(manager)
         {
             _transforms = new ListArray<UITransform>();
             Children = new ReadOnlyWrapper<UITransform>(_transforms);
+            InterceptCursor = false;
         }
 
         public UIContainer() : this(null)
@@ -25,13 +28,17 @@ namespace GeneralShare.UI
         private void Transform_MarkedDirty(DirtMarkType marks)
         {
             if (marks.HasFlags(DirtMarkType.Boundaries))
-                UpdateBounds();
+                _needsBoundsUpdate = true;
         }
 
         private void AddInternal(UITransform transform)
         {
             _transforms.Add(transform);
-            transform.MarkedDirty += Transform_MarkedDirty;
+            lock (transform.SyncRoot)
+            {
+                transform.SetContainer(this);
+                transform.MarkedDirty += Transform_MarkedDirty;
+            }
         }
 
         public void Add(UITransform transform)
@@ -39,7 +46,7 @@ namespace GeneralShare.UI
             lock (SyncRoot)
             {
                 AddInternal(transform);
-                UpdateBounds();
+                _needsBoundsUpdate = true;
             }
         }
 
@@ -48,14 +55,22 @@ namespace GeneralShare.UI
             lock (SyncRoot)
             {
                 foreach (var item in transforms)
+                {
                     AddInternal(item);
-                UpdateBounds();
+                }
+                _needsBoundsUpdate = true;
             }
         }
 
         private bool RemoveInternal(UITransform original, UITransform candidate, int i)
         {
-            original.MarkedDirty -= Transform_MarkedDirty;
+            lock (original.SyncRoot)
+            {
+                if (original.Container == this)
+                    original.SetContainer(null);
+
+                original.MarkedDirty -= Transform_MarkedDirty;
+            }
             if (candidate.TransformKey == original.TransformKey)
             {
                 _transforms.RemoveAt(i);
@@ -73,7 +88,7 @@ namespace GeneralShare.UI
                     if (RemoveInternal(transform, _transforms[i], i))
                         return true;
                 }
-                UpdateBounds();
+                _needsBoundsUpdate = true;
                 return false;
             }
         }
@@ -93,26 +108,70 @@ namespace GeneralShare.UI
                         }
                     }
                 }
-                UpdateBounds();
+                _needsBoundsUpdate = true;
                 return items;
             }
+        }
+        
+        private RectangleF GetBounds()
+        {
+            if (_needsBoundsUpdate)
+            {
+                UpdateBounds();
+                _needsBoundsUpdate = false;
+            }
+            return _bounds;
         }
 
         private void UpdateBounds()
         {
-            _bounds = RectangleF.Empty;
-            for (int i = 0, count = _transforms.Count; i < count; i++)
+            lock (SyncRoot)
             {
-                var transform = _transforms[i];
-                if (transform is UIElement element && transform.Enabled)
-                    RectangleF.Union(_bounds, element.Boundaries, out _bounds);
+                bool hasOriginRect = false;
+                for (int i = 0, count = _transforms.Count; i < count; i++)
+                {
+                    var transform = _transforms[i];
+                    if (transform is UIElement element)
+                    {
+                        lock (element.SyncRoot)
+                        {
+                            if (element.IsEnabled)
+                            {
+                                if (hasOriginRect)
+                                    RectangleF.Union(_bounds, element.Boundaries, out _bounds);
+                                else
+                                {
+                                    _bounds = element.Boundaries;
+                                    hasOriginRect = true;
+                                }
+                            }
+                        }
+                    }
+                }
             }
             InvokeMarkedDirty(DirtMarkType.Boundaries);
         }
 
+        public override void Update(GameTime time)
+        {
+            if (Dirty)
+            {
+                lock (SyncRoot)
+                {
+                    for (int i = 0, count = _transforms.Count; i < count; i++)
+                    {
+                        _transforms[i].InvokeMarkedDirtyInternal(UITransform.FULL_TRANSFORM_UPDATE);
+                    }
+                }
+                Dirty = false;
+                ClearDirtMarks();
+            }
+            base.Update(time);
+        }
+
         protected override void Dispose(bool disposing)
         {
-            if (!Disposed)
+            if (!IsDisposed)
             {
                 for (int i = 0, count = _transforms.Count; i < count; i++)
                 {

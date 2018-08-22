@@ -237,7 +237,7 @@ namespace GeneralShare.UI
                 for (int i = 0, length = transforms.Count; i < length; i++)
                 {
                     UITransform transform = transforms[i];
-                    if (transform.Enabled == false)
+                    if (transform.IsEnabled == false)
                         continue;
 
                     if (transform is UIElement element)
@@ -275,14 +275,13 @@ namespace GeneralShare.UI
                 for (int i = 0, count = transforms.Count; i < count; i++)
                 {
                     UITransform transform = transforms[i];
-                    if (transform.Active == false)
-                        continue;
-
                     if (viewportChanged)
                         transform.OnViewportChange(freshViewport);
 
-                    transform.Update(time);
+                    if (transform.IsActive == false)
+                        continue;
 
+                    transform.Update(time);
                     if (transform is UIElement element)
                     {
                         element.IsSelected = false;

@@ -202,7 +202,7 @@ namespace GeneralShare.UI
                 {
                     if (_processedText.Length > 0 && _font != null)
                     {
-                        _textCache.Clear();
+                        _textCache.Clear(false);
                         if (_textCache.Capacity < _processedText.Length)
                             _textCache.Capacity = _processedText.Length;
 
@@ -363,7 +363,7 @@ namespace GeneralShare.UI
             {
                 if (HasDirtMarks(needsProcess))
                 {
-                    _expressionColors.Clear();
+                    _expressionColors.Clear(false);
                     _processedText.Clear();
 
                     SpecialBeforeTextProcessing();
