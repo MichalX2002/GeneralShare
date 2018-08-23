@@ -145,7 +145,6 @@ namespace GeneralShare.UI
         public virtual void ViewportChanged(in Viewport viewport)
         {
         }
-
         public bool HasDirtMarks(params DirtMarkType[] marks)
         {
             var src = DirtMarks;
@@ -161,7 +160,6 @@ namespace GeneralShare.UI
         {
             return (DirtMarks & marks) != 0;
         }
-
         private void SetPosition(in Vector3 value)
         {
             MarkDirtyE(ref _position, value, DirtMarkType.Position | DirtMarkType.Transform);

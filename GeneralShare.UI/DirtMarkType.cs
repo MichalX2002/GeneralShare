@@ -19,7 +19,7 @@ namespace GeneralShare.UI
         ShadowColor = 1 << 8,
         UseShadow = 1 << 9,
         ShadowMath = 1 << 10,
-        BuildTextTree = 1 << 11,
+        BuildQuadTree = 1 << 11,
         TextAlignment = 1 << 27,
 
         // ProgressBar

@@ -11,8 +11,7 @@ namespace GeneralShare.UI
         public delegate void MouseHoverDelegate(MouseState mouseState);
         public delegate void GenericMouseDelegate(MouseState mouseState, MouseButton buttons);
         public delegate void GenericKeyboardDelegate(Keys key);
-
-        public event ContentStateDelegate ContentStateChanged;
+        
         public event GenericMouseDelegate OnMouseDown;
         public event GenericMouseDelegate OnMousePress;
         public event GenericMouseDelegate OnMouseRelease;
@@ -24,10 +23,7 @@ namespace GeneralShare.UI
         public event GenericKeyboardDelegate OnKeyRelease;
         public event Input.TextInputDelegate OnTextInput;
 
-        private bool _hasContent;
-
         public string Name { get; private set; }
-        public bool HasContent { get => _hasContent; protected set => SetContentState(value); }
         public bool TriggerMouseEvents { get; set; }
         public bool TriggerKeyEvents { get; set; }
         public bool InterceptCursor { get; set; }
@@ -120,19 +116,6 @@ namespace GeneralShare.UI
         internal void TriggerOnKeyRelease(Keys key)
         {
             TriggerGenericKeyboardEvent(key, OnKeyRelease);
-        }
-
-        private void SetContentState(bool hasContent)
-        {
-            lock (SyncRoot)
-            {
-                if (_hasContent != hasContent)
-                {
-                    bool hadContentBefore = _hasContent;
-                    _hasContent = hasContent;
-                    ContentStateChanged?.Invoke(hadContentBefore);
-                }
-            }
         }
 
         public virtual void Draw(GameTime time, SpriteBatch batch) { }

@@ -66,7 +66,6 @@
     <Compile Include="SpecialTextFormat.cs" />
     <Compile Include="TextAlignment.cs" />
     <Compile Include="UIText.cs" />
-    <Compile Include="UITextBase old.cs" />
     <Compile Include="UIAnchor.cs" />
     <Compile Include="UICollisionLayer.cs" />
     <Compile Include="UIManager.cs" />

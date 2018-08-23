@@ -110,7 +110,7 @@ namespace GeneralShare.UI
 
         protected void SetBuildTextTree(bool value)
         {
-            MarkDirtyE(ref _buildTextTree, value, DirtMarkType.BuildTextTree);
+            MarkDirtyE(ref _buildTextTree, value, DirtMarkType.BuildQuadTree);
         }
 
         public void SetShadowRadius(float radius)
@@ -325,7 +325,7 @@ namespace GeneralShare.UI
                         HasContent = false;
                 }
 
-                if (HasDirtMarks(DirtMarkType.BuildTextTree))
+                if (HasDirtMarks(DirtMarkType.BuildQuadTree))
                 {
                     if (_buildTextTree)
                     {
@@ -335,7 +335,7 @@ namespace GeneralShare.UI
                     else
                         _textQuadTree.ClearPool();
 
-                    ClearDirtMarks(DirtMarkType.BuildTextTree);
+                    ClearDirtMarks(DirtMarkType.BuildQuadTree);
                 }
 
                 if (HasDirtMarks(DirtMarkType.ShadowColor))
