@@ -148,7 +148,7 @@ namespace GeneralShare.UI
                     UITransform item = Transforms[i];
                     if (item is UIElement element)
                     {
-                        if (element.Boundaries.Contains(new Point2(x, y)))
+                        if (element.Boundaries.Contains(new PointF(x, y)))
                         {
                             output = element;
                             return true;

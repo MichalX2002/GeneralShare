@@ -70,20 +70,20 @@ namespace GeneralShare.Collections
         
         public Item QueryNearest(RectangleF range, Vector2 start)
         {
-            return QueryNearest(range, (Point2)start);
+            return QueryNearest(range, (PointF)start);
         }
 
-        public Item QueryNearest(RectangleF range, Point2 start)
+        public Item QueryNearest(RectangleF range, PointF start)
         {
             return Query(range).FirstMin(item => item.Bounds.SquaredDistanceTo(start));
         }
 
         public IEnumerable<Item> Query(Vector2 point)
         {
-            return Query((Point2)point);
+            return Query((PointF)point);
         }
 
-        public IEnumerable<Item> Query(Point2 point)
+        public IEnumerable<Item> Query(PointF point)
         {
             return Query(new RectangleF(point, SizeF.Empty));
         }
@@ -100,10 +100,10 @@ namespace GeneralShare.Collections
 
         public bool Insert(Vector2 item, T value)
         {
-            return Insert((Point2)item, value);
+            return Insert((PointF)item, value);
         }
 
-        public bool Insert(Point2 item, T value)
+        public bool Insert(PointF item, T value)
         {
             return Insert(new RectangleF(item, SizeF.Empty), value);
         }
@@ -140,7 +140,7 @@ namespace GeneralShare.Collections
 
             if(AllowOverflow)
             {
-                Items.Add(in item);
+                Items.Add(item);
                 return true;
             }
 
