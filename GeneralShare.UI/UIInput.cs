@@ -256,7 +256,7 @@ namespace GeneralShare.UI
                 PrepareCaretIndex(ref _caretIndex);
                 if (_caretIndex > 0 && _caretIndex <= _totalTextLength)
                 {
-                    Vector3 lastPos = _textCache.GetReferenceAt(_caretIndex - 1).Sprite.TR.Position;
+                    Vector3 lastPos = _textGlyphs.GetReferenceAt(_caretIndex - 1).Sprite.TR.Position;
                     double rawDistance = (lastPos.Y - Position.Y) / Font.LineHeight;
                     double line = Math.Floor(rawDistance / Scale.Y);
                     double yOffset = Math.Round(Position.Y + line * Font.LineHeight * Scale.Y - 0.5f);

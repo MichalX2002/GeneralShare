@@ -9,10 +9,10 @@ using System.Text;
 
 namespace GeneralShare.UI
 {
-    public abstract class UITextBase : UIElement
+    public abstract class UITextBaseOLD : UIElement
     {
         protected BitmapFont _font;
-        protected ListArray<BitmapFont.Glyph> _textGlyphs;
+        protected ListArray<GlyphBatchedSprite> _textCache;
         protected ListArray<Color> _expressionColors;
         protected string _value;
         protected StringBuilder _processedText;
@@ -38,7 +38,7 @@ namespace GeneralShare.UI
         protected Point _shadowTexSrc;
         protected Color _shadowColor;
         protected bool _shadowAvailable;
-
+        
         public Color BaseColor { get => _baseColor; set => SetColor(value); }
         public BitmapFont Font { get => _font; set => SetFont(value); }
         public Rectangle? ClippingRectangle { get => _clipRect; set => SetClipRect(value); }
@@ -64,7 +64,7 @@ namespace GeneralShare.UI
         public UITextBase(UIManager manager, BitmapFont font) : base(manager)
         {
             _value = string.Empty;
-            _textGlyphs = new ListArray<BitmapFont.Glyph>();
+            _textCache = new ListArray<GlyphBatchedSprite>();
             _expressionColors = new ListArray<Color>();
             _processedText = new StringBuilder();
             _textQuadTree = new PooledQuadTree<float>(Rectangle.Empty, 2, true);
@@ -202,24 +202,24 @@ namespace GeneralShare.UI
                 {
                     if (_processedText.Length > 0 && _font != null)
                     {
-                        _textGlyphs.Clear(false);
-                        if (_textGlyphs.Capacity < _processedText.Length)
-                            _textGlyphs.Capacity = _processedText.Length;
-                        
+                        _textCache.Clear(false);
+                        if (_textCache.Capacity < _processedText.Length)
+                            _textCache.Capacity = _processedText.Length;
+
+                        _font.GetGlyphSprites(_textCache, _processedText, Position.ToVector2(),
+                            _baseColor, Rotation, Origin, Scale, Position.Z, _clipRect);
+
                         _textBounds.X = Position.X;
                         _textBounds.Y = Position.Y;
-                        _textBounds.Size = _font.GetGlyphs(_processedText, PointF.Zero, _textGlyphs);
-
-                        //Position.ToVector2(), _baseColor, Rotation, Origin, Scale, Position.Z, _clipRect
 
                         if (_buildTextTree)
                             PrepareTextTree();
 
                         int expressionCount = _expressionColors.Count;
-                        int itemCount = _textGlyphs.Count;
+                        int itemCount = _textCache.Count;
                         for (int i = 0; i < itemCount; i++)
                         {
-                            ref var sprite = ref _textGlyphs.GetReferenceAt(i);
+                            ref var sprite = ref _textCache.GetReferenceAt(i);
                             if (_buildTextTree)
                                 AddTextQuadItem(ref sprite);
 
@@ -259,11 +259,11 @@ namespace GeneralShare.UI
                                     AddLine(i);
                                     continue;
                                 }
-
+                                
                                 int character = char.IsHighSurrogate(_processedText[i]) && ++i < pTextLength
                                     ? char.ConvertToUtf32(_processedText[i - 1], _processedText[i])
                                     : _processedText[i];
-
+                                
                                 if (_font.GetCharacterRegion(character, out var fontRegion))
                                 {
                                     if (previousReg != null && BitmapFont.UseKernings)
@@ -271,14 +271,14 @@ namespace GeneralShare.UI
                                         if (previousReg.Kernings.TryGetValue(character, out int amount))
                                             width += amount;
                                     }
-
+                                
                                     width += fontRegion.XAdvance + _font.LetterSpacing;
                                     previousReg = fontRegion;
                                 }
                             }
                             AddLine(pTextLength - 1);
                             //largestW *= Scale.X;
-
+                            
                             void TranslateSprite(float xOffset, ref BatchedSprite sprite)
                             {
                                 sprite.TL.Position.X += xOffset;
@@ -311,7 +311,7 @@ namespace GeneralShare.UI
                                 for (int j = lastBreak; j < charCount; j++)
                                 {
                                     float xOffset = GetXOffset(_lines[i].Width);
-                                    TranslateSprite(xOffset, ref _textGlyphs.GetReferenceAt(j).Sprite);
+                                    TranslateSprite(xOffset, ref _textCache.GetReferenceAt(j).Sprite);
                                 }
                                 lastBreak = breakIndex;
                             }
@@ -319,7 +319,7 @@ namespace GeneralShare.UI
                         }
 
                         MarkDirty(DirtMarkType.ShadowMath, true);
-                        HasContent = _textGlyphs.Count > 0;
+                        HasContent = _textCache.Count > 0;
                     }
                     else
                         HasContent = false;
@@ -378,7 +378,7 @@ namespace GeneralShare.UI
 
                     SpecialPostTextProcessing();
 
-                    _measure = _font.MeasureString(_textGlyphs);
+                    _measure = _font.MeasureString(_processedText);
                     UpdateScaledMeasure();
 
                     _textBounds.Width = _scaledMeasure.Width;
@@ -413,9 +413,9 @@ namespace GeneralShare.UI
         protected void BuildTextTree()
         {
             PrepareTextTree();
-            for (int i = 0, count = _textGlyphs.Count; i < count; i++)
+            for (int i = 0, count = _textCache.Count; i < count; i++)
             {
-                AddTextQuadItem(ref _textGlyphs.GetReferenceAt(i));
+                AddTextQuadItem(ref _textCache.GetReferenceAt(i));
             }
         }
 
@@ -478,7 +478,7 @@ namespace GeneralShare.UI
                     if (_shadowAvailable)
                         batch.Draw(_shadowTex.Texture, _shadowSprite);
 
-                    batch.DrawString(_textGlyphs);
+                    batch.DrawString(_textCache);
                 }
             }
         }
