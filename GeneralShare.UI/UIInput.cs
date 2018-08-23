@@ -341,7 +341,7 @@ namespace GeneralShare.UI
             }
         }
 
-        protected override void SpecialBoundaryUpdate(in RectangleF input, out RectangleF output)
+        protected override void SpecialBoundaryUpdate(RectangleF input, out RectangleF output)
         {
             if (HasDirtMarks(DirtMarkType.Position | DirtMarkType.CaretIndex | DirtMarkType.CaretSize))
                 _caretRect = GetCaretPosition();

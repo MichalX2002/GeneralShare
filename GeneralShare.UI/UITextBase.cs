@@ -369,9 +369,9 @@ namespace GeneralShare.UI
                     SpecialBeforeTextProcessing();
                     SpecialProcessedTextLength = _processedText.Length;
 
-                    if (_value != null)
+                    if (string.IsNullOrEmpty(_value) == false)
                     {
-                        var colorOutput = _valueExpressions ? _expressionColors : null;
+                        ListArray<Color> colorOutput = _valueExpressions ? _expressionColors : null;
                         SpecialTextFormat.Format(_value, _processedText,
                             _baseColor, _font, _keepExpressions, colorOutput);
                     }
@@ -399,7 +399,7 @@ namespace GeneralShare.UI
         {
         }
 
-        protected virtual void SpecialBoundaryUpdate(in RectangleF input, out RectangleF output)
+        protected virtual void SpecialBoundaryUpdate(RectangleF input, out RectangleF output)
         {
             output = input;
         }
