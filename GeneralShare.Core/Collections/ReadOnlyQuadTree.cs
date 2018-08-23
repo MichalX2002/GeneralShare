@@ -20,21 +20,16 @@ namespace GeneralShare.Collections
             _tree = tree;
         }
 
-        public QuadTree<T>.Item QueryNearest(RectangleF range, Point2 start)
+        public QuadTree<T>.Item QueryNearest(RectangleF range, PointF start)
         {
             return _tree.QueryNearest(range, start);
         }
 
-        public IEnumerable<QuadTree<T>.Item> Query(Vector2 point)
+        public IEnumerable<QuadTree<T>.Item> Query(PointF point)
         {
             return _tree.Query(point);
         }
-
-        public IEnumerable<QuadTree<T>.Item> Query(Point2 point)
-        {
-            return _tree.Query(point);
-        }
-
+        
         public IEnumerable<QuadTree<T>.Item> Query(RectangleF range)
         {
             return _tree.Query(range);

@@ -167,20 +167,26 @@ namespace GeneralShare.Collections
             __version = value;
         }
 
-        public void Add(T item)
+        public void AddRef(in T item)
         {
-            Add(in item);
+            AddCheck();
+            InnerArray[Count++] = item;
+            Version++;
         }
 
-        public void Add(in T item)
+        public void Add(T item)
+        {
+            AddCheck();
+            InnerArray[Count++] = item;
+            Version++;
+        }
+
+        private void AddCheck()
         {
             CheckAccessibility();
 
             if (Count == InnerArray.Length)
                 EnsureCapacity(Count + 1);
-
-            InnerArray[Count++] = item;
-            Version++;
         }
 
         public void AddRange(IEnumerable<T> collection)
