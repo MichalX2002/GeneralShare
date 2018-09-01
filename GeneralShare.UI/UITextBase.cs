@@ -254,13 +254,13 @@ namespace GeneralShare.UI
 
                 UpdateTotalBoundaries();
                 SpecialBoundaryUpdate(_totalBoundaries, out _totalBoundaries);
-                InvokeMarkedDirty(DirtMarkType.Boundaries);
 
                 if (HasDirtMarks(DirtMarkType.ShadowMath))
                     UpdateShadowSprite();
                 _shadowAvailable = _useShadow && _shadowTex != null;
 
                 ClearDirtMarks();
+                InvokeMarkedDirty(DirtMarkType.Boundaries);
             }
         }
 
@@ -347,6 +347,8 @@ namespace GeneralShare.UI
                 bool neededProcessing = HasDirtMarks(needsProcessingFlags);
                 if (neededProcessing)
                 {
+                    ClearDirtMarks(needsProcessingFlags);
+
                     _expressionColors.Clear(false);
                     _processedText.Clear();
 
@@ -368,8 +370,6 @@ namespace GeneralShare.UI
                     InvokeMarkedDirty(DirtMarkType.Boundaries);
 
                     GetLines();
-
-                    ClearDirtMarks(needsProcessingFlags);
                     MarkDirty(DirtMarkType.ValueProcessed, true);
                 }
             }
