@@ -4,12 +4,14 @@ using System.Collections.Generic;
 
 namespace GeneralShare.Collections
 {
-    public class ReadOnlyWrapper<T> : ICollection<T>, IReadOnlyCollection<T>
+    public class ReadOnlyWrapper<T> : ICollection<T>, IReadOnlyCollection<T>, IReadOnlyList<T>
     {
         private ICollection<T> _collection;
 
         public int Count => _collection.Count;
         public bool IsReadOnly => true;
+
+        public T this[int index] => (_collection as IReadOnlyList<T>)[index];
 
         public ReadOnlyWrapper(ICollection<T> collection)
         {

@@ -17,8 +17,8 @@ namespace GeneralShare.UI
         protected string _value;
         protected StringBuilder _processedText;
         protected ListArray<LineInfo> _lines;
-        protected bool _buildQuadTree;
-        protected PooledQuadTree<float> _textQuadTree;
+        protected bool _buildCharQuadTree;
+        protected PooledQuadTree<float> _charQuadTree;
 
         protected ListArray<GlyphBatchedSprite> _textSprites;
         protected ListArray<Color> _expressionColors;
@@ -27,7 +27,6 @@ namespace GeneralShare.UI
         protected bool _valueExpressions;
         protected bool _keepExpressions;
         protected Color _color;
-        protected SizeF _measure;
         protected Rectangle? _clipRect;
         protected RectangleF _textBounds;
         protected RectangleF _totalBoundaries;
@@ -52,11 +51,11 @@ namespace GeneralShare.UI
         public bool UseShadow { get => _useShadow; set => SetUseShadow(value); }
         public RectangleF ShadowOffset { get => _shadowOffset; set => SetShadowOffset(value); }
 
-        public bool BuildTextQuadTree { get => _buildQuadTree; set => SetBuildTextTree(value); }
-        public ReadOnlyQuadTree<float> CharQuadTree => _textQuadTree.CurrentTree.AsReadOnly();
+        public bool BuildCharQuadTree { get => _buildCharQuadTree; set => SetBuildCharQuadTree(value); }
+        public ReadOnlyQuadTree<float> CharQuadTree => _charQuadTree.CurrentTree.AsReadOnly();
         public override RectangleF Boundaries { get { ProcessTextIfNeeded(); return _totalBoundaries; } }
         public RectangleF TextBoundaries { get { ProcessTextIfNeeded(); return _textBounds; } }
-        public SizeF Measure { get { ProcessTextIfNeeded(); return _measure; } }
+        public SizeF Measure => TextBoundaries.Size;
         public TextAlignment Alignment { get => _align; set => SetAlign(value); }
 
         public UIAnchor Anchor => GetAnchor();
@@ -68,7 +67,7 @@ namespace GeneralShare.UI
             _value = string.Empty;
             _textGlyphs = new ListArray<Glyph>();
             _processedText = new StringBuilder();
-            _textQuadTree = new PooledQuadTree<float>(Rectangle.Empty, 2, true);
+            _charQuadTree = new PooledQuadTree<float>(Rectangle.Empty, 2, true);
             _lines = new ListArray<LineInfo>();
 
             _textSprites = new ListArray<GlyphBatchedSprite>();
@@ -112,9 +111,9 @@ namespace GeneralShare.UI
             MarkDirty(ref _align, align, DirtMarkType.TextAlignment);
         }
 
-        protected void SetBuildTextTree(bool value)
+        protected void SetBuildCharQuadTree(bool value)
         {
-            MarkDirtyE(ref _buildQuadTree, value, DirtMarkType.BuildQuadTree);
+            MarkDirtyE(ref _buildCharQuadTree, value, DirtMarkType.BuildQuadTree);
         }
 
         public void SetShadowRadius(float radius)
@@ -212,21 +211,21 @@ namespace GeneralShare.UI
                     {
                         _textSprites.Clear(false);
                         BitmapFontExtensions.GetGlyphSprites(
-                            _textGlyphs, _textSprites, pos.ToVector2(), _color, Rotation, Origin, Scale, pos.Z, _clipRect);
+                            _textGlyphs, _textSprites, pos.ToVector2(), _color, Rotation, Origin, Scale, Z, _clipRect);
 
-                        if (_buildQuadTree)
+                        if (_buildCharQuadTree)
                             PrepareQuadTree();
 
                         int expressionCount = _expressionColors.Count;
                         int itemCount = _textSprites.Count;
                         for (int i = 0; i < itemCount; i++)
                         {
+                            ref var sprite = ref _textSprites.GetReferenceAt(i);
+                            if (_buildCharQuadTree)
+                                AddTextQuadItem(ref sprite);
+
                             if (_valueExpressions && i < expressionCount)
                             {
-                                ref var sprite = ref _textSprites.GetReferenceAt(i);
-                                if (_buildQuadTree)
-                                    AddTextQuadItem(ref sprite);
-
                                 Color color = _expressionColors.GetReferenceAt(i);
                                 sprite.SetColor(color);
                             }
@@ -238,14 +237,7 @@ namespace GeneralShare.UI
 
                 if (HasDirtMarks(DirtMarkType.BuildQuadTree))
                 {
-                    if (_buildQuadTree)
-                    {
-                        if (!hadDirtyGraphics)
-                            BuildQuadTree();
-                    }
-                    else
-                        _textQuadTree.ClearPool();
-
+                    ManageQuadTree(!hadDirtyGraphics);
                     ClearDirtMarks(DirtMarkType.BuildQuadTree);
                 }
 
@@ -262,6 +254,17 @@ namespace GeneralShare.UI
                 ClearDirtMarks();
                 InvokeMarkedDirty(DirtMarkType.Boundaries);
             }
+        }
+
+        private void ManageQuadTree(bool buildTree)
+        {
+            if (_buildCharQuadTree)
+            {
+                if (buildTree)
+                    BuildQuadTree();
+            }
+            else
+                _charQuadTree.ClearPool();
         }
 
         private void GetLines()
@@ -347,8 +350,6 @@ namespace GeneralShare.UI
                 bool neededProcessing = HasDirtMarks(needsProcessingFlags);
                 if (neededProcessing)
                 {
-                    ClearDirtMarks(needsProcessingFlags);
-
                     _expressionColors.Clear(false);
                     _processedText.Clear();
 
@@ -367,6 +368,8 @@ namespace GeneralShare.UI
                     _textGlyphs.Clear(false);
                     _textBounds.Size = _font.GetGlyphs(_processedText, _textGlyphs) * Scale;
                     UpdateTotalBoundaries();
+
+                    ClearDirtMarks(needsProcessingFlags);
                     InvokeMarkedDirty(DirtMarkType.Boundaries);
 
                     GetLines();
@@ -390,8 +393,8 @@ namespace GeneralShare.UI
 
         protected void PrepareQuadTree()
         {
-            _textQuadTree.ClearTree();
-            _textQuadTree.Resize(_textBounds);
+            _charQuadTree.ClearTree();
+            _charQuadTree.Resize(_textBounds);
         }
 
         protected void BuildQuadTree()
@@ -416,10 +419,10 @@ namespace GeneralShare.UI
             float o = 0.001f;
             var node = new RectangleF(x + o, y + h * 0.5f, w - o, h);
 
-            _textQuadTree.CurrentTree.Insert(node, item.Index);
+            _charQuadTree.CurrentTree.Insert(node, item.Index);
 
             node.X += w;
-            _textQuadTree.CurrentTree.Insert(node, item.Index + 0.5f);
+            _charQuadTree.CurrentTree.Insert(node, item.Index + 0.5f);
         }
 
         protected void UpdateTotalBoundaries()
@@ -436,7 +439,7 @@ namespace GeneralShare.UI
                 _totalBoundaries, Origin, Rotation, _shadowTexSrc);
 
             _shadowSprite.SetTransform(matrix, _shadowTexSrc);
-            _shadowSprite.SetDepth(Position.Z);
+            _shadowSprite.SetDepth(Z);
             _shadowSprite.SetTexCoords(_shadowTex);
         }
 

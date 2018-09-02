@@ -33,17 +33,17 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="MonoGame.Extended">
-      <HintPath>..\Binaries\MonoGame.Extended\MonoGame.Extended.dll</HintPath>
+      <HintPath>..\..\Binaries\MonoGame.Extended\MonoGame.Extended.dll</HintPath>
     </Reference>
     <Reference Include="MonoGame.Framework, Version=3.6.0.1625, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Binaries\MonoGame\DesktopGL\MonoGame.Framework.dll</HintPath>
+      <HintPath>..\..\Binaries\MonoGame\DesktopGL\MonoGame.Framework.dll</HintPath>
     </Reference>
     <Reference Include="MonoGame.Imaging">
-      <HintPath>..\Binaries\MonoGame\MonoGame.Imaging.dll</HintPath>
+      <HintPath>..\..\Binaries\MonoGame\MonoGame.Imaging.dll</HintPath>
     </Reference>
     <Reference Include="MonoGame.Utilities">
-      <HintPath>..\Binaries\MonoGame\MonoGame.Utilities.dll</HintPath>
+      <HintPath>..\..\Binaries\MonoGame\MonoGame.Utilities.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

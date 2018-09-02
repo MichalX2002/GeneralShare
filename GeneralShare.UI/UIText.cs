@@ -12,7 +12,7 @@ namespace GeneralShare.UI
         {
             UseTextExpressions = true;
             KeepTextExpressions = false;
-            BuildTextQuadTree = false;
+            BuildCharQuadTree = false;
         }
 
         public UIText(BitmapFont font) : this(null, font)

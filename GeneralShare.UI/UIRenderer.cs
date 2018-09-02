@@ -31,7 +31,7 @@ namespace GeneralShare.UI
                 for (int i = 0, count = transforms.Count; i < count; i++)
                 {
                     UITransform transform = transforms[i];
-                    if (transform.IsActive == false)
+                    if (transform.IsActive == false || transform is UIContainer)
                         continue;
 
                     if (transform is UIElement element)
@@ -51,11 +51,12 @@ namespace GeneralShare.UI
         {
             foreach (var entry in _elementQueue)
             {
-                spriteBatch.Begin(samplerState: GetSamplerState(entry.Key), blendState: BlendState.NonPremultiplied);
+                spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, GetSamplerState(entry.Key), DepthStencilState.Default);
                 var list = entry.Value;
                 for (int i = 0, count = list.Count; i < count; i++)
                 {
                     spriteBatch.Draw(time, list[i]);
+                    //System.Console.WriteLine(list[i]);
                 }
                 spriteBatch.End();
 

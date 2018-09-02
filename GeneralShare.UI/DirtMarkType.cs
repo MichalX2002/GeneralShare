@@ -43,6 +43,6 @@ namespace GeneralShare.UI
         ObscureChar = 1 << 26,
         PivotPosition = 1 << 28,
         Boundaries = 1 << 29,
-        Bounds = 1 << 13,
+        Destination = 1 << 13,
     }
 }

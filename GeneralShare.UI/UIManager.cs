@@ -69,6 +69,7 @@ namespace GeneralShare.UI
             SyncRoot = new object();
             Transforms = new ListArray<UITransform>();
             Transforms.Changed += Transforms_Changed;
+            PreferredSamplingMode = SamplingMode.LinearClamp;
 
             Input.TextInput += Input_TextInput;
         }

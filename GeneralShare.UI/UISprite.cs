@@ -7,40 +7,57 @@ namespace GeneralShare.UI
 {
     public class UISprite : UIElement
     {
-        private TextureRegion2D _texture;
+        private TextureRegion2D _region;
         private BatchedSprite _sprite;
         private RectangleF _boundaries;
+        private RectangleF _destination;
 
         public override RectangleF Boundaries => _boundaries;
 
-        public TextureRegion2D Texture { get => _texture; set => SetTexture(value); }
+        public TextureRegion2D Region { get => _region; set => SetTexture(value); }
         public Color Color { get => _sprite.TL.Color; set => _sprite.SetColor(value); }
+        public RectangleF Destination { get => _destination; set => SetDestination(value); }
+        public bool IsUsingDestination => Destination.Width > 0 && Destination.Height > 0;
 
-        public UISprite(TextureRegion2D texture, UIManager manager) : base(manager)
+        public UISprite(UIManager manager, TextureRegion2D texture) : base(manager)
         {
+            Region = texture;
             Color = Color.White;
         }
 
         private void SetTexture(TextureRegion2D value)
         {
-            MarkDirty(ref _texture, value, DirtMarkType.Value);
+            MarkDirty(ref _region, value, DirtMarkType.Value);
+        }
+
+        private void SetDestination(RectangleF value)
+        {
+            MarkDirty(ref _destination, value, DirtMarkType.Destination);
         }
 
         private void UpdateSprite()
         {
-            if (DirtMarks.HasFlags(DirtMarkType.Transform, DirtMarkType.Value))
+            if (DirtMarks.HasFlags(DirtMarkType.Transform, DirtMarkType.Value, DirtMarkType.Destination))
             {
-                _boundaries = new RectangleF(X, Y, Texture.Width * Scale.X, Texture.Height * Scale.Y);
+                ClearDirtMarks();
+                var srcSize = _region.Bounds.Size.ToVector2();
+                if (IsUsingDestination)
+                {
+                    var matrix = BatchedSprite.GetMatrixFromRect(_destination, Origin, -Rotation, srcSize);
+                    _sprite.SetTransform(matrix, srcSize);
+                }
+                else
+                {
+                    _boundaries = new RectangleF(X, Y, Region.Width * Scale.X, Region.Height * Scale.Y);
+
+                    var pos = Position.ToVector2();
+                    _sprite.SetTransform(pos, -Rotation, Scale, Origin * srcSize, srcSize);
+                }
+                _sprite.SetDepth(Z);
+                _sprite.SetTexCoords(_region);
+
                 InvokeMarkedDirty(DirtMarkType.Boundaries);
-
-                var pos = Position.ToVector2();
-                var srcSize = _texture.Bounds.Size.ToVector2();
-
-                _sprite.SetTransform(pos, Rotation, Scale, Origin * srcSize, srcSize);
-                _sprite.SetDepth(Position.Z);
-                _sprite.SetTexCoords(_texture);
             }
-            ClearDirtMarks();
         }
 
         public override void Draw(GameTime time, SpriteBatch batch)
@@ -53,7 +70,7 @@ namespace GeneralShare.UI
                     Dirty = false;
                 }
             }
-            batch.Draw(_texture.Texture, _sprite);
+            batch.Draw(_region.Texture, _sprite);
         }
     }
 }

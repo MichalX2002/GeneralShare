@@ -19,14 +19,14 @@ namespace GeneralShare.UI
         private int _barThickness;
         private float _value;
         private Range<float> _range;
-        private Vector2 _bounds;
+        private Vector2 _destination;
         private Vector2 _headPos;
         private RectangleF _mainRect;
         private bool _needsSpriteUpdate;
 
         public override RectangleF Boundaries { get { UpdateBar(); return _boundaries; } }
         public int BackBarThickness { get => _barThickness; set => SetThickness(value); }
-        public Vector2 Bounds { get => _bounds; set => SetBounds(value); }
+        public Vector2 Destination { get => _destination; set => SetDestination(value); }
         public RectangleF MainBarRect { get { UpdateBar(); return _mainRect; } }
         public Vector2 BarHeadPosition { get { UpdateBar(); return _headPos; } }
         public BarDirection Direction { get => _direction; set => SetDirection(value); }
@@ -82,9 +82,9 @@ namespace GeneralShare.UI
             MarkDirty(ref _direction, value, DirtMarkType.BarDirection);
         }
 
-        private void SetBounds(Vector2 value)
+        private void SetDestination(Vector2 value)
         {
-            MarkDirtyE(ref _bounds, value, DirtMarkType.Bounds);
+            MarkDirtyE(ref _destination, value, DirtMarkType.Destination);
         }
 
         private void SetValue(float value)
@@ -106,7 +106,7 @@ namespace GeneralShare.UI
         {
             var matrix = Matrix2.CreateFrom(Position.ToVector2(), Rotation, Boundaries.Size, Origin);
             _backSprite.SetTransform(matrix, _backBarRegion.Bounds.Size);
-            _backSprite.SetDepth(Position.Z);
+            _backSprite.SetDepth(Z);
             _backSprite.SetTexCoords(_backBarRegion);
         }
 
@@ -121,13 +121,14 @@ namespace GeneralShare.UI
             var matrix = Matrix2.CreateFrom(mainDst.Position, Rotation, size, Origin);
             
             _mainSprite.SetTransform(matrix, _mainBarRegion.Bounds.Size);
+            _mainSprite.SetDepth(Z);
             _mainSprite.SetTexCoords(_mainBarRegion);
         }
 
         private void UpdateMainRect()
         {
-            float w = _bounds.X * FillPercentage;
-            float h = _bounds.Y / _mainBarRegion.Height;
+            float w = _destination.X * FillPercentage;
+            float h = _destination.Y / _mainBarRegion.Height;
             switch (_direction)
             {
                 //TODO: Add more directions
@@ -139,7 +140,7 @@ namespace GeneralShare.UI
                     break;
 
                 case BarDirection.ToLeft:
-                    float hPos = Position.X + _bounds.X - w;
+                    float hPos = Position.X + _destination.X - w;
                     _headPos = new Vector2(hPos, 0);
                     _mainRect = new RectangleF(hPos, Position.Y, w, h);
                     break;
@@ -157,8 +158,8 @@ namespace GeneralShare.UI
 
                 _boundaries.X = Position.X;
                 _boundaries.Y = Position.Y;
-                _boundaries.Width = Scale.X * _bounds.X / _backBarRegion.Width;
-                _boundaries.Height = Scale.Y * _bounds.Y / _backBarRegion.Height;
+                _boundaries.Width = Scale.X * _destination.X / _backBarRegion.Width;
+                _boundaries.Height = Scale.Y * _destination.Y / _backBarRegion.Height;
                 InvokeMarkedDirty(DirtMarkType.Boundaries);
 
                 _needsSpriteUpdate = true;
@@ -170,6 +171,7 @@ namespace GeneralShare.UI
 
         public override void Draw(GameTime time, SpriteBatch batch)
         {
+            UpdateBar();
             if (_needsSpriteUpdate)
             {
                 CalculateMainSprite(_mainRect);

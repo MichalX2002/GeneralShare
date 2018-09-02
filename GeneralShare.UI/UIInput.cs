@@ -54,9 +54,9 @@ namespace GeneralShare.UI
             InterceptCursor = true;
             AllowSelection = true;
             UseShadow = true;
-            BuildTextQuadTree = true;
+            BuildCharQuadTree = true;
 
-            SetMaxCharCount(200);
+            MaxCharCount = 200;
             CaretIndex = 0;
             CaretSize = new Vector2(2, -1);
             CaretBlinkSpeed = 1;
@@ -212,7 +212,7 @@ namespace GeneralShare.UI
                 var pos = mouseState.Position;
                 var range = new RectangleF(pos.X - sizeX, pos.Y - sizeY, sizeX * 2, sizeY * 2);
 
-                var item = _textQuadTree.CurrentTree.QueryNearest(range, pos);
+                var item = _charQuadTree.CurrentTree.QueryNearest(range, pos);
                 if (item != null)
                 {
                     int newIndex = (int)Math.Ceiling(item.Value);
@@ -275,7 +275,7 @@ namespace GeneralShare.UI
             {
                 base.Draw(time, batch);
 
-                if (BuildTextQuadTree == false)
+                if (BuildCharQuadTree == false)
                     return;
 
                 if (IsSelected)
@@ -317,7 +317,7 @@ namespace GeneralShare.UI
                     }
                 }
 
-                DrawTree(_textQuadTree.CurrentTree);
+                DrawTree(_charQuadTree.CurrentTree);
                 */
             }
         }

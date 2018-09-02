@@ -256,6 +256,18 @@ namespace GeneralShare.UI
             MarkDirty(marks);
         }
 
+        public override bool Equals(object obj)
+        {
+            if (obj is UITransform transform)
+                return TransformKey == transform.TransformKey;
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return TransformKey;
+        }
+
         protected virtual void Dispose(bool disposing)
         {
             if (!IsDisposed)
