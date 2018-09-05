@@ -9,7 +9,7 @@ namespace GeneralShare
         {
             if (value == null)
                 throw new ArgumentNullException(nameof(value));
-            if (value == string.Empty)
+            if (value == string.Empty || value.Length == 0)
                 return 0;
 
             int index = -1;
@@ -20,7 +20,7 @@ namespace GeneralShare
             return count;
         }
 
-        public static string SafeFormat(this string value, params object[] items)
+        public static string Format(this string value, params object[] items)
         {
             try
             {
@@ -28,11 +28,12 @@ namespace GeneralShare
             }
             catch
             {
-                var b = new StringBuilder($"Format Error: \"{value}\": ");
+                string errorFormat = $"Format Error: \"{value}\": ";
+                var b = new StringBuilder(errorFormat, errorFormat.Length + items.Length * 2);
                 for (int i = 0; i < items.Length; i++)
                 {
                     b.Append(items[i]);
-                    if (i <= items.Length - 1)
+                    if (i < items.Length)
                         b.Append(',');
                 }
                 return b.ToString();
@@ -68,8 +69,7 @@ namespace GeneralShare
             if (string.IsNullOrWhiteSpace(camelCasedString))
                 return string.Empty;
 
-            StringBuilder newText = new StringBuilder((int)(camelCasedString.Length * 1.5f));
-            newText.Append(camelCasedString);
+            var newText = new StringBuilder(camelCasedString, (int)(camelCasedString.Length * 1.1f));
             for (int i = 1; i < newText.Length; i++)
             {
                 if (char.IsUpper(newText[i]) && newText[i - 1] != ' ')
