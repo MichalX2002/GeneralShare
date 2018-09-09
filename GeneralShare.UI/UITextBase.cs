@@ -31,6 +31,7 @@ namespace GeneralShare.UI
         protected RectangleF _textBounds;
         protected RectangleF _totalBoundaries;
         private TextAlignment _align;
+        private float _alignOffsetX;
 
         protected bool _useShadow;
         protected BatchedSprite _shadowSprite;
@@ -204,7 +205,7 @@ namespace GeneralShare.UI
                 if (hadDirtyGraphics)
                 {
                     Vector3 pos = Position;
-                    _textBounds.X = pos.X;
+                    _textBounds.X = pos.X + _alignOffsetX;
                     _textBounds.Y = pos.Y;
 
                     if (_processedText.Length > 0 && _font != null)
@@ -266,18 +267,16 @@ namespace GeneralShare.UI
 
         private void GetLines()
         {
+            if(_processedText.Length == 0)
+                return;
+
             if (_align != TextAlignment.Center && _align != TextAlignment.Right)
                 return;
 
             float width = 0;
-
             void AddLine(int index)
             {
-                float scaledWidth = width * Scale.X;
-                _lines.Add(new LineInfo(
-                    scaledWidth,
-                    index - _lines.Count // pretend that newline chars don't exist
-                ));
+                _lines.Add(new LineInfo(width, index));
                 width = 0;
             }
 
@@ -292,10 +291,7 @@ namespace GeneralShare.UI
                 }
 
                 if (glyph.Character == '\n')
-                {
-                    width = 0;
                     AddLine(i);
-                }
             }
             AddLine(_textGlyphs.Count - 1);
 
@@ -316,23 +312,35 @@ namespace GeneralShare.UI
 
             int lastBreak = 0;
             int lineCount = _lines.Count;
+            float largestOffset = 0;
+            
             for (int i = 0; i < lineCount; i++)
-            {
+                {
+                    if (_processedText.Length > 0 && _processedText[0] == 'e')
+                    {
+                        Console.WriteLine(_lines[i].BreakIndex  + " | " + _lines[i].Width);
+                }
+
                 int breakIndex = _lines[i].BreakIndex;
                 int charCount = i == lineCount - 1 ? breakIndex + 1 : breakIndex;
 
                 for (int j = lastBreak; j < charCount; j++)
                 {
+                    ref Glyph glyph = ref _textGlyphs.GetReferenceAt(j);
                     float xOffset = GetXOffset(_lines[i].Width);
 
-                    ref BatchedSprite sprite = ref _textSprites.GetReferenceAt(j).Sprite;
-                    sprite.TL.Position.X += xOffset;
-                    sprite.TR.Position.X += xOffset;
-                    sprite.BL.Position.X += xOffset;
-                    sprite.BR.Position.X += xOffset;
+                    Vector2 newPos = glyph.Position;
+                    newPos.X += xOffset;
+                    glyph = new Glyph(glyph.Character, newPos, glyph.FontRegion);
+
+                    if (Math.Abs(xOffset) > Math.Abs(largestOffset))
+                        largestOffset = xOffset;
                 }
                 lastBreak = breakIndex;
             }
+
+            _alignOffsetX = largestOffset * Scale.X;
+            _textBounds.X += _alignOffsetX;
             _lines.Clear(false);
         }
 
@@ -361,15 +369,16 @@ namespace GeneralShare.UI
 
                     SpecialPostTextProcessing();
                     
-                    _textBounds.Position = Position.ToVector2();
                     _textGlyphs.Clear(false);
-                    _textBounds.Size = _font.GetGlyphs(_processedText, _textGlyphs) * Scale;
+                    _textBounds.Position = Position.ToVector2();
+                    _textBounds.Size = _font.GetGlyphs(_processedText, _textGlyphs);
+                    GetLines();
+                    _textBounds.Size *= Scale;
                     UpdateTotalBoundaries();
 
                     ClearDirtMarks(needsProcessingFlags);
                     InvokeMarkedDirty(DirtMarkType.Boundaries);
 
-                    GetLines();
                     MarkDirty(DirtMarkType.ValueProcessed, true);
                 }
             }
@@ -449,7 +458,6 @@ namespace GeneralShare.UI
                     if (_anchor.Pivot != PivotPosition.None)
                         Position = _anchor.Position;
                 }
-
                 BuildGraphicsIfNeeded();
 
                 if (_textSprites.Count > 0)
@@ -462,7 +470,7 @@ namespace GeneralShare.UI
             }
         }
 
-        protected struct LineInfo
+        public struct LineInfo
         {
             public float Width;
             public int BreakIndex;

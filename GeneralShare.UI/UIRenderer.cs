@@ -56,7 +56,6 @@ namespace GeneralShare.UI
                 for (int i = 0, count = list.Count; i < count; i++)
                 {
                     spriteBatch.Draw(time, list[i]);
-                    //System.Console.WriteLine(list[i]);
                 }
                 spriteBatch.End();
 
