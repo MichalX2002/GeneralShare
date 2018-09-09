@@ -84,6 +84,7 @@
     <Compile Include="VersionTag.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Helpers\StringHelper.Format.cs" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -3,7 +3,7 @@ using System.Text;
 
 namespace GeneralShare
 {
-    public static class StringHelper
+    public static partial class StringHelper
     {
         public static int LineCount(this string value)
         {
@@ -18,26 +18,6 @@ namespace GeneralShare
                 count++;
 
             return count;
-        }
-
-        public static string Format(this string value, params object[] items)
-        {
-            try
-            {
-                return string.Format(value, items);
-            }
-            catch
-            {
-                string errorFormat = $"Format Error: \"{value}\": ";
-                var b = new StringBuilder(errorFormat, errorFormat.Length + items.Length * 2);
-                for (int i = 0; i < items.Length; i++)
-                {
-                    b.Append(items[i]);
-                    if (i < items.Length)
-                        b.Append(',');
-                }
-                return b.ToString();
-            }
         }
 
         public static bool Equals(this string value, StringBuilder builder)

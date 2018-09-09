@@ -225,10 +225,7 @@ namespace GeneralShare.UI
                                 AddTextQuadItem(ref sprite);
 
                             if (_valueExpressions && i < expressionCount)
-                            {
-                                Color color = _expressionColors.GetReferenceAt(i);
-                                sprite.SetColor(color);
-                            }
+                                sprite.SetColor(_expressionColors[i]);
                         }
 
                         MarkDirty(DirtMarkType.ShadowMath, true);
