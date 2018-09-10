@@ -267,7 +267,7 @@ namespace GeneralShare.UI
 
         private void GetLines()
         {
-            if(_processedText.Length == 0)
+            if (_processedText.Length == 0)
                 return;
 
             if (_align != TextAlignment.Center && _align != TextAlignment.Right)
@@ -313,17 +313,10 @@ namespace GeneralShare.UI
             int lastBreak = 0;
             int lineCount = _lines.Count;
             float largestOffset = 0;
-            
             for (int i = 0; i < lineCount; i++)
-                {
-                    if (_processedText.Length > 0 && _processedText[0] == 'e')
-                    {
-                        Console.WriteLine(_lines[i].BreakIndex  + " | " + _lines[i].Width);
-                }
-
+            {
                 int breakIndex = _lines[i].BreakIndex;
                 int charCount = i == lineCount - 1 ? breakIndex + 1 : breakIndex;
-
                 for (int j = lastBreak; j < charCount; j++)
                 {
                     ref Glyph glyph = ref _textGlyphs.GetReferenceAt(j);

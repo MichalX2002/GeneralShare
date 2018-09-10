@@ -30,7 +30,7 @@ namespace GeneralShare
             return _lastMemoryUsage;
         }
         
-        public static void RefreshCurrentProcess()
+        private static void RefreshCurrentProcess()
         {
             var now = DateTime.Now.TimeOfDay;
             if (now.TotalSeconds - _lastProcessRefresh.TotalSeconds > 1)
@@ -46,7 +46,7 @@ namespace GeneralShare
             GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true, true);
         }
 
-        public static void CollectLargeGarbage()
+        public static void CollectLargeObjectHeap()
         {
             GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
             CollectGarbage();

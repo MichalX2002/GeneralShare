@@ -2,10 +2,32 @@
 using System;
 using System.Collections.Generic;
 
-namespace GeneralShare.Collections
+namespace GeneralShare
 {
     public static class EnumerableExtensions
     {
+        public static int FastSum<TSource>(
+            this IEnumerable<TSource> source, Func<TSource, int> selector)
+        {
+            int result = 0;
+            if (source is IList<TSource> list)
+            {
+                for (int i = 0; i < list.Count; i++)
+                    result += selector.Invoke(list[i]);
+            }
+            else if (source is IReadOnlyList<TSource> readList)
+            {
+                for (int i = 0; i < readList.Count; i++)
+                    result += selector.Invoke(readList[i]);
+            }
+            else
+            {
+                foreach (var item in source)
+                    result += selector.Invoke(item);
+            }
+            return result;
+        }
+
         public static TSource FirstMin<TSource, TKey>(
                this IEnumerable<TSource> source, Func<TSource, TKey> keySelector) where TKey : IComparable<TKey>
         {
