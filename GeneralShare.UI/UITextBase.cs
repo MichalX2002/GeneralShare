@@ -6,40 +6,39 @@ using MonoGame.Extended.BitmapFonts;
 using MonoGame.Extended.TextureAtlases;
 using System;
 using System.Text;
-using Glyph = MonoGame.Extended.BitmapFonts.BitmapFont.Glyph;
 
 namespace GeneralShare.UI
 {
     public abstract class UITextBase : UIElement
     {
-        protected BitmapFont _font;
-        protected ListArray<Glyph> _textGlyphs;
+        private BitmapFont _font;
+        private ListArray<BitmapFont.Glyph> _textGlyphs;
         protected string _value;
         protected StringBuilder _processedText;
-        protected ListArray<LineInfo> _lines;
-        protected bool _buildCharQuadTree;
+        private ListArray<LineInfo> _lines;
+        private bool _buildCharQuadTree;
         protected PooledQuadTree<float> _charQuadTree;
 
         protected ListArray<GlyphBatchedSprite> _textSprites;
         protected ListArray<Color> _expressionColors;
-        protected UIAnchor _anchor;
+        private UIAnchor _anchor;
 
         protected bool _valueExpressions;
         protected bool _keepExpressions;
-        protected Color _color;
-        protected Rectangle? _clipRect;
-        protected RectangleF _textBounds;
-        protected RectangleF _totalBoundaries;
+        private Color _color;
+        private Rectangle? _clipRect;
+        private RectangleF _textBounds;
+        private RectangleF _totalBoundaries;
         private TextAlignment _align;
         private float _alignOffsetX;
 
-        protected bool _useShadow;
-        protected BatchedSprite _shadowSprite;
-        protected TextureRegion2D _shadowTex;
-        protected RectangleF _shadowOffset;
-        protected Point _shadowTexSrc;
-        protected Color _shadowColor;
-        protected bool _shadowAvailable;
+        private bool _useShadow;
+        private BatchedSprite _shadowSprite;
+        private TextureRegion2D _shadowTex;
+        private RectangleF _shadowOffset;
+        private Point _shadowTexSrc;
+        private Color _shadowColor;
+        private bool _shadowAvailable;
 
         public Color BaseColor { get => _color; set => SetColor(value); }
         public BitmapFont Font { get => _font; set => SetFont(value); }
@@ -66,7 +65,7 @@ namespace GeneralShare.UI
         public UITextBase(UIManager manager, BitmapFont font) : base(manager)
         {
             _value = string.Empty;
-            _textGlyphs = new ListArray<Glyph>();
+            _textGlyphs = new ListArray<BitmapFont.Glyph>();
             _processedText = new StringBuilder();
             _charQuadTree = new PooledQuadTree<float>(Rectangle.Empty, 2, true);
             _lines = new ListArray<LineInfo>();
@@ -267,7 +266,7 @@ namespace GeneralShare.UI
 
         private void GetLines()
         {
-            if (_processedText.Length == 0)
+            if (_textGlyphs.Count == 0)
                 return;
 
             if (_align != TextAlignment.Center && _align != TextAlignment.Right)
@@ -282,7 +281,7 @@ namespace GeneralShare.UI
 
             for (int i = 0; i < _textGlyphs.Count; i++)
             {
-                ref Glyph glyph = ref _textGlyphs.GetReferenceAt(i);
+                ref BitmapFont.Glyph glyph = ref _textGlyphs.GetReferenceAt(i);
                 if (glyph.FontRegion != null)
                 {
                     float right = glyph.Position.X + glyph.FontRegion.Width;
@@ -319,12 +318,12 @@ namespace GeneralShare.UI
                 int charCount = i == lineCount - 1 ? breakIndex + 1 : breakIndex;
                 for (int j = lastBreak; j < charCount; j++)
                 {
-                    ref Glyph glyph = ref _textGlyphs.GetReferenceAt(j);
+                    ref BitmapFont.Glyph glyph = ref _textGlyphs.GetReferenceAt(j);
                     float xOffset = GetXOffset(_lines[i].Width);
 
                     Vector2 newPos = glyph.Position;
                     newPos.X += xOffset;
-                    glyph = new Glyph(glyph.Character, newPos, glyph.FontRegion);
+                    glyph = new BitmapFont.Glyph(glyph.Character, newPos, glyph.FontRegion);
 
                     if (Math.Abs(xOffset) > Math.Abs(largestOffset))
                         largestOffset = xOffset;

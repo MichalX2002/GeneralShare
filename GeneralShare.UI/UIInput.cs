@@ -207,8 +207,8 @@ namespace GeneralShare.UI
         {
             lock (SyncRoot)
             {
-                float sizeX = Scale.X * _font.LineHeight * 0.9f;
-                float sizeY = Scale.Y * _font.LineHeight;
+                float sizeX = Scale.X * Font.LineHeight * 0.9f;
+                float sizeY = Scale.Y * Font.LineHeight;
                 var pos = mouseState.Position;
                 var range = new RectangleF(pos.X - sizeX, pos.Y - sizeY, sizeX * 2, sizeY * 2);
 
@@ -326,7 +326,7 @@ namespace GeneralShare.UI
         {
             var colorOutput = _prefixExpressions ? _expressionColors : null;
             SpecialTextFormat.Format(_prefix, _processedText,
-                _basePrefixColor, _font, _keepPrefixExpressions, colorOutput);
+                _basePrefixColor, Font, _keepPrefixExpressions, colorOutput);
         }
 
         protected override void SpecialPostTextProcessing()
