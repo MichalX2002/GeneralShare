@@ -5,7 +5,7 @@ namespace GeneralShare.UI
 {
     public static class ViewportExtensions
     {
-        public static bool EqualsTo(this in Viewport src, in Viewport viewport)
+        public static bool EqualsTo(this Viewport src, Viewport viewport)
         {
             return 
                 src.Bounds != viewport.Bounds ||
