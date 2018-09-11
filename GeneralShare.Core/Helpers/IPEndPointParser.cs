@@ -46,7 +46,7 @@ namespace GeneralShare
 
             int port = 0;
             IPAddress ip;
-            if (ep.Length > 2)
+            if (ep.Length >= 2)
             {
                 int.TryParse(ep[ep.Length - 1], out port);
                 if (port < IPEndPoint.MinPort || port > IPEndPoint.MaxPort)
