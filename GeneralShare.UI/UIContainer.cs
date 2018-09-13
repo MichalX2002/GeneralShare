@@ -27,7 +27,7 @@ namespace GeneralShare.UI
 
         private void Transform_MarkedDirty(DirtMarkType marks)
         {
-            if (marks.HasFlags(DirtMarkType.Boundaries))
+            if (marks.HasAnyFlag(DirtMarkType.Boundaries, DirtMarkType.Enabled))
                 _needsBoundsUpdate = true;
         }
 

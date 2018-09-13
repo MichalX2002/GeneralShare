@@ -22,7 +22,7 @@ namespace GeneralShare.UI
 
         private void UILayer_MarkedDirty(DirtMarkType type)
         {
-            if (type.HasFlags(DirtMarkType.Transform, DirtMarkType.Destination))
+            if (type.HasAnyFlag(DirtMarkType.Transform, DirtMarkType.Destination))
             {
                 float x = Position.X + _destination.X - Origin.X * Scale.X;
                 float y = Position.Y + _destination.Y - Origin.Y * Scale.Y;

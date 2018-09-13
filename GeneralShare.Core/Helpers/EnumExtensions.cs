@@ -20,6 +20,61 @@ namespace GeneralShare
             return EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag);
         }
 
+        public static bool HasAnyFlag<TEnum>(
+            this TEnum value, TEnum flag0, TEnum flag1) where TEnum : Enum
+        {
+            if (EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag0) ||
+                EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag1))
+                return true;
+            return false;
+        }
+
+        public static bool HasAnyFlag<TEnum>(
+            this TEnum value, TEnum flag0, TEnum flag1, TEnum flag2) where TEnum : Enum
+        {
+            if (EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag0) ||
+                EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag1) ||
+                EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag2))
+                return true;
+            return false;
+        }
+
+        public static bool HasAnyFlag<TEnum>(
+            this TEnum value, TEnum flag0, TEnum flag1, TEnum flag2, TEnum flag3) where TEnum : Enum
+        {
+            if (EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag0) ||
+                EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag1) ||
+                EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag2) ||
+                EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag3))
+                return true;
+            return false;
+        }
+
+        public static bool HasAnyFlag<TEnum>(
+            this TEnum value, TEnum flag0, TEnum flag1, TEnum flag2, TEnum flag3, TEnum flag4) where TEnum : Enum
+        {
+            if (EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag0) ||
+                EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag1) ||
+                EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag2) ||
+                EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag3) ||
+                EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag4))
+                return true;
+            return false;
+        }
+
+        public static bool HasAnyFlag<TEnum>(
+            this TEnum value, TEnum flag0, TEnum flag1, TEnum flag2, TEnum flag3, TEnum flag4, TEnum flag5) where TEnum : Enum
+        {
+            if (EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag0) ||
+                EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag1) ||
+                EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag2) ||
+                EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag3) ||
+                EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag4) ||
+                EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag5))
+                return true;
+            return false;
+        }
+
         /// <summary>
         /// Determines whether the specified value has multiple flags.
         /// </summary>
@@ -29,7 +84,7 @@ namespace GeneralShare
         /// <returns>
         ///  <c>true</c> if the specified value has any flag; otherwise, <c>false</c>.
         /// </returns>
-        public static bool HasFlags<TEnum>(this TEnum value, params TEnum[] flags) where TEnum : Enum
+        public static bool HasAnyFlag<TEnum>(this TEnum value, params TEnum[] flags) where TEnum : Enum
         {
             for (int i = 0; i < flags.Length; i++)
             {

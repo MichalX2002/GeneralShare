@@ -44,5 +44,6 @@ namespace GeneralShare.UI
         PivotPosition = 1 << 28,
         Boundaries = 1 << 29,
         Destination = 1 << 13,
+        Enabled = 1 << 30
     }
 }

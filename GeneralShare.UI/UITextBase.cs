@@ -358,7 +358,6 @@ namespace GeneralShare.UI
                         ListArray<Color> colorOutput = _valueExpressions ? _expressionColors : null;
                         SpecialTextFormat.Format(_value, _processedText, _color, _font, _keepExpressions, colorOutput);
                     }
-
                     SpecialPostTextProcessing();
                     
                     _textGlyphs.Clear(false);
@@ -399,9 +398,7 @@ namespace GeneralShare.UI
         {
             PrepareQuadTree();
             for (int i = 0, count = _textSprites.Count; i < count; i++)
-            {
                 AddTextQuadItem(ref _textSprites.GetReferenceAt(i));
-            }
         }
 
         protected void AddTextQuadItem(ref GlyphBatchedSprite item)

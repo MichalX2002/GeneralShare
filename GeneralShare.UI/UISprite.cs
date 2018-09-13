@@ -37,7 +37,7 @@ namespace GeneralShare.UI
 
         private void UpdateSprite()
         {
-            if (DirtMarks.HasFlags(DirtMarkType.Transform, DirtMarkType.Value, DirtMarkType.Destination))
+            if (DirtMarks.HasAnyFlag(DirtMarkType.Transform, DirtMarkType.Value, DirtMarkType.Destination))
             {
                 ClearDirtMarks();
                 var srcSize = _region.Bounds.Size.ToVector2();

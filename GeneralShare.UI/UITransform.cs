@@ -127,7 +127,7 @@ namespace GeneralShare.UI
                     _updateViewportOnEnable = false;
                 }
             }
-            _enabled = value;
+            MarkDirtyE(ref _enabled, value, DirtMarkType.Enabled);
         }
 
         public virtual void Update(GameTime time)
@@ -160,6 +160,7 @@ namespace GeneralShare.UI
         {
             return (DirtMarks & marks) != 0;
         }
+
         private void SetPosition(in Vector3 value)
         {
             MarkDirtyE(ref _position, value, DirtMarkType.Position | DirtMarkType.Transform);
