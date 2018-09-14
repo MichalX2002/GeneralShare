@@ -156,11 +156,14 @@ namespace GeneralShare.UI
         {
             if (Dirty)
             {
+                DirtMarkType mark = FULL_TRANSFORM_UPDATE;
+                if (HasDirtMarks(DirtMarkType.Enabled))
+                    mark |= DirtMarkType.Enabled;
                 lock (SyncRoot)
                 {
                     for (int i = 0, count = _transforms.Count; i < count; i++)
                     {
-                        _transforms[i].InvokeMarkedDirtyInternal(UITransform.FULL_TRANSFORM_UPDATE);
+                        _transforms[i].InvokeMarkedDirtyInternal(mark);
                     }
                 }
                 Dirty = false;
@@ -173,11 +176,14 @@ namespace GeneralShare.UI
         {
             if (!IsDisposed)
             {
-                for (int i = 0, count = _transforms.Count; i < count; i++)
+                lock (SyncRoot)
                 {
-                    _transforms[i].MarkedDirty -= Transform_MarkedDirty;
+                    for (int i = 0, count = _transforms.Count; i < count; i++)
+                    {
+                        _transforms[i].MarkedDirty -= Transform_MarkedDirty;
+                    }
+                    _transforms = null;
                 }
-                _transforms = null;
 
                 base.Dispose(disposing);
             }
