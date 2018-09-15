@@ -11,7 +11,7 @@ namespace GeneralShare.UI
         private Viewport _viewport;
 
         public PivotPosition Pivot { get => _pivot; set => SetPivot(value); }
-        public Vector3 PivotOffset { get => _pivotOffset; set => SetPivotOffset(value); }
+        public Vector3 Offset { get => _pivotOffset; set => SetPivotOffset(value); }
 
         public UIAnchor(UIManager manager) : base(manager)
         {
@@ -40,7 +40,7 @@ namespace GeneralShare.UI
             }
         }
 
-        public override void ViewportChanged(in Viewport viewport)
+        public override void ViewportChanged(Viewport viewport)
         {
             _viewport = viewport;
             UpdatePivotPosition();
@@ -99,7 +99,7 @@ namespace GeneralShare.UI
                     break;
             }
             Position = basePos;
-            InvokeMarkedDirty(DirtMarkType.PivotPosition);
+            InvokeMarkedDirty(DirtMarkType.Position);
         }
     }
 }

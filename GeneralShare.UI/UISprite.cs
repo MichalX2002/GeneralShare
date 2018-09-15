@@ -50,7 +50,7 @@ namespace GeneralShare.UI
                 {
                     _boundaries = new RectangleF(X, Y, Region.Width * Scale.X, Region.Height * Scale.Y);
 
-                    var pos = Position.ToVector2();
+                    var pos = GlobalPosition.ToVector2();
                     _sprite.SetTransform(pos, -Rotation, Scale, Origin * srcSize, srcSize);
                 }
                 _sprite.SetDepth(Z);

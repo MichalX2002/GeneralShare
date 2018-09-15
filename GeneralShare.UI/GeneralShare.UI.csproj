@@ -37,7 +37,7 @@
     </Reference>
     <Reference Include="MonoGame.Framework, Version=3.6.0.1625, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Binaries\MonoGame\DesktopGL\MonoGame.Framework.dll</HintPath>
+      <HintPath>..\..\..\GeneralShare\Binaries\MonoGame\DesktopGL\MonoGame.Framework.dll</HintPath>
     </Reference>
     <Reference Include="MonoGame.Imaging">
       <HintPath>..\..\Binaries\MonoGame\MonoGame.Imaging.dll</HintPath>
@@ -58,6 +58,7 @@
     <Compile Include="DirtMarkType.cs" />
     <Compile Include="DrawExtensions.cs" />
     <Compile Include="UIContainer.cs" />
+    <Compile Include="UIDrawCaller.cs" />
     <Compile Include="UIInput.cs" />
     <Compile Include="PivotPosition.cs" />
     <Compile Include="UIProgressBar.cs" />
@@ -69,7 +70,7 @@
     <Compile Include="UIAnchor.cs" />
     <Compile Include="UICollisionLayer.cs" />
     <Compile Include="UIManager.cs" />
-    <Compile Include="UIDepthComparer.cs" />
+    <Compile Include="UIDrawOrderComparer.cs" />
     <Compile Include="UIElement.cs" />
     <Compile Include="UIRenderer.cs" />
     <Compile Include="UISprite.cs" />

@@ -24,27 +24,40 @@ namespace GeneralShare.UI
         private bool _dirty;
         private bool _enabled;
         private Vector3 _position;
+        private Vector2 _origin;
         private Vector2 _scale;
         private float _rotation;
-        private Vector2 _origin;
         private UIContainer _container;
+        private UIAnchor _anchor;
+        private int _drawOrder;
 
         public readonly int TransformKey;
+        public object SyncRoot { get; }
         public bool IsDisposed { get; private set; }
+        public bool IsDrawable { get; protected set; }
         public bool IsEnabled { get => _enabled; set { SetEnabled(value); } }
         public bool IsActive => _enabled && (_container == null ? true : _container.IsEnabled);
-        public object SyncRoot { get; }
+        public int DrawOrder { get => _drawOrder; set => SetDrawOrder(value); }
         public DirtMarkType DirtMarks { get; private set; }
-        public UIManager Manager { get; }
-        public UIContainer Container => _container;
+        public SamplingMode PreferredSampling { get; set; }
 
-        public Vector2 Scale { get => GetScale(); set => SetScale(value); }
-        public float Rotation { get => GetRotation(); set => SetRotation(value); }
-        public Vector2 Origin { get => GetOrigin(); set => SetOrigin(value); }
-        public Vector3 Position { get => GetPosition(); set => SetPosition(value); }
-        public float X { get => Position.X; set => SetPositionF(value, _position.Y, _position.Z); }
-        public float Y { get => Position.Y; set => SetPositionF(_position.X, value, _position.Z); }
-        public float Z { get => Position.Z; set => SetPositionF(_position.X, _position.Y, value); }
+        public UIManager Manager { get; }
+        public UIContainer Container { get => _container; set => SetContainer(value); }
+        public UIAnchor Anchor { get => _anchor; set => SetAnchor(value); }
+        public PivotPosition AnchorPivot => _anchor == null ? _anchor.Pivot : PivotPosition.None;
+        public Vector3 AnchorOffset => _anchor == null ? _anchor.Offset : Vector3.Zero;
+        
+        public Vector3 GlobalPosition => GetGlobalPosition();
+        public Vector2 GlobalScale => GetGlobalScale();   
+        public float GlobalRotation => GetGlobalRotation();
+
+        public Vector3 Position { get => _position; set => SetPosition(value); }
+        public Vector2 Origin { get => _origin; set => SetOrigin(value); }
+        public Vector2 Scale { get => _scale; set => SetScale(value); }
+        public float Rotation { get => _rotation; set => SetRotation(value); }
+        public float X { get => _position.X; set => SetPositionF(value, _position.Y, _position.Z); }
+        public float Y { get => _position.Y; set => SetPositionF(_position.X, value, _position.Z); }
+        public float Z { get => _position.Z; set => SetPositionF(_position.X, _position.Y, value); }
 
         public bool Dirty
         {
@@ -72,8 +85,14 @@ namespace GeneralShare.UI
             {
                 Manager = manager;
                 Manager.Add(this);
+                PreferredSampling = manager.PreferredSamplingMode;
+            }
+            else
+            {
+                PreferredSampling = SamplingMode.LinearClamp;
             }
 
+            IsDrawable = true;
             IsEnabled = true;
         }
 
@@ -92,29 +111,43 @@ namespace GeneralShare.UI
             _origin = origin;
         }
 
-        internal void SetContainer(UIContainer container)
+        internal void SetContainer(UIContainer value)
         {
-            MarkDirty(ref _container, container, FULL_TRANSFORM_UPDATE);
+            MarkDirty(ref _container, value, FULL_TRANSFORM_UPDATE);
+        }
+               
+        private void SetDrawOrder(int value)
+        {
+            MarkDirtyE(ref _drawOrder, value, DirtMarkType.DrawOrder);
         }
 
-        private Vector2 GetScale()
+        private void SetAnchor(UIAnchor value)
         {
-            return Container == null ? _scale : _scale * Container.Scale;
+            MarkDirty(ref _anchor, value, DirtMarkType.Position);
         }
 
-        private float GetRotation()
+        private Vector2 GetGlobalScale()
         {
-            return Container == null ? _rotation : _rotation + Container.Rotation;
+            if (Container == null)
+                return _scale;
+            return _scale * Container.Scale;
         }
 
-        private Vector2 GetOrigin()
+        private float GetGlobalRotation()
         {
-            return Container == null ? _origin : _origin + Container.Origin;
+            if (Container == null)
+                return _rotation;
+            return _rotation + Container.Rotation;
         }
         
-        public Vector3 GetPosition()
+        private Vector3 GetGlobalPosition()
         {
-            return Container == null ? _position : _position + Container.Position;
+            Vector3 pos = _position;
+            if(_container != null)
+                pos += _container.Position;
+            if (_anchor != null && _anchor.Pivot != PivotPosition.None)
+                pos += _anchor.Position;
+            return pos;
         }
 
         private void SetEnabled(bool value)
@@ -134,6 +167,10 @@ namespace GeneralShare.UI
         {
         }
 
+        public virtual void Draw(GameTime time, SpriteBatch batch)
+        {
+        }
+
         internal void OnViewportChange(Viewport viewport)
         {
             if (_enabled == false)
@@ -142,26 +179,11 @@ namespace GeneralShare.UI
                 ViewportChanged(viewport);
         }
 
-        public virtual void ViewportChanged(in Viewport viewport)
+        public virtual void ViewportChanged(Viewport viewport)
         {
-        }
-        public bool HasDirtMarks(params DirtMarkType[] marks)
-        {
-            var src = DirtMarks;
-            for (int i = 0; i < marks.Length; i++)
-            {
-                if ((src & marks[i]) != 0)
-                    return true;
-            }
-            return false;
         }
 
-        public bool HasDirtMarks(DirtMarkType marks)
-        {
-            return (DirtMarks & marks) != 0;
-        }
-
-        private void SetPosition(in Vector3 value)
+        private void SetPosition(Vector3 value)
         {
             MarkDirtyE(ref _position, value, DirtMarkType.Position | DirtMarkType.Transform);
         }
@@ -176,14 +198,19 @@ namespace GeneralShare.UI
             MarkDirtyE(ref _rotation, value, DirtMarkType.Rotation | DirtMarkType.Transform);
         }
 
-        private void SetScale(in Vector2 value)
+        private void SetScale(Vector2 value)
         {
             MarkDirtyE(ref _scale, value, DirtMarkType.Scale | DirtMarkType.Transform);
         }
 
-        private void SetOrigin(in Vector2 value)
+        private void SetOrigin(Vector2 value)
         {
             MarkDirtyE(ref _origin, value, DirtMarkType.Origin | DirtMarkType.Transform);
+        }
+
+        public bool HasAnyDirtMark(DirtMarkType marks)
+        {
+            return (DirtMarks & marks) != 0;
         }
 
         protected void ClearDirtMarks(DirtMarkType marks)

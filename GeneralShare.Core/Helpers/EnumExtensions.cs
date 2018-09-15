@@ -6,8 +6,7 @@ namespace GeneralShare
     public static class EnumExtensions
     {
         /// <summary>
-        /// Determines whether the specified value has flags. Note this method is faster
-        /// than the one that comes with .NET 4 as it avoids any explict boxing or unboxing. 
+        /// Determines whether the specified value has flags.
         /// </summary>
         /// <typeparam name="TEnum">The type of the enum.</typeparam>
         /// <param name="value">The value.</param>
@@ -15,7 +14,7 @@ namespace GeneralShare
         /// <returns>
         ///  <c>true</c> if the specified value has flags; otherwise, <c>false</c>.
         /// </returns>
-        public static bool HasFlags<TEnum>(this TEnum value, TEnum flag) where TEnum : Enum
+        public static bool HasAnyFlag<TEnum>(this TEnum value, TEnum flag) where TEnum : Enum
         {
             return EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag);
         }

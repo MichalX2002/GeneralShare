@@ -1,5 +1,4 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended;
 
@@ -31,7 +30,6 @@ namespace GeneralShare.UI
         public bool IsSelected { get; internal set; }
         public bool AllowSelection { get; set; }
         public abstract RectangleF Boundaries { get; }
-        public SamplingMode PreferredSamplingMode { get; set; }
 
         public UIElement(string name, UIManager manager) : base(manager)
         {
@@ -39,15 +37,6 @@ namespace GeneralShare.UI
             TriggerMouseEvents = false;
             TriggerKeyEvents = false;
             InterceptCursor = true;
-
-            if (manager != null)
-            {
-                PreferredSamplingMode = manager.PreferredSamplingMode;
-            }
-            else
-            {
-                PreferredSamplingMode = SamplingMode.LinearClamp;
-            }
         }
 
         public UIElement(UIManager manager) : this(null, manager) { }
@@ -117,7 +106,5 @@ namespace GeneralShare.UI
         {
             TriggerGenericKeyboardEvent(key, OnKeyRelease);
         }
-
-        public virtual void Draw(GameTime time, SpriteBatch batch) { }
     }
 }

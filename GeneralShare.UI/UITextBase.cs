@@ -21,7 +21,6 @@ namespace GeneralShare.UI
 
         protected ListArray<GlyphBatchedSprite> _textSprites;
         protected ListArray<Color> _expressionColors;
-        private UIAnchor _anchor;
 
         protected bool _valueExpressions;
         protected bool _keepExpressions;
@@ -46,9 +45,9 @@ namespace GeneralShare.UI
         public StringBuilder ProcessedText { get { ProcessTextIfNeeded(); return _processedText; } }
         public int SpecialProcessedTextLength { get; private set; }
 
-        public TextureRegion2D ShadowTexture { get => _shadowTex; set => SetShadowTex(value); }
-        public Color ShadowColor { get => _shadowColor; set => SetShadowColor(value); }
         public bool UseShadow { get => _useShadow; set => SetUseShadow(value); }
+        public Color ShadowColor { get => _shadowColor; set => SetShadowColor(value); }
+        public TextureRegion2D ShadowTexture { get => _shadowTex; set => SetShadowTex(value); }
         public RectangleF ShadowOffset { get => _shadowOffset; set => SetShadowOffset(value); }
 
         public bool BuildCharQuadTree { get => _buildCharQuadTree; set => SetBuildCharQuadTree(value); }
@@ -57,11 +56,7 @@ namespace GeneralShare.UI
         public RectangleF TextBoundaries { get { ProcessTextIfNeeded(); return _textBounds; } }
         public SizeF Measure => TextBoundaries.Size;
         public TextAlignment Alignment { get => _align; set => SetAlign(value); }
-
-        public UIAnchor Anchor => GetAnchor();
-        public PivotPosition Pivot { get => GetPivot(); set => Anchor.Pivot = value; }
-        public Vector3 PivotOffset { get => GetPivotOffset(); set => Anchor.PivotOffset = value; }
-
+        
         public UITextBase(UIManager manager, BitmapFont font) : base(manager)
         {
             _value = string.Empty;
@@ -84,27 +79,6 @@ namespace GeneralShare.UI
         }
 
         public UITextBase(BitmapFont font) : this(null, font) { }
-
-        private UIAnchor GetAnchor()
-        {
-            if (_anchor == null)
-                _anchor = new UIAnchor(Manager);
-            return _anchor;
-        }
-
-        private PivotPosition GetPivot()
-        {
-            if (_anchor == null)
-                return PivotPosition.None;
-            return _anchor.Pivot;
-        }
-
-        private Vector3 GetPivotOffset()
-        {
-            if (_anchor == null)
-                return Vector3.Zero;
-            return Anchor.PivotOffset;
-        }
 
         protected void SetAlign(TextAlignment align)
         {
@@ -197,13 +171,13 @@ namespace GeneralShare.UI
 
             lock (SyncRoot)
             {
-                bool hadDirtyGraphics = HasDirtMarks(
-                    DirtMarkType.ValueProcessed | DirtMarkType.Transform |
-                    DirtMarkType.Font | DirtMarkType.ClipRectangle);
+                bool hadDirtyGraphics = DirtMarks.HasAnyFlag(
+                    DirtMarkType.ValueProcessed, DirtMarkType.Transform,
+                    DirtMarkType.Font, DirtMarkType.ClipRectangle);
 
                 if (hadDirtyGraphics)
                 {
-                    Vector3 pos = Position;
+                    Vector3 pos = GlobalPosition;
                     _textBounds.X = pos.X + _alignOffsetX;
                     _textBounds.Y = pos.Y;
 
@@ -222,7 +196,7 @@ namespace GeneralShare.UI
                         {
                             ref var sprite = ref _textSprites.GetReferenceAt(i);
                             if (_buildCharQuadTree)
-                                AddTextQuadItem(ref sprite);
+                                AddTextQuadItem(ref pos, ref sprite);
 
                             if (_valueExpressions && i < expressionCount)
                                 sprite.SetColor(_expressionColors[i]);
@@ -232,19 +206,19 @@ namespace GeneralShare.UI
                     }
                 }
 
-                if (HasDirtMarks(DirtMarkType.BuildQuadTree))
+                if (DirtMarks.HasAnyFlag(DirtMarkType.BuildQuadTree))
                 {
                     ManageQuadTree(!hadDirtyGraphics);
                     ClearDirtMarks(DirtMarkType.BuildQuadTree);
                 }
 
-                if (HasDirtMarks(DirtMarkType.ShadowColor))
+                if (DirtMarks.HasAnyFlag(DirtMarkType.ShadowColor))
                     _shadowSprite.SetColor(_shadowColor);
 
                 UpdateTotalBoundaries();
                 SpecialBoundaryUpdate(_totalBoundaries, out _totalBoundaries);
 
-                if (HasDirtMarks(DirtMarkType.ShadowMath))
+                if (DirtMarks.HasAnyFlag(DirtMarkType.ShadowMath))
                     UpdateShadowSprite();
                 _shadowAvailable = _useShadow && _shadowTex != null;
 
@@ -338,13 +312,13 @@ namespace GeneralShare.UI
 
         public void ProcessTextIfNeeded()
         {
-            const DirtMarkType needsProcessingFlags =
+            const DirtMarkType needsProcessingMarks =
                 DirtMarkType.Color | DirtMarkType.Value | DirtMarkType.UseTextExpressions |
                 DirtMarkType.Font | DirtMarkType.InputPrefix | DirtMarkType.KeepTextExpressions;
 
             lock (SyncRoot)
             {
-                bool neededProcessing = HasDirtMarks(needsProcessingFlags);
+                bool neededProcessing = HasAnyDirtMark(needsProcessingMarks);
                 if (neededProcessing)
                 {
                     _expressionColors.Clear(false);
@@ -361,13 +335,13 @@ namespace GeneralShare.UI
                     SpecialPostTextProcessing();
                     
                     _textGlyphs.Clear(false);
-                    _textBounds.Position = Position.ToVector2();
+                    _textBounds.Position = GlobalPosition.ToVector2();
                     _textBounds.Size = _font.GetGlyphs(_processedText, _textGlyphs);
                     GetLines();
                     _textBounds.Size *= Scale;
                     UpdateTotalBoundaries();
 
-                    ClearDirtMarks(needsProcessingFlags);
+                    ClearDirtMarks(needsProcessingMarks);
                     InvokeMarkedDirty(DirtMarkType.Boundaries);
 
                     MarkDirty(DirtMarkType.ValueProcessed, true);
@@ -397,17 +371,18 @@ namespace GeneralShare.UI
         protected void BuildQuadTree()
         {
             PrepareQuadTree();
+            Vector3 globalPos = GlobalPosition;
             for (int i = 0, count = _textSprites.Count; i < count; i++)
-                AddTextQuadItem(ref _textSprites.GetReferenceAt(i));
+                AddTextQuadItem(ref globalPos, ref _textSprites.GetReferenceAt(i));
         }
 
-        protected void AddTextQuadItem(ref GlyphBatchedSprite item)
+        protected void AddTextQuadItem(ref Vector3 pos, ref GlyphBatchedSprite item)
         {
-            float yDiff = item.Sprite.TL.Position.Y - Position.Y;
+            float yDiff = item.Sprite.TL.Position.Y - pos.Y;
             int line = (int)Math.Floor(yDiff / Scale.Y / _font.LineHeight);
 
             float x = (float)Math.Floor(item.Sprite.TL.Position.X);
-            float y = (float)Math.Floor(Position.Y) + line * _font.LineHeight * Scale.Y;
+            float y = (float)Math.Floor(pos.Y) + line * _font.LineHeight * Scale.Y;
             float w = (float)Math.Floor(item.Sprite.BR.Position.X - x) * 0.5f;
             float h = _font.LineHeight * Scale.Y * 0.5f;
 
@@ -442,11 +417,6 @@ namespace GeneralShare.UI
         {
             lock (SyncRoot)
             {
-                if (_anchor != null)
-                {
-                    if (_anchor.Pivot != PivotPosition.None)
-                        Position = _anchor.Position;
-                }
                 BuildGraphicsIfNeeded();
 
                 if (_textSprites.Count > 0)

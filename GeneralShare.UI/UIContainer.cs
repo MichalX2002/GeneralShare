@@ -19,6 +19,7 @@ namespace GeneralShare.UI
             _transforms = new ListArray<UITransform>();
             Children = new ReadOnlyWrapper<UITransform>(_transforms);
             InterceptCursor = false;
+            IsDrawable = false;
         }
 
         public UIContainer() : this(null)
@@ -156,14 +157,14 @@ namespace GeneralShare.UI
         {
             if (Dirty)
             {
-                DirtMarkType mark = FULL_TRANSFORM_UPDATE;
-                if (HasDirtMarks(DirtMarkType.Enabled))
-                    mark |= DirtMarkType.Enabled;
+                DirtMarkType marks = FULL_TRANSFORM_UPDATE;
+                if (DirtMarks.HasAnyFlag(DirtMarkType.Enabled))
+                    marks |= DirtMarkType.Enabled;
                 lock (SyncRoot)
                 {
                     for (int i = 0, count = _transforms.Count; i < count; i++)
                     {
-                        _transforms[i].InvokeMarkedDirtyInternal(mark);
+                        _transforms[i].InvokeMarkedDirtyInternal(marks);
                     }
                 }
                 Dirty = false;

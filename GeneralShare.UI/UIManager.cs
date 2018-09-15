@@ -133,7 +133,7 @@ namespace GeneralShare.UI
             {
                 if (TransformsNeedSorting)
                 {
-                    Transforms.Sort(new UIDepthComparer());
+                    Transforms.Sort(new UIDrawOrderComparer());
                     TransformListSorted?.Invoke();
                     TransformsNeedSorting = false;
                 }
@@ -185,7 +185,7 @@ namespace GeneralShare.UI
 
         private void Transform_MarkedDirty(DirtMarkType type)
         {
-            if (type.HasFlags(DirtMarkType.Position))
+            if (type.HasAnyFlag(DirtMarkType.DrawOrder))
                 FlagForSort();
         }
 

@@ -215,8 +215,8 @@ namespace GeneralShare
             CtrlDown = ModifiersDown.HasAnyFlag(KeyModifier.Ctrl, KeyModifier.LeftCtrl, KeyModifier.RightCtrl);
             AltDown = ModifiersDown.HasAnyFlag(KeyModifier.Alt, KeyModifier.LeftAlt, KeyModifier.RightAlt);
             ShiftDown = ModifiersDown.HasAnyFlag(KeyModifier.Shift, KeyModifier.LeftShift, KeyModifier.RightShift);
-            NumLock = ModifiersDown.HasFlags(KeyModifier.NumLock);
-            CapsLock = ModifiersDown.HasFlags(KeyModifier.CapsLock);
+            NumLock = ModifiersDown.HasAnyFlag(KeyModifier.NumLock);
+            CapsLock = ModifiersDown.HasAnyFlag(KeyModifier.CapsLock);
         }
 
         private static void GetKeyDifferences(

@@ -7,9 +7,9 @@ namespace GeneralShare.UI
     {
         // Transform
         Position = 1 << 0,
-        Scale = 1 << 1,
-        Rotation = 1 << 2,
-        Origin = 1 << 3,
+        Origin = 1 << 1,
+        Scale = 1 << 2,
+        Rotation = 1 << 3,
 
         // TextBox
         Font = 1 << 4,
@@ -41,9 +41,9 @@ namespace GeneralShare.UI
         ValueProcessed = 1 << 24,
         ObscureValue = 1 << 25,
         ObscureChar = 1 << 26,
-        PivotPosition = 1 << 28,
         Boundaries = 1 << 29,
         Destination = 1 << 13,
-        Enabled = 1 << 30
+        Enabled = 1 << 30,
+        DrawOrder = 1 << 28
     }
 }

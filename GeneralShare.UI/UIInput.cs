@@ -245,10 +245,11 @@ namespace GeneralShare.UI
         {
             lock (SyncRoot)
             {
+                Vector3 globalPos = GlobalPosition;
                 RectangleF output = new RectangleF
                 {
-                    X = Position.X,
-                    Y = Position.Y,
+                    X = globalPos.X,
+                    Y = globalPos.Y,
                     Width = _caretSize.X * Scale.X,
                     Height = (_caretSize.Y < 0 ? Font.LineHeight : _caretSize.Y) * Scale.Y
                 };
@@ -257,9 +258,9 @@ namespace GeneralShare.UI
                 if (_caretIndex > 0 && _caretIndex <= _totalTextLength)
                 {
                     Vector3 lastPos = _textSprites.GetReferenceAt(_caretIndex - 1).Sprite.TR.Position;
-                    double rawDistance = (lastPos.Y - Position.Y) / Font.LineHeight;
+                    double rawDistance = (lastPos.Y - globalPos.Y) / Font.LineHeight;
                     double line = Math.Floor(rawDistance / Scale.Y);
-                    double yOffset = Math.Round(Position.Y + line * Font.LineHeight * Scale.Y - 0.5f);
+                    double yOffset = Math.Round(globalPos.Y + line * Font.LineHeight * Scale.Y - 0.5f);
 
                     output.X = lastPos.X;
                     output.Y = (float)yOffset;
@@ -343,7 +344,7 @@ namespace GeneralShare.UI
 
         protected override void SpecialBoundaryUpdate(RectangleF input, out RectangleF output)
         {
-            if (HasDirtMarks(DirtMarkType.Position | DirtMarkType.CaretIndex | DirtMarkType.CaretSize))
+            if (HasAnyDirtMark(DirtMarkType.Position | DirtMarkType.CaretIndex | DirtMarkType.CaretSize))
                 _caretRect = GetCaretPosition();
 
             RectangleF.Union(input, _caretRect, out output);

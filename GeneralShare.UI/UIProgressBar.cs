@@ -46,14 +46,14 @@ namespace GeneralShare.UI
             _backBarRegion = backBarRegion;
 
             MainColor = Color.White;
-            BackgroundColor = Color.White;
+            BackgroundColor = Color.Gray;
             BackBarThickness = 1;
             Range = new Range<float>(0, 1);
             _direction = BarDirection.ToRight;
         }
 
         public UIProgressBar(UIManager manager) :
-            this(manager, manager.GrayscaleRegion, manager.WhitePixelRegion)
+            this(manager, manager.WhitePixelRegion, manager.WhitePixelRegion)
         {
         }
         
@@ -104,7 +104,7 @@ namespace GeneralShare.UI
         
         private void CalculateBackSprite()
         {
-            var matrix = Matrix2.CreateFrom(Position.ToVector2(), Rotation, Boundaries.Size, Origin);
+            var matrix = Matrix2.CreateFrom(GlobalPosition.ToVector2(), Rotation, Boundaries.Size, Origin);
             _backSprite.SetTransform(matrix, _backBarRegion.Bounds.Size);
             _backSprite.SetDepth(Z);
             _backSprite.SetTexCoords(_backBarRegion);
@@ -129,6 +129,7 @@ namespace GeneralShare.UI
         {
             float w = _destination.X * FillPercentage;
             float h = _destination.Y / _mainBarRegion.Height;
+            Vector3 globalPos = GlobalPosition;
             switch (_direction)
             {
                 //TODO: Add more directions
@@ -136,13 +137,13 @@ namespace GeneralShare.UI
                 case BarDirection.ToRight:
 
                     _headPos = new Vector2(w, 0);
-                    _mainRect = new RectangleF(Position.X, Position.Y, w, h);
+                    _mainRect = new RectangleF(globalPos.X, globalPos.Y, w, h);
                     break;
 
                 case BarDirection.ToLeft:
-                    float hPos = Position.X + _destination.X - w;
+                    float hPos = globalPos.X + _destination.X - w;
                     _headPos = new Vector2(hPos, 0);
-                    _mainRect = new RectangleF(hPos, Position.Y, w, h);
+                    _mainRect = new RectangleF(hPos, globalPos.Y, w, h);
                     break;
 
                 default:
@@ -156,8 +157,9 @@ namespace GeneralShare.UI
             {
                 UpdateMainRect();
 
-                _boundaries.X = Position.X;
-                _boundaries.Y = Position.Y;
+                Vector3 globalPos = GlobalPosition;
+                _boundaries.X = globalPos.X;
+                _boundaries.Y = globalPos.Y;
                 _boundaries.Width = Scale.X * _destination.X / _backBarRegion.Width;
                 _boundaries.Height = Scale.Y * _destination.Y / _backBarRegion.Height;
                 InvokeMarkedDirty(DirtMarkType.Boundaries);

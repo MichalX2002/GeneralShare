@@ -13,6 +13,7 @@ namespace GeneralShare.UI
         public UICollisionLayer(UIManager manager) : base(manager)
         {
             MarkedDirty += UILayer_MarkedDirty;
+            IsDrawable = false;
         }
 
         private void SetDestination(RectangleF value)
@@ -24,8 +25,9 @@ namespace GeneralShare.UI
         {
             if (type.HasAnyFlag(DirtMarkType.Transform, DirtMarkType.Destination))
             {
-                float x = Position.X + _destination.X - Origin.X * Scale.X;
-                float y = Position.Y + _destination.Y - Origin.Y * Scale.Y;
+                var globalPos = GlobalPosition;
+                float x = globalPos.X + _destination.X - Origin.X * Scale.X;
+                float y = globalPos.Y + _destination.Y - Origin.Y * Scale.Y;
                 float w = Destination.Width * Scale.X;
                 float h = Destination.Height * Scale.Y;
                 _boundaries = new RectangleF(x, y, w, h);

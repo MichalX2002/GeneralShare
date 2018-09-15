@@ -1,65 +1,50 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System.Collections.Generic;
 
 namespace GeneralShare.UI
 {
     public class UIRenderer
     {
-        protected Dictionary<SamplingMode, List<UIElement>> _elementQueue;
-
         public UIManager Manager { get; }
 
         public UIRenderer(UIManager manager)
         {
             Manager = manager;
-
-            _elementQueue = new Dictionary<SamplingMode, List<UIElement>>();
         }
 
         public virtual void Draw(GameTime time, SpriteBatch spriteBatch)
         {
-            FillQueue();
-            DrawQueue(time, spriteBatch);
-        }
-
-        protected virtual void FillQueue()
-        {
             lock (Manager.SyncRoot)
             {
+                bool isBatching = false;
+                SamplingMode lastSampling = SamplingMode.LinearClamp;
+
                 var transforms = Manager.GetSortedTransforms();
                 for (int i = 0, count = transforms.Count; i < count; i++)
                 {
                     UITransform transform = transforms[i];
-                    if (transform.IsActive == false || transform is UIContainer)
+                    if (transform.IsActive == false || !transform.IsDrawable)
                         continue;
-
-                    if (transform is UIElement element)
+                    
+                    if (lastSampling != transform.PreferredSampling)
                     {
-                        if (_elementQueue.TryGetValue(element.PreferredSamplingMode, out var list) == false)
+                        if (isBatching)
                         {
-                            list = new List<UIElement>();
-                            _elementQueue.Add(element.PreferredSamplingMode, list);
+                            spriteBatch.End();
+                            isBatching = false;
                         }
-                        list.Add(element);
+                        lastSampling = transform.PreferredSampling;
                     }
-                }
-            }
-        }
 
-        protected virtual void DrawQueue(GameTime time, SpriteBatch spriteBatch)
-        {
-            foreach (var entry in _elementQueue)
-            {
-                spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, GetSamplerState(entry.Key), DepthStencilState.Default);
-                var list = entry.Value;
-                for (int i = 0, count = list.Count; i < count; i++)
-                {
-                    spriteBatch.Draw(time, list[i]);
+                    if (!isBatching)
+                    {
+                        spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, GetSamplerState(lastSampling));
+                        isBatching = true;
+                    }
+
+                    transform.Draw(time, spriteBatch);
                 }
                 spriteBatch.End();
-
-                list.Clear();
             }
         }
 
