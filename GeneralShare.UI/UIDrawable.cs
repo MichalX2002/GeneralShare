@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace GeneralShare.UI
 {
-    public class UIDrawCaller : UITransform
+    public class UIDrawable : UITransform
     {
         public delegate void DrawDelegate(
             GameTime time, SpriteBatch batch,
@@ -12,11 +12,11 @@ namespace GeneralShare.UI
 
         public event DrawDelegate OnDraw;
 
-        public UIDrawCaller()
+        public UIDrawable()
         {
         }
 
-        public UIDrawCaller(UIManager manager) : base(manager)
+        public UIDrawable(UIManager manager) : base(manager)
         {
         }
 

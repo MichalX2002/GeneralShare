@@ -42,7 +42,6 @@ namespace GeneralShare.UI
         public Color BaseColor { get => _color; set => SetColor(value); }
         public BitmapFont Font { get => _font; set => SetFont(value); }
         public Rectangle? ClippingRectangle { get => _clipRect; set => SetClipRect(value); }
-        public StringBuilder ProcessedText { get { ProcessTextIfNeeded(); return _processedText; } }
         public int SpecialProcessedTextLength { get; private set; }
 
         public bool UseShadow { get => _useShadow; set => SetUseShadow(value); }
@@ -56,7 +55,7 @@ namespace GeneralShare.UI
         public RectangleF TextBoundaries { get { ProcessTextIfNeeded(); return _textBounds; } }
         public SizeF Measure => TextBoundaries.Size;
         public TextAlignment Alignment { get => _align; set => SetAlign(value); }
-        
+
         public UITextBase(UIManager manager, BitmapFont font) : base(manager)
         {
             _value = string.Empty;
@@ -67,7 +66,7 @@ namespace GeneralShare.UI
 
             _textSprites = new ListArray<GlyphBatchedSprite>();
             _expressionColors = new ListArray<Color>();
-            
+
             Font = font;
             BaseColor = Color.White;
             Scale = Vector2.One;
@@ -78,7 +77,15 @@ namespace GeneralShare.UI
                 ShadowTexture = manager.WhitePixelRegion;
         }
 
-        public UITextBase(BitmapFont font) : this(null, font) { }
+        public UITextBase(BitmapFont font) : this(null, font)
+        {
+        }
+
+        public string GetProcessedText()
+        {
+            ProcessTextIfNeeded();
+            return _processedText.ToString();
+        }
 
         protected void SetAlign(TextAlignment align)
         {
@@ -158,72 +165,66 @@ namespace GeneralShare.UI
 
         public void BuildGraphicsIfNeeded()
         {
-            if (Dirty == true)
+            if (Dirty)
             {
-                BuildGraphics();
-                Dirty = false;
-            }
-        }
-
-        private void BuildGraphics()
-        {
-            ProcessTextIfNeeded();
-
-            lock (SyncRoot)
-            {
-                bool hadDirtyGraphics = DirtMarks.HasAnyFlag(
-                    DirtMarkType.ValueProcessed, DirtMarkType.Transform,
-                    DirtMarkType.Font, DirtMarkType.ClipRectangle);
-
-                if (hadDirtyGraphics)
+                ProcessTextIfNeeded();
+                lock (SyncRoot)
                 {
-                    Vector3 pos = GlobalPosition;
-                    _textBounds.X = pos.X + _alignOffsetX;
-                    _textBounds.Y = pos.Y;
+                    bool hadDirtyGraphics = DirtMarks.HasAnyFlag(
+                        DirtMarkType.ValueProcessed, DirtMarkType.Transform,
+                        DirtMarkType.Font, DirtMarkType.ClipRectangle);
 
-                    if (_processedText.Length > 0 && _font != null)
+                    if (hadDirtyGraphics)
                     {
-                        _textSprites.Clear(false);
-                        BitmapFontExtensions.GetGlyphSprites(
-                            _textGlyphs, _textSprites, pos.ToVector2(), _color, Rotation, Origin, Scale, Z, _clipRect);
+                        Vector3 pos = GlobalPosition;
+                        _textBounds.X = pos.X + _alignOffsetX;
+                        _textBounds.Y = pos.Y;
 
-                        if (_buildCharQuadTree)
-                            PrepareQuadTree();
-
-                        int expressionCount = _expressionColors.Count;
-                        int itemCount = _textSprites.Count;
-                        for (int i = 0; i < itemCount; i++)
+                        if (_processedText.Length > 0 && _font != null)
                         {
-                            ref var sprite = ref _textSprites.GetReferenceAt(i);
+                            _textSprites.Clear(false);
+                            BitmapFontExtensions.GetGlyphSprites(
+                                _textGlyphs, _textSprites, pos.ToVector2(), _color, Rotation, Origin, Scale, Z, _clipRect);
+
                             if (_buildCharQuadTree)
-                                AddTextQuadItem(ref pos, ref sprite);
+                                PrepareQuadTree();
 
-                            if (_valueExpressions && i < expressionCount)
-                                sprite.SetColor(_expressionColors[i]);
+                            int expressionCount = _expressionColors.Count;
+                            int itemCount = _textSprites.Count;
+                            for (int i = 0; i < itemCount; i++)
+                            {
+                                ref var sprite = ref _textSprites.GetReferenceAt(i);
+                                if (_buildCharQuadTree)
+                                    AddTextQuadItem(ref pos, ref sprite);
+
+                                if (_valueExpressions && i < expressionCount)
+                                    sprite.SetColor(_expressionColors[i]);
+                            }
+
+                            MarkDirty(DirtMarkType.ShadowMath, true);
                         }
-
-                        MarkDirty(DirtMarkType.ShadowMath, true);
                     }
+
+                    if (DirtMarks.HasAnyFlag(DirtMarkType.BuildQuadTree))
+                    {
+                        ManageQuadTree(!hadDirtyGraphics);
+                        ClearDirtMarks(DirtMarkType.BuildQuadTree);
+                    }
+
+                    if (DirtMarks.HasAnyFlag(DirtMarkType.ShadowColor))
+                        _shadowSprite.SetColor(_shadowColor);
+
+                    UpdateTotalBoundaries();
+                    SpecialBoundaryUpdate(_totalBoundaries, out _totalBoundaries);
+
+                    if (DirtMarks.HasAnyFlag(DirtMarkType.ShadowMath))
+                        UpdateShadowSprite();
+                    _shadowAvailable = _useShadow && _shadowTex != null;
+
+                    ClearDirtMarks();
+                    InvokeMarkedDirty(DirtMarkType.Boundaries);
                 }
-
-                if (DirtMarks.HasAnyFlag(DirtMarkType.BuildQuadTree))
-                {
-                    ManageQuadTree(!hadDirtyGraphics);
-                    ClearDirtMarks(DirtMarkType.BuildQuadTree);
-                }
-
-                if (DirtMarks.HasAnyFlag(DirtMarkType.ShadowColor))
-                    _shadowSprite.SetColor(_shadowColor);
-
-                UpdateTotalBoundaries();
-                SpecialBoundaryUpdate(_totalBoundaries, out _totalBoundaries);
-
-                if (DirtMarks.HasAnyFlag(DirtMarkType.ShadowMath))
-                    UpdateShadowSprite();
-                _shadowAvailable = _useShadow && _shadowTex != null;
-
-                ClearDirtMarks();
-                InvokeMarkedDirty(DirtMarkType.Boundaries);
+                Dirty = false;
             }
         }
 

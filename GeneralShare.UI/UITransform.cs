@@ -64,10 +64,10 @@ namespace GeneralShare.UI
             get => _dirty;
             protected set
             {
-                _dirty = value;
-                if (value == false)
+                lock (SyncRoot)
                 {
-                    lock (SyncRoot)
+                    _dirty = value;
+                    if (value == false)
                     {
                         MarkedClean?.Invoke();
                     }
