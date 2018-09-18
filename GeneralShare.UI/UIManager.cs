@@ -144,10 +144,10 @@ namespace GeneralShare.UI
         {
             lock (SyncRoot)
             {
-                for (int i = 0, length = Transforms.Count; i < length; i++)
+                for (int i = 0, count = Transforms.Count; i < count; i++)
                 {
                     UITransform item = Transforms[i];
-                    if (item is UIElement element)
+                    if (item is UIElement element && item.IsActive)
                     {
                         if (element.Boundaries.Contains(new PointF(x, y)))
                         {
