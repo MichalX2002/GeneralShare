@@ -70,6 +70,7 @@
     <Compile Include="Helpers\ArrayHelper.cs" />
     <Compile Include="Helpers\EnumExtensions.cs" />
     <Compile Include="Helpers\IPEndPointParser.cs" />
+    <Compile Include="Helpers\JsonUtils.cs" />
     <Compile Include="Helpers\PathHelper.cs" />
     <Compile Include="Helpers\SecureStringHelper.cs" />
     <Compile Include="Helpers\StringBuilderComparer.cs" />

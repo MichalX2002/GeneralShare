@@ -40,7 +40,7 @@ namespace GeneralShare.UI
         private bool _shadowAvailable;
 
         public Color BaseColor { get => _color; set => SetColor(value); }
-        public BitmapFont Font { get => _font; set => SetFont(value); }
+        public BitmapFont Font { get => _font; set => SetFont(value); } // add fontscale that scales with font.LineHeight
         public Rectangle? ClippingRectangle { get => _clipRect; set => SetClipRect(value); }
         public int SpecialProcessedTextLength { get; private set; }
 
