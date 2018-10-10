@@ -18,7 +18,7 @@ namespace GeneralShare.UI
         {
             _transforms = new ListArray<UITransform>();
             Children = new ReadOnlyWrapper<UITransform>(_transforms);
-            InterceptCursor = false;
+            IsIntercepting = false;
             IsDrawable = false;
         }
 

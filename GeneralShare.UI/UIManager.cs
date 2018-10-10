@@ -19,17 +19,23 @@ namespace GeneralShare.UI
         private UIElement __selectedElement;
         internal Viewport _lastViewport;
 
+        public bool IsDisposed { get; private set; }
+        public object SyncRoot { get; private set; }
+
         public GraphicsDevice GraphicsDevice { get; }
         public TextureRegion2D GrayscaleRegion { get; set; }
         public TextureRegion2D WhitePixelRegion { get; set; }
-
-        public bool Disposed { get; private set; }
         public SamplingMode PreferredSamplingMode { get; set; }
         public Viewport Viewport => _lastViewport;
-        public object SyncRoot { get; private set; }
+        
         public bool TransformsNeedSorting { get; private set; }
         public ListArray<UITransform> Transforms { get; }
 
+        /// <summary>
+        /// The currently selected <see cref="UIElement"/> that (primarily) receives
+        /// keyboard events (use <see cref="UIElement.IsSelected"/> to easily check if
+        /// an element is selected in conjunction with <see cref="UIElement.IsSelectable"/>).
+        /// </summary>
         public UIElement SelectedElement
         {
             get
@@ -111,7 +117,7 @@ namespace GeneralShare.UI
 
         private void Input_TextInput(TextInputEventArgs e)
         {
-            if (Disposed == false)
+            if (IsDisposed == false)
             {
                 lock (SyncRoot)
                 {
@@ -123,7 +129,7 @@ namespace GeneralShare.UI
 
         private void FlagForSort()
         {
-            if (Disposed == false)
+            if (IsDisposed == false)
                 TransformsNeedSorting = true;
         }
 
@@ -220,7 +226,7 @@ namespace GeneralShare.UI
 
         public ListArray<UITransform> GetSortedTransforms()
         {
-            if (Disposed)
+            if (IsDisposed)
                 throw new ObjectDisposedException(nameof(UIManager));
 
             lock (SyncRoot)
@@ -250,10 +256,19 @@ namespace GeneralShare.UI
 
         public bool IsElementInputSensitive(UIElement element)
         {
-            return element.InterceptCursor || element.TriggerMouseEvents;
+            return element.IsIntercepting || element.TriggerMouseEvents;
         }
 
         public void Update(GameTime time)
+        {
+            lock (SyncRoot)
+            {
+                UpdateTransformsAndTriggerMouseEvents(time);
+                TriggerKeyboardEvents(SelectedElement);
+            }
+        }
+
+        private void UpdateTransformsAndTriggerMouseEvents(GameTime time)
         {
             Viewport freshViewport = GraphicsDevice.Viewport;
             bool viewportChanged = Viewport.EqualsTo(freshViewport);
@@ -266,103 +281,103 @@ namespace GeneralShare.UI
             MouseState mouseState = Input.NewMouseState;
             Point mousePos = mouseState.Position;
 
-            lock (SyncRoot)
+            bool cursorIntercepted = false;
+            // a state used instead of 'break;'ing (the loop) as processing the 
+            // mouse hover events "Enter" and "Leave" is pretty important
+
+            ListArray<UITransform> transforms = GetSortedTransforms();
+            for (int i = 0, count = transforms.Count; i < count; i++)
             {
-                bool interceptionBroken = false;
-                // a state used instead of 'break'ing (the loop) as processing the 
-                // mouse hover events "Enter" and "Leave" is pretty important
+                var transform = transforms[i];
+                if (viewportChanged)
+                    transform.OnViewportChange(freshViewport);
 
-                ListArray<UITransform> transforms = GetSortedTransforms();
-                for (int i = 0, count = transforms.Count; i < count; i++)
+                if (transform.IsActive == false)
+                    continue;
+
+                transform.Update(time);
+                if (transform is UIElement element)
                 {
-                    UITransform transform = transforms[i];
-                    if (viewportChanged)
-                        transform.OnViewportChange(freshViewport);
-
-                    if (transform.IsActive == false)
+                    element.IsSelected = false;
+                    if (!IsElementInputSensitive(element))
                         continue;
 
-                    transform.Update(time);
-                    if (transform is UIElement element)
+                    lock (element.SyncRoot)
                     {
-                        element.IsSelected = false;
-                        if (IsElementInputSensitive(element) == false)
+                        bool lastHovering = element.IsHoveredOver;
+                        element.IsHoveredOver = element.Boundaries.Contains(mousePos);
+
+                        if (element.IsHoveredOver != lastHovering)
+                        {
+                            if (element.IsHoveredOver && lastHovering == false)
+                                element.TriggerOnMouseEnter(mouseState);
+                            else
+                                element.TriggerOnMouseLeave(mouseState);
+                        }
+
+                        if (cursorIntercepted || !element.IsHoveredOver)
                             continue;
 
-                        lock (element.SyncRoot)
+                        if (element.TriggerMouseEvents)
                         {
-                            bool lastIsHovering = element.IsMouseHovering;
-                            element.IsMouseHovering = element.Boundaries.Contains(mousePos);
+                            element.TriggerOnMouseHover(mouseState);
 
-                            if (element.IsMouseHovering != lastIsHovering)
-                            {
-                                if (element.IsMouseHovering && lastIsHovering == false)
-                                    element.TriggerOnMouseEnter(mouseState);
-                                else
-                                    element.TriggerOnMouseLeave(mouseState);
-                            }
+                            if (anyDown)
+                                element.TriggerOnMouseDown(mouseState, pressed);
 
-                            if (interceptionBroken)
-                                continue;
+                            if (anyPressed)
+                                element.TriggerOnMousePress(mouseState, pressed);
 
-                            if (element.IsMouseHovering)
-                            {
-                                if (element.TriggerMouseEvents)
-                                {
-                                    element.TriggerOnMouseHover(mouseState);
-
-                                    if (anyDown)
-                                        element.TriggerOnMouseDown(mouseState, pressed);
-
-                                    if (anyPressed)
-                                        element.TriggerOnMousePress(mouseState, pressed);
-
-                                    if (anyReleased)
-                                        element.TriggerOnMouseRelease(mouseState, released);
-                                }
-
-                                if (element.AllowSelection)
-                                {
-                                    if (Input.IsAnyMouseDown(out var temp))
-                                        SelectedElement = element;
-                                }
-
-                                if (element.InterceptCursor == true)
-                                    interceptionBroken = true; // instead of a 'break'
-                            }
+                            if (anyReleased)
+                                element.TriggerOnMouseRelease(mouseState, released);
                         }
+
+                        if (element.IsSelectable)
+                        {
+                            if (Input.IsAnyMouseDown(out var temp))
+                                SelectedElement = element;
+                        }
+
+                        if (element.IsIntercepting == true)
+                            cursorIntercepted = true; // instead of a 'break;'
                     }
                 }
+            }
+        }
 
-                var selectedE = SelectedElement;
-                if (selectedE != null)
+        private void TriggerKeyboardEvents(UIElement element)
+        {
+            if (element == null)
+                return;
+
+            lock (element.SyncRoot)
+            {
+                element.IsSelected = true;
+                if (element.TriggerKeyEvents)
                 {
-                    lock (selectedE.SyncRoot)
-                    {
-                        selectedE.IsSelected = true;
-                        if (selectedE.TriggerKeyEvents)
-                        {
-                            var keysDown = Input.KeysDown;
-                            var keysPressed = Input.KeysPressed;
-                            var keysReleased = Input.KeysReleased;
+                    var keysDown = Input.KeysDown;
+                    var keysHeld = Input.KeysHeld;
+                    var keysPressed = Input.KeysPressed;
+                    var keysReleased = Input.KeysReleased;
 
-                            for (int d = 0; d < keysDown.Count; d++)
-                                selectedE.TriggerOnKeyDown(keysDown[d]);
+                    for (int d = 0; d < keysDown.Count; d++)
+                        element.TriggerOnKeyDown(keysDown[d]);
 
-                            for (int p = 0; p < keysPressed.Count; p++)
-                                selectedE.TriggerOnKeyPress(keysPressed[p]);
+                    for (int h = 0; h < keysHeld.Count; h++)
+                        element.TriggerOnKeyHeld(keysHeld[h]);
 
-                            for (int r = 0; r < keysReleased.Count; r++)
-                                selectedE.TriggerOnKeyRelease(keysReleased[r]);
-                        }
-                    }
+                    for (int p = 0; p < keysPressed.Count; p++)
+                        element.TriggerOnKeyPress(keysPressed[p]);
+
+                    for (int r = 0; r < keysReleased.Count; r++)
+                        element.TriggerOnKeyRelease(keysReleased[r]);
                 }
             }
         }
 
         protected virtual void Dispose(bool disposing)
         {
-            if(Disposed == false)
+            if(IsDisposed == false)
             {
                 if (disposing)
                 {
@@ -377,7 +392,7 @@ namespace GeneralShare.UI
                     }
                 }
 
-                Disposed = true;
+                IsDisposed = true;
             }
         }
 

@@ -18,25 +18,40 @@ namespace GeneralShare.UI
         public event MouseHoverDelegate OnMouseHover;
         public event MouseHoverDelegate OnMouseLeave;
         public event GenericKeyboardDelegate OnKeyDown;
+        public event GenericKeyboardDelegate OnKeyHeld;
         public event GenericKeyboardDelegate OnKeyPress;
         public event GenericKeyboardDelegate OnKeyRelease;
         public event Input.TextInputDelegate OnTextInput;
 
+        public abstract RectangleF Boundaries { get; }
         public string Name { get; private set; }
         public bool TriggerMouseEvents { get; set; }
         public bool TriggerKeyEvents { get; set; }
-        public bool InterceptCursor { get; set; }
-        public bool IsMouseHovering { get; internal set; }
         public bool IsSelected { get; internal set; }
-        public bool AllowSelection { get; set; }
-        public abstract RectangleF Boundaries { get; }
 
+        /// <summary>
+        /// Returns <see langword="true"/> if the cursor is within
+        /// this <see cref="UIElement"/>'s boundaries, otherwise <see langword="false"/>.
+        /// </summary>
+        public bool IsHoveredOver { get; internal set; }
+
+        /// <summary>
+        /// Dictates if this <see cref="UIElement"/> intercepts mouse events.
+        /// </summary>
+        public bool IsIntercepting { get; set; }
+
+        /// <summary>
+        /// Dictates if this <see cref="UIElement"/> can be selected
+        /// as <see cref="UIManager.SelectedElement"/>.
+        /// </summary>
+        public bool IsSelectable { get; set; }
+        
         public UIElement(string name, UIManager manager) : base(manager)
         {
             Name = name ?? string.Empty;
             TriggerMouseEvents = false;
             TriggerKeyEvents = false;
-            InterceptCursor = true;
+            IsIntercepting = true;
         }
 
         public UIElement(UIManager manager) : this(null, manager) { }
@@ -95,6 +110,11 @@ namespace GeneralShare.UI
         internal void TriggerOnKeyDown(Keys key)
         {
             TriggerGenericKeyboardEvent(key, OnKeyDown);
+        }
+
+        internal void TriggerOnKeyHeld(Keys key)
+        {
+            TriggerGenericKeyboardEvent(key, OnKeyHeld);
         }
 
         internal void TriggerOnKeyPress(Keys key)

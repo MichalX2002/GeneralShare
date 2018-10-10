@@ -51,8 +51,8 @@ namespace GeneralShare.UI
 
             TriggerMouseEvents = true;
             TriggerKeyEvents = true;
-            InterceptCursor = true;
-            AllowSelection = true;
+            IsIntercepting = true;
+            IsSelectable = true;
             UseShadow = true;
             BuildCharQuadTree = true;
 
@@ -172,7 +172,6 @@ namespace GeneralShare.UI
                 switch (e.Key)
                 {
                     case Keys.Back:
-                    case Keys.Delete:
                         if (Value.Length > 0)
                         {
                             int index = _caretIndex - SpecialProcessedTextLength - 1;
@@ -181,6 +180,18 @@ namespace GeneralShare.UI
                                 CaretIndex--;
                                 Value = Value.Remove(index, 1);
                             }
+                        }
+                        break;
+
+                    case Keys.Delete:
+                        if (Value.Length > 0)
+                        {
+                            int index = _caretIndex - SpecialProcessedTextLength;
+                            if (index >= 0 && index < Value.Length)
+                            {
+                                Value = Value.Remove(index, 1);
+                            }
+                            MarkDirty(DirtMarkType.CaretIndex, true);
                         }
                         break;
 
@@ -257,6 +268,8 @@ namespace GeneralShare.UI
                 PrepareCaretIndex(ref _caretIndex);
                 if (_caretIndex > 0 && _caretIndex <= _totalTextLength)
                 {
+                    Console.WriteLine(_caretIndex + " | Count: " + _textSprites.Count);
+
                     Vector3 lastPos = _textSprites.GetReferenceAt(_caretIndex - 1).Sprite.TR.Position;
                     double rawDistance = (lastPos.Y - globalPos.Y) / Font.LineHeight;
                     double line = Math.Floor(rawDistance / Scale.Y);

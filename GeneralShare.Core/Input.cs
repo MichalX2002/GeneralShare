@@ -16,6 +16,7 @@ namespace GeneralShare
 
         private static readonly ListArray<Keys> _oldKeysDown;
         private static readonly ListArray<Keys> _keysDown;
+        private static readonly ListArray<Keys> _keysHeld;
         private static readonly ListArray<Keys> _keysPressed;
         private static readonly ListArray<Keys> _keysReleased;
 
@@ -25,6 +26,7 @@ namespace GeneralShare
         public static MouseState NewMouseState => _newMS;
 
         public static ReadOnlyCollection<Keys> KeysDown { get; private set; }
+        public static ReadOnlyCollection<Keys> KeysHeld { get; private set; }
         public static ReadOnlyCollection<Keys> KeysPressed { get; private set; }
         public static ReadOnlyCollection<Keys> KeysReleased { get; private set; }
 
@@ -46,12 +48,16 @@ namespace GeneralShare
 
             _oldKeysDown = new ListArray<Keys>(KS.MaxKeysPerState);
             _keysDown = new ListArray<Keys>(KS.MaxKeysPerState);
+            _keysHeld = new ListArray<Keys>(KS.MaxKeysPerState);
             _keysPressed = new ListArray<Keys>(KS.MaxKeysPerState);
             _keysReleased = new ListArray<Keys>(KS.MaxKeysPerState);
 
             KeysDown = _keysDown.AsReadOnly();
+            KeysHeld = _keysHeld.AsReadOnly();
             KeysPressed = _keysPressed.AsReadOnly();
             KeysReleased = _keysReleased.AsReadOnly();
+
+            throw new System.NotImplementedException("implement keysheld thanks");
         }
 
         public static void AddWindow(GameWindow window)
@@ -71,12 +77,17 @@ namespace GeneralShare
 
         public static bool IsKeyUp(Keys key)
         {
-            return !_keysDown.Contains(key);
+            return !IsKeyDown(key);
         }
 
         public static bool IsKeyDown(Keys key)
         {
-            return !IsKeyUp(key);
+            return _keysDown.Contains(key);
+        }
+
+        public static bool IsKeyHeld(Keys key)
+        {
+            return _keysHeld.Contains(key);
         }
 
         public static bool IsKeyPressed(Keys key)
@@ -196,13 +207,14 @@ namespace GeneralShare
             _oldKeysDown.Clear(false);
             _oldKeysDown.AddRange(_keysDown);
 
+            var keyList = Keyboard.KeyList;
             _keysDown.Clear(false);
-            _keysDown.AddRange(Keyboard.KeyList);
+            _keysDown.AddRange(keyList);
             // getting the KeyList updates it's internal keyboard state (and updates the Modifiers property)
-            // (getting the KeyList to update the internal state is only required on DirectX,
-            //  on DesktopGL, the KeyList and Modifiers properties are updated constantly by the SDL loop)
-            
-            // therefore update Modifiers after getting Keyboard.KeyList
+            // (getting the KeyList to update the internal state is only required on DirectX, on DesktopGL
+            // the KeyList and Modifiers properties are constantly updated by the SDL window loop)
+
+            // therefore update Modifiers *after* getting Keyboard.KeyList
             UpdateModifiers(); 
 
             GetKeyDifferences(_keysPressed, _keysDown, _oldKeysDown);

@@ -20,7 +20,7 @@ namespace GeneralShare.Collections
         public event VersionChangedDelegate Changed;
 
         public bool IsReadOnly { get; private set; }
-        public bool FixedCapacity { get; private set; }
+        public bool IsFixedCapacity { get; private set; }
         public int Version { get => __version; protected set => SetVersion(value); }
 
         public T[] InnerArray { get; private set; }
@@ -49,7 +49,7 @@ namespace GeneralShare.Collections
             get => InnerArray.Length;
             set
             {
-                if (FixedCapacity)
+                if (IsFixedCapacity)
                     throw new InvalidOperationException(
                         "This collection has a fixed capacity therefore cannot be resized.");
 
@@ -91,7 +91,7 @@ namespace GeneralShare.Collections
 
         public ListArray(int capacity, bool fixedCapacity) : this(capacity)
         {
-            FixedCapacity = fixedCapacity;
+            IsFixedCapacity = fixedCapacity;
         }
 
         public ListArray(T[] sourceArray, int startOffset, int count)
@@ -99,7 +99,7 @@ namespace GeneralShare.Collections
             InnerArray = sourceArray;
             Count = count;
             Capacity = sourceArray.Length;
-            FixedCapacity = true;
+            IsFixedCapacity = true;
 
             if (startOffset != 0)
             {
@@ -225,17 +225,17 @@ namespace GeneralShare.Collections
         /// <summary>
         /// Clears the list with the option to make all elements their default (to null if <typeparamref name="T"/> is a class).
         /// </summary>
-        /// <param name="clearInnerArray">
+        /// <param name="setToDefault">
         /// <see langword="true"/> to clear the <see cref="InnerArray"/>
         /// (only available if <typeparamref name="T"/> is a value type).
         /// </param>
-        public void Clear(bool clearInnerArray)
+        public void Clear(bool setToDefault)
         {
             CheckAccessibility();
 
             if (Count > 0)
             {
-                if (clearInnerArray || !typeof(T).IsValueType)
+                if (setToDefault || !typeof(T).IsValueType)
                 {
                     Array.Clear(InnerArray, 0, Count);
                 }
