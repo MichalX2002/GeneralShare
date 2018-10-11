@@ -1,7 +1,7 @@
 ﻿using GeneralShare.Collections;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
-using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using BS = Microsoft.Xna.Framework.Input.ButtonState;
 using KS = Microsoft.Xna.Framework.Input.KeyboardState;
 using MB = GeneralShare.MouseButton;
@@ -11,12 +11,12 @@ namespace GeneralShare
     public static class Input
     {
         public delegate void TextInputDelegate(TextInputEventArgs e);
-
         public static event TextInputDelegate TextInput;
 
+        private static readonly ListArray<HeldKey> _lastKeysHeld;
+        private static readonly ListArray<HeldKey> _keysHeld;
         private static readonly ListArray<Keys> _oldKeysDown;
         private static readonly ListArray<Keys> _keysDown;
-        private static readonly ListArray<Keys> _keysHeld;
         private static readonly ListArray<Keys> _keysPressed;
         private static readonly ListArray<Keys> _keysReleased;
 
@@ -25,10 +25,10 @@ namespace GeneralShare
         public static MouseState OldMouseState => _oldMS;
         public static MouseState NewMouseState => _newMS;
 
-        public static ReadOnlyCollection<Keys> KeysDown { get; private set; }
-        public static ReadOnlyCollection<Keys> KeysHeld { get; private set; }
-        public static ReadOnlyCollection<Keys> KeysPressed { get; private set; }
-        public static ReadOnlyCollection<Keys> KeysReleased { get; private set; }
+        public static IReadOnlyList<Keys> KeysDown { get; private set; }
+        public static IReadOnlyList<HeldKey> KeysHeld { get; private set; }
+        public static IReadOnlyList<Keys> KeysPressed { get; private set; }
+        public static IReadOnlyList<Keys> KeysReleased { get; private set; }
 
         public static Point MousePosition => _newMS.Position;
         public static Point MouseVelocity => new Point(_newMS.X - _oldMS.X, _newMS.Y - _oldMS.Y);
@@ -46,9 +46,10 @@ namespace GeneralShare
             _oldMS = Mouse.GetState();
             _newMS = Mouse.GetState();
 
+            _lastKeysHeld = new ListArray<HeldKey>(KS.MaxKeysPerState);
+            _keysHeld = new ListArray<HeldKey>(KS.MaxKeysPerState);
             _oldKeysDown = new ListArray<Keys>(KS.MaxKeysPerState);
             _keysDown = new ListArray<Keys>(KS.MaxKeysPerState);
-            _keysHeld = new ListArray<Keys>(KS.MaxKeysPerState);
             _keysPressed = new ListArray<Keys>(KS.MaxKeysPerState);
             _keysReleased = new ListArray<Keys>(KS.MaxKeysPerState);
 
@@ -56,8 +57,6 @@ namespace GeneralShare
             KeysHeld = _keysHeld.AsReadOnly();
             KeysPressed = _keysPressed.AsReadOnly();
             KeysReleased = _keysReleased.AsReadOnly();
-
-            throw new System.NotImplementedException("implement keysheld thanks");
         }
 
         public static void AddWindow(GameWindow window)
@@ -75,9 +74,20 @@ namespace GeneralShare
             TextInput?.Invoke(e);
         }
 
-        public static bool IsKeyUp(Keys key)
+        public static bool IsKeyHeld(Keys key, float timeThreshold)
         {
-            return !IsKeyDown(key);
+            for (int i = 0; i < _keysHeld.Count; i++)
+            {
+                var k = _keysHeld[i];
+                if (k.Key == key && k.Time >= timeThreshold)
+                    return true;
+            }
+            return false;
+        }
+
+        public static bool IsKeyHeld(Keys key)
+        {
+            return IsKeyHeld(key, 0.5f);
         }
 
         public static bool IsKeyDown(Keys key)
@@ -85,9 +95,9 @@ namespace GeneralShare
             return _keysDown.Contains(key);
         }
 
-        public static bool IsKeyHeld(Keys key)
+        public static bool IsKeyUp(Keys key)
         {
-            return _keysHeld.Contains(key);
+            return !IsKeyDown(key);
         }
 
         public static bool IsKeyPressed(Keys key)
@@ -199,7 +209,7 @@ namespace GeneralShare
             return anyPressed;
         }
 
-        public static void Update()
+        public static void Update(GameTime time)
         {
             _oldMS = _newMS;
             _newMS = Mouse.GetState();
@@ -207,18 +217,18 @@ namespace GeneralShare
             _oldKeysDown.Clear(false);
             _oldKeysDown.AddRange(_keysDown);
 
+            // Getting KeyList updates it's internal keyboard state (and Modifiers) on DirectX, 
+            // DesktopGL (the SDL window loop) updates KeyList and Modifiers constantly,
+            // therefore call UpdateModifiers *after* getting KeyList.
             var keyList = Keyboard.KeyList;
+
             _keysDown.Clear(false);
             _keysDown.AddRange(keyList);
-            // getting the KeyList updates it's internal keyboard state (and updates the Modifiers property)
-            // (getting the KeyList to update the internal state is only required on DirectX, on DesktopGL
-            // the KeyList and Modifiers properties are constantly updated by the SDL window loop)
-
-            // therefore update Modifiers *after* getting Keyboard.KeyList
             UpdateModifiers(); 
 
             GetKeyDifferences(_keysPressed, _keysDown, _oldKeysDown);
             GetKeyDifferences(_keysReleased, _oldKeysDown, _keysDown);
+            UpdateHeldKeys(time);
         }
 
         private static void UpdateModifiers()
@@ -240,6 +250,48 @@ namespace GeneralShare
                 Keys key = keys1[i];
                 if (keys2.Contains(key) == false)
                     output.Add(key);
+            }
+        }
+
+        private static void UpdateHeldKeys(GameTime time)
+        {
+            _lastKeysHeld.AddRange(_keysHeld);
+            _keysHeld.Clear();
+            for (int i = 0; i < _keysDown.Count; i++)
+            {
+                CheckLastHeldKey(time.Delta, _keysDown[i]);
+            }
+            _lastKeysHeld.Clear(false);
+        }
+
+        private static void CheckLastHeldKey(float delta, Keys key)
+        {
+            for (int i = 0; i < _lastKeysHeld.Count; i++)
+            {
+                HeldKey last = _lastKeysHeld[i];
+                if (last.Key == key)
+                {
+                    last._time += delta;
+                    _keysHeld.Add(last);
+                    return; // return as we only want one HeldKey in the list
+                }
+            }
+
+            // we add a new HeldKey if it didn't exist before
+            _keysHeld.Add(new HeldKey(key));
+        }
+        
+        public struct HeldKey
+        {
+            internal float _time;
+
+            public Keys Key { get; }
+            public float Time => _time;
+
+            public HeldKey(Keys key)
+            {
+                Key = key;
+                _time = 0;
             }
         }
     }

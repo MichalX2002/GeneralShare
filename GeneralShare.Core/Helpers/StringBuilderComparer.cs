@@ -6,13 +6,6 @@ namespace GeneralShare
 {
     public struct StringBuilderComparer : IEqualityComparer<StringBuilder>
     {
-        public static readonly StringBuilderComparer Instance;
-
-        static StringBuilderComparer()
-        {
-            Instance = new StringBuilderComparer();
-        }
-
         public bool Equals(StringBuilder x, StringBuilder y)
         {
             if (x == null)

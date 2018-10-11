@@ -360,9 +360,9 @@ namespace GeneralShare.Collections
                     EnsureCapacity(Count + count);
                     if (index < Count)
                     {
-                        Array.Copy(InnerArray, index, InnerArray, index + count,count  - index);
+                        Array.Copy(InnerArray, index, InnerArray, index + count, count - index);
                     }
-                    
+
                     if (c == this)
                     {
                         Array.Copy(InnerArray, 0, InnerArray, index, index);

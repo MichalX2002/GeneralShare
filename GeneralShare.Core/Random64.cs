@@ -14,9 +14,8 @@ namespace GeneralShare
 
         public long Seed { get; }
         
-        public Random64() : this(DateTime.UtcNow.Ticks)
+        public Random64() : this(Environment.TickCount)
         {
-
         }
 
         public Random64(long seed)
@@ -24,7 +23,6 @@ namespace GeneralShare
             Seed = seed;
 
             long sub = (seed == long.MinValue) ? long.MaxValue : Math.Abs(seed);
-
             long ii;
             long mj = MSEED - sub;
             long mk = 1;
@@ -53,7 +51,7 @@ namespace GeneralShare
             inextp = 21;
         }
 
-        private long IntegerSample()
+        private long LongSample()
         {
             long retVal;
             int locINext = inext;
@@ -81,10 +79,10 @@ namespace GeneralShare
             return retVal;
         }
 
-        private double FloatSample()
+        public double NextDouble()
         {
-            long result = IntegerSample();
-            bool negative = (IntegerSample() % 2 == 0) ? true : false;
+            long result = LongSample();
+            bool negative = (LongSample() % 2 == 0) ? true : false;
             if (negative)
                 result = -result;
 
@@ -94,19 +92,14 @@ namespace GeneralShare
             return d;
         }
 
-        public double NextDouble()
-        {
-            return FloatSample();
-        }
-
         public float NextSingle()
         {
-            return (float)FloatSample(); 
+            return (float)NextDouble(); 
         }
 
         public long NextInt64()
         {
-            return IntegerSample();
+            return LongSample();
         }
 
         public long NextInt64(long maxValue)
@@ -114,12 +107,12 @@ namespace GeneralShare
             if (maxValue < 0)
                 throw new ArgumentOutOfRangeException(nameof(maxValue), "Value must be positive.");
 
-            return (long)(FloatSample() * maxValue);
+            return (long)(NextDouble() * maxValue);
         }
 
         public int NextInt32()
         {
-            return (int)(FloatSample() * int.MaxValue);
+            return (int)(NextDouble() * int.MaxValue);
         }
 
         public int NextInt32(int maxValue)
@@ -127,7 +120,7 @@ namespace GeneralShare
             if (maxValue < 0)
                 throw new ArgumentOutOfRangeException(nameof(maxValue), "Value must be positive.");
 
-            return (int)(FloatSample() * maxValue);
+            return (int)(NextDouble() * maxValue);
         }
 
         public int NextInt32(int minValue, int maxValue)
@@ -141,23 +134,42 @@ namespace GeneralShare
             long range = (long)maxValue - minValue;
             if (range <= int.MaxValue)
             {
-                return ((int)(FloatSample() * range) + minValue);
+                return ((int)(NextDouble() * range) + minValue);
             }
             else
             {
-                return (int)((long)(FloatSample() * range) + minValue);
+                return (int)((long)(NextDouble() * range) + minValue);
             }
         }
 
-        public virtual void NextBytes(byte[] buffer)
+        public void NextBytes(byte[] buffer)
         {
             if (buffer == null)
                 throw new ArgumentNullException(nameof(buffer));
 
-            for (int i = 0; i < buffer.Length; i++)
+            NextBytes(buffer, 0, buffer.Length);
+        }
+
+        public void NextBytes(byte[] buffer, int offset, int count)
+        {
+            if (buffer == null)
+                throw new ArgumentNullException(nameof(buffer));
+
+            if (count > buffer.Length)
+                throw new ArgumentOutOfRangeException(nameof(count));
+
+            if (offset + count > buffer.Length)
+                throw new ArgumentOutOfRangeException(nameof(offset));
+
+            for (int i = 0; i < count; i++)
             {
-                buffer[i] = (byte)(IntegerSample() % (byte.MaxValue + 1));
+                buffer[i + offset] = (byte)(LongSample() % (byte.MaxValue + 1));
             }
+        }
+
+        public byte NextByte()
+        {
+            return (byte)(LongSample() % (byte.MaxValue + 1));
         }
     }
 }

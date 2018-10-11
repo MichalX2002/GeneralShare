@@ -360,11 +360,14 @@ namespace GeneralShare.UI
                     var keysPressed = Input.KeysPressed;
                     var keysReleased = Input.KeysReleased;
 
+                    for (int h = 0; h < keysHeld.Count; h++)
+                    {
+                        var heldKey = keysHeld[h];
+                        element.TriggerOnKeyRepeat(heldKey.Key, heldKey.Time);
+                    }
+
                     for (int d = 0; d < keysDown.Count; d++)
                         element.TriggerOnKeyDown(keysDown[d]);
-
-                    for (int h = 0; h < keysHeld.Count; h++)
-                        element.TriggerOnKeyHeld(keysHeld[h]);
 
                     for (int p = 0; p < keysPressed.Count; p++)
                         element.TriggerOnKeyPress(keysPressed[p]);

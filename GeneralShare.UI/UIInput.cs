@@ -63,9 +63,11 @@ namespace GeneralShare.UI
             CaretColor = Color.Red;
             BasePrefixColor = Color.White;
 
-            OnMousePress += InputBox_OnMousePress;
-            OnTextInput += InputBox_OnTextInput;
-            OnKeyPress += InputBox_OnKeyPress;
+            OnMousePress += UIInput_OnMousePress;
+            OnTextInput += UIInput_OnTextInput;
+
+            OnKeyPress += UIInput_OnKeyPress;
+            OnKeyRepeat += UIInput_OnKeyRepeat;
         }
 
         private void SetObscureValue(bool value)
@@ -132,7 +134,16 @@ namespace GeneralShare.UI
             MarkDirtyE(ref _caretSize, value, DirtMarkType.CaretSize);
         }
 
-        private void InputBox_OnKeyPress(Keys key)
+        private void UIInput_OnKeyRepeat(Keys key, float timeDown)
+        {
+            if(timeDown > 0.5f)
+                UIInput_OnKeyPress(key);
+
+            // TODO: this will run at current framerate, better make it delta time based
+            // we have an update function, so that's relatively simple
+        }
+
+        private void UIInput_OnKeyPress(Keys key)
         {
             lock (SyncRoot)
             {
@@ -151,7 +162,7 @@ namespace GeneralShare.UI
             }
         }
 
-        private void InputBox_OnTextInput(TextInputEventArgs e)
+        private void UIInput_OnTextInput(TextInputEventArgs e)
         {
             lock (SyncRoot)
             {
@@ -214,7 +225,7 @@ namespace GeneralShare.UI
             }
         }
 
-        private void InputBox_OnMousePress(MouseState mouseState, MouseButton buttons)
+        private void UIInput_OnMousePress(MouseState mouseState, MouseButton buttons)
         {
             lock (SyncRoot)
             {
@@ -366,9 +377,9 @@ namespace GeneralShare.UI
 
         protected override void Dispose(bool disposing)
         {
-            OnMousePress -= InputBox_OnMousePress;
-            OnTextInput -= InputBox_OnTextInput;
-            OnKeyPress -= InputBox_OnKeyPress;
+            OnMousePress -= UIInput_OnMousePress;
+            OnTextInput -= UIInput_OnTextInput;
+            OnKeyPress -= UIInput_OnKeyPress;
 
             base.Dispose(disposing);
         }
