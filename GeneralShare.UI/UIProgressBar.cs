@@ -153,22 +153,21 @@ namespace GeneralShare.UI
 
         private void UpdateBar()
         {
-            if (Dirty)
-            {
-                UpdateMainRect();
+            if (Dirty == false)
+                return;
 
-                Vector3 globalPos = GlobalPosition;
-                _boundaries.X = globalPos.X;
-                _boundaries.Y = globalPos.Y;
-                _boundaries.Width = Scale.X * _destination.X / _backBarRegion.Width;
-                _boundaries.Height = Scale.Y * _destination.Y / _backBarRegion.Height;
-                InvokeMarkedDirty(DirtMarkType.Boundaries);
+            UpdateMainRect();
 
-                _needsSpriteUpdate = true;
+            Vector3 globalPos = GlobalPosition;
+            _boundaries.X = globalPos.X;
+            _boundaries.Y = globalPos.Y;
+            _boundaries.Width = Scale.X * _destination.X / _backBarRegion.Width;
+            _boundaries.Height = Scale.Y * _destination.Y / _backBarRegion.Height;
+            InvokeMarkedDirty(DirtMarkType.Boundaries);
 
-                ClearDirtMarks();
-                Dirty = false;
-            }
+            _needsSpriteUpdate = true;
+            ClearDirtMarks();
+            Dirty = false;
         }
 
         public override void Draw(GameTime time, SpriteBatch batch)

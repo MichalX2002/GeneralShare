@@ -6,21 +6,28 @@ using MonoGame.Extended;
 using MonoGame.Extended.BitmapFonts;
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace GeneralShare.UI
 {
     public class UIInput : UITextBase
     {
-        private RectangleF _caretRect;
-        private Color _visibleCaretColor;
-        private Vector2 _caretSize;
-        private int _caretIndex;
         private int _maxCharCount;
         private int _totalTextLength;
         private bool _obscureValue;
         private char _obscureChar;
         private HashSet<char> _excludedChars;
         private ReadOnlyWrapper<char> _readonlyExcludedChars;
+        private float _keyRepeatTime;
+        private float _repeatKeyOccuring;
+
+        private RectangleF _caretRect;
+        private Color _visibleCaretColor;
+        private Vector2 _caretSize;
+        private int _caretIndex;
+        private float _caretAngle;
+        private float _currentCaretAlpha;
+        private byte _caretAlphaThreshold;
 
         private string _prefix;
         private bool _prefixExpressions;
@@ -31,12 +38,20 @@ namespace GeneralShare.UI
         public Vector2 CaretSize { get => _caretSize; set => SetCaretSize(value); }
         public float CaretBlinkSpeed { get; set; }
         public Color CaretColor { get; set; }
+        public byte CaretAlphaThreshold
+        {
+            get => _caretAlphaThreshold;
+            set => _caretAlphaThreshold = (byte)Mathf.Clamp(value, 0, byte.MaxValue);
+        }
 
         public string Value { get => _value; set => SetValue(value); }
         public string Prefix { get => _prefix; set => SetPrefix(value); }
         public bool UsePrefixExpressions { get => _prefixExpressions; set => SetPrefixExp(value); }
         public bool KeepPrefixExpressions { get => _keepPrefixExpressions; set => SetKeepPrefixExp(value); }
         public Color BasePrefixColor { get => _basePrefixColor; set => SetPrefixColor(value); }
+
+        public float KeyRepeatDelay { get; set; } 
+        public float KeyRepeatRate { get; set; }
 
         public bool AllowNewLine { get; set; }
         public bool ObscureValue { get => _obscureValue; set => SetObscureValue(value); }
@@ -56,18 +71,30 @@ namespace GeneralShare.UI
             UseShadow = true;
             BuildCharQuadTree = true;
 
-            MaxCharCount = 200;
+            MaxCharCount = 256;
             CaretIndex = 0;
             CaretSize = new Vector2(2, -1);
-            CaretBlinkSpeed = 1;
+            CaretBlinkSpeed = 0.666f;
             CaretColor = Color.Red;
             BasePrefixColor = Color.White;
+            KeyRepeatDelay = 0.5f;
+            KeyRepeatRate = 20;
+            CaretAlphaThreshold = 25;
 
             OnMousePress += UIInput_OnMousePress;
             OnTextInput += UIInput_OnTextInput;
-
             OnKeyPress += UIInput_OnKeyPress;
             OnKeyRepeat += UIInput_OnKeyRepeat;
+        }
+
+        public void SetValueNow(StringBuilder builder)
+        {
+            SetAndProcessText(builder);
+        }
+
+        private void PauseCaretAnimation()
+        {
+            _repeatKeyOccuring = 0.666f;
         }
 
         private void SetObscureValue(bool value)
@@ -117,15 +144,11 @@ namespace GeneralShare.UI
 
         private void SetCaretIndex(int value)
         {
-            SetCaretIndexInternal(value);
-        }
-
-        private void SetCaretIndexInternal(int value)
-        {
             lock (SyncRoot)
             {
                 PrepareCaretIndex(ref value);
-                MarkDirtyE(ref _caretIndex, value, DirtMarkType.CaretIndex);
+                if (MarkDirtyE(ref _caretIndex, value, DirtMarkType.CaretIndex))
+                    PauseCaretAnimation();
             }
         }
 
@@ -136,7 +159,7 @@ namespace GeneralShare.UI
 
         private void UIInput_OnKeyRepeat(Keys key, float timeDown)
         {
-            if(timeDown > 0.5f)
+            if (timeDown > KeyRepeatDelay)
                 UIInput_OnKeyPress(key);
 
             // TODO: this will run at current framerate, better make it delta time based
@@ -175,6 +198,8 @@ namespace GeneralShare.UI
                     if (Value.Length < _maxCharCount)
                     {
                         _caretIndex++;
+                        PauseCaretAnimation();
+
                         Value = Value.Insert(insertIndex, value.ToString());
                         MarkDirty(DirtMarkType.CaretIndex, true);
                     }
@@ -237,7 +262,7 @@ namespace GeneralShare.UI
                 if (item != null)
                 {
                     int newIndex = (int)Math.Ceiling(item.Value);
-                    SetCaretIndexInternal(newIndex);
+                    SetCaretIndex(newIndex);
                 }
             }
         }
@@ -293,23 +318,9 @@ namespace GeneralShare.UI
 
                 if (BuildCharQuadTree == false)
                     return;
-
-                if (IsSelected)
-                {
-                    if (CaretBlinkSpeed <= 0)
-                    {
-                        _visibleCaretColor = CaretColor;
-                    }
-                    else
-                    {
-                        double totalSec = time.TotalGameTime.TotalSeconds;
-                        double sin = Math.Sin(totalSec * CaretBlinkSpeed * Math.PI * 2) + 1;
-                        _visibleCaretColor = new Color(CaretColor, (int)(CaretColor.A * sin * 0.5));
-                    }
-
-                    if (_caretRect.Width > 0 && _caretRect.Height > 0)
-                        batch.DrawFilledRectangle(_caretRect, _visibleCaretColor);
-                }
+                
+                if (IsSelected && _caretRect.Width > 0 && _caretRect.Height > 0)
+                    batch.DrawFilledRectangle(_caretRect, _visibleCaretColor);
 
                 /*
                 void DrawTree(Collections.QuadTree<float> ree)
@@ -335,10 +346,37 @@ namespace GeneralShare.UI
             }
         }
 
+        public override void Update(GameTime time)
+        {
+            base.Update(time);
+
+            if (IsSelected)
+                UpdateCaretColor(time.Delta);
+            else if (IsActive)
+                _caretAngle = (float)(Math.PI / 2f);
+        }
+
+        private void UpdateCaretColor(float delta)
+        {
+            float alpha = 255f;
+            if (_repeatKeyOccuring > 0f)
+            {
+                _repeatKeyOccuring -= delta;
+            }
+            else if (CaretBlinkSpeed > 0)
+            {
+                _caretAngle += delta;
+                double sin = (Math.Sin(_caretAngle * CaretBlinkSpeed * Math.PI * 2) + 1) / 2;
+                alpha = Mathf.Map((float)(CaretColor.A * sin), 0, 255, _caretAlphaThreshold, 255);
+            }
+            _currentCaretAlpha = Mathf.Lerp(_currentCaretAlpha, alpha, delta * 9);
+            _visibleCaretColor = new Color(CaretColor, (byte)_currentCaretAlpha);
+        }
+
         protected override void SpecialBeforeTextProcessing()
         {
             SpecialTextFormat.Format(
-                _prefix, _processedText, _basePrefixColor, Font,
+                new SpecialTextFormat.Input(_prefix), _processedText, _basePrefixColor, Font,
                 _keepPrefixExpressions, _prefixExpressions ? _expressionColors : null);
         }
 

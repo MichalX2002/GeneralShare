@@ -258,12 +258,13 @@ namespace GeneralShare.UI
             return false;
         }
 
-        protected void MarkDirty(DirtMarkType marks, bool onlyMarkFlags)
+        protected void MarkDirty(DirtMarkType marks, bool onlyMark)
         {
-            if (onlyMarkFlags == false)
-                _dirty = true;
+            _dirty = true;
             DirtMarks |= marks;
-            InvokeMarkedDirty(marks);
+
+            if (onlyMark == false)
+                InvokeMarkedDirty(marks);
         }
 
         protected void MarkDirty(DirtMarkType marks)
@@ -294,6 +295,12 @@ namespace GeneralShare.UI
         public override int GetHashCode()
         {
             return TransformKey;
+        }
+
+        internal void FastDispose()
+        {
+            Dispose(false);
+            GC.SuppressFinalize(this);
         }
 
         protected virtual void Dispose(bool disposing)

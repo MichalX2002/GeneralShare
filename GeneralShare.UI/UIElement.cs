@@ -11,6 +11,7 @@ namespace GeneralShare.UI
         public delegate void GenericMouseDelegate(MouseState mouseState, MouseButton buttons);
         public delegate void GenericKeyboardDelegate(Keys key);
         public delegate void RepeatedKeyboardDelegate(Keys key, float timeDown);
+        public delegate void ScrollDelegate(float amount);
         
         public event GenericMouseDelegate OnMouseDown;
         public event GenericMouseDelegate OnMousePress;
@@ -18,6 +19,7 @@ namespace GeneralShare.UI
         public event MouseHoverDelegate OnMouseEnter;
         public event MouseHoverDelegate OnMouseHover;
         public event MouseHoverDelegate OnMouseLeave;
+        public event ScrollDelegate OnScroll;
         public event RepeatedKeyboardDelegate OnKeyRepeat;
         public event GenericKeyboardDelegate OnKeyDown;
         public event GenericKeyboardDelegate OnKeyPress;
@@ -56,23 +58,7 @@ namespace GeneralShare.UI
         }
 
         public UIElement(UIManager manager) : this(null, manager) { }
-
-        private void TriggerMouseHoverEvent(MouseState mouseState, MouseHoverDelegate action)
-        {
-            action?.Invoke(mouseState);
-        }
-
-        private void TriggerGenericMouseEvent(
-            MouseState state, MouseButton buttons, GenericMouseDelegate action)
-        {
-            action?.Invoke(state, buttons);
-        }
-
-        private void TriggerGenericKeyboardEvent(Keys key, GenericKeyboardDelegate action)
-        {
-            action?.Invoke(key);
-        }
-
+        
         internal void TriggerOnTextInput(TextInputEventArgs e)
         {
             OnTextInput?.Invoke(e);
@@ -80,32 +66,37 @@ namespace GeneralShare.UI
 
         internal void TriggerOnMouseDown(MouseState state, MouseButton buttons)
         {
-            TriggerGenericMouseEvent(state, buttons, OnMouseDown);
+            OnMouseDown?.Invoke(state, buttons);
         }
 
         internal void TriggerOnMousePress(MouseState state, MouseButton buttons)
         {
-            TriggerGenericMouseEvent(state, buttons, OnMousePress);
+            OnMousePress?.Invoke(state, buttons);
         }
 
         internal void TriggerOnMouseRelease(MouseState state, MouseButton buttons)
         {
-            TriggerGenericMouseEvent(state, buttons, OnMouseRelease);
+            OnMouseRelease?.Invoke(state, buttons);
         }
 
         internal void TriggerOnMouseEnter(MouseState state)
         {
-            TriggerMouseHoverEvent(state, OnMouseEnter);
+            OnMouseEnter?.Invoke(state);
         }
 
         internal void TriggerOnMouseHover(MouseState state)
         {
-            TriggerMouseHoverEvent(state, OnMouseHover);
+            OnMouseHover?.Invoke(state);
         }
 
         internal void TriggerOnMouseLeave(MouseState state)
         {
-            TriggerMouseHoverEvent(state, OnMouseLeave);
+            OnMouseLeave?.Invoke(state);
+        }
+
+        internal void TriggerOnScroll(float amount)
+        {
+            OnScroll?.Invoke(amount);
         }
 
         internal void TriggerOnKeyRepeat(Keys key, float timeDown)
@@ -115,17 +106,17 @@ namespace GeneralShare.UI
 
         internal void TriggerOnKeyDown(Keys key)
         {
-            TriggerGenericKeyboardEvent(key, OnKeyDown);
+            OnKeyDown?.Invoke(key);
         }
 
         internal void TriggerOnKeyPress(Keys key)
         {
-            TriggerGenericKeyboardEvent(key, OnKeyPress);
+            OnKeyPress?.Invoke(key);
         }
 
         internal void TriggerOnKeyRelease(Keys key)
         {
-            TriggerGenericKeyboardEvent(key, OnKeyRelease);
+            OnKeyRelease?.Invoke(key);
         }
     }
 }

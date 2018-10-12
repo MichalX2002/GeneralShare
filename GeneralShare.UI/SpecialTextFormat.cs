@@ -45,7 +45,7 @@ namespace GeneralShare.UI
         }
 
         public static StringBuilder ColorFormat(
-            string input, Color startColor, BitmapFont font, ICollection<Color> output)
+            Input input, Color startColor, BitmapFont font, ICollection<Color> output)
         {
             var outputB = new StringBuilder(input.Length);
             Format(input, outputB, startColor, font, true, output);
@@ -53,29 +53,29 @@ namespace GeneralShare.UI
         }
 
         public static void Format(
-            string textInput, StringBuilder textOutput,
+            Input input, StringBuilder textOutput,
             Color baseColor, BitmapFont font,
-            bool keepSequences, ICollection<Color> outputColors)
+            bool keepSequences, ICollection<Color> colorOutput)
         {
             Color currentColor = baseColor;
-            bool processColor = outputColors != null;
+            bool processColor = colorOutput != null;
 
             void AddCurrent(int index)
             {
                 if (processColor)
                 {
-                    if (font.GetCharacterRegion(textInput[index], out var reg))
-                        outputColors.Add(currentColor);
+                    if (font.GetCharacterRegion(input[index], out var reg))
+                        colorOutput.Add(currentColor);
                 }
 
-                textOutput.Append(textInput[index]);
+                textOutput.Append(input[index]);
             }
 
             bool inSequence = false;
-            int inputLength = textInput.Length;
+            int inputLength = input.Length;
             for (int i = 0; i < inputLength; i++)
             {
-                if (textInput[i] == '§')
+                if (input[i] == '§')
                 {
                     if (inSequence == true)
                     {
@@ -91,9 +91,9 @@ namespace GeneralShare.UI
                         int startOffset = i + 1;
                         if (startOffset < inputLength)
                         {
-                            if (textInput[startOffset] == '[')
+                            if (input[startOffset] == '[')
                             {
-                                int tailOffset = GetSequence(textInput, startOffset + 1, out var seq);
+                                int tailOffset = GetSequence(input, startOffset + 1, out var seq);
                                 if (tailOffset > 0)
                                 {
                                     inSequence = true;
@@ -117,27 +117,27 @@ namespace GeneralShare.UI
         // and use a font collection instead of BitmapFont (in TextBox).
         // Switching fonts while building will need some work,
         // but special color format application should be the same.
-        private static int GetSequence(string chars, int start, out StringBuilder sequence)
+        private static int GetSequence(Input input, int start, out StringBuilder sequence)
         {
             int tail = start;
-            while (tail < chars.Length)
+            while (tail < input.Length)
             {
                 tail++;
 
                 // Don't bother going beyond text length or 15 chars 
                 // ("255,255,255,255" is 15 chars)
-                if (tail == chars.Length)
+                if (tail == input.Length)
                 {
                     sequence = null;
                     return 0;
                 }
 
-                if (chars[tail] == ']')
+                if (input[tail] == ']')
                 {
                     var seqBuilder = SequenceBuilder;
 
                     for (int j = start; j < tail; j++)
-                        seqBuilder.Append(chars[j]);
+                        seqBuilder.Append(input[j]);
 
                     sequence = seqBuilder;
                     return tail;
@@ -195,6 +195,26 @@ namespace GeneralShare.UI
             buffer[itemCount] = FastParse(seq, lastOffset, seqLength - lastOffset);
 
             return new Color(buffer[0], buffer[1], buffer[2], buffer[3]);
+        }
+        
+        public struct Input
+        {
+            private Func<int, char> _getChar;
+
+            public char this[int index] => _getChar(index);
+            public int Length { get; }
+
+            public Input(StringBuilder builder)
+            {
+                Length = builder.Length;
+                _getChar = (i) => builder[i];
+            }
+
+            public Input(string value)
+            {
+                Length = value.Length;
+                _getChar = (i) => value[i];
+            }
         }
     }
 }

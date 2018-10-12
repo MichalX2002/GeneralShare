@@ -12,7 +12,7 @@ namespace GeneralShare.UI
         private bool _needsBoundsUpdate;
 
         public override RectangleF Boundaries => GetBounds();
-        public ReadOnlyWrapper<UITransform> Children { get; }
+        public IReadOnlyList<UITransform> Children { get; }
         
         public UIContainer(UIManager manager) : base(manager)
         {
@@ -155,22 +155,21 @@ namespace GeneralShare.UI
 
         public override void Update(GameTime time)
         {
-            if (Dirty)
+            if (Dirty == false)
+                return;
+
+            DirtMarkType marks = FULL_TRANSFORM_UPDATE;
+            if (DirtMarks.HasAnyFlag(DirtMarkType.Enabled))
+                marks |= DirtMarkType.Enabled;
+            lock (SyncRoot)
             {
-                DirtMarkType marks = FULL_TRANSFORM_UPDATE;
-                if (DirtMarks.HasAnyFlag(DirtMarkType.Enabled))
-                    marks |= DirtMarkType.Enabled;
-                lock (SyncRoot)
+                for (int i = 0, count = _transforms.Count; i < count; i++)
                 {
-                    for (int i = 0, count = _transforms.Count; i < count; i++)
-                    {
-                        _transforms[i].InvokeMarkedDirtyInternal(marks);
-                    }
+                    _transforms[i].InvokeMarkedDirtyInternal(marks);
                 }
-                Dirty = false;
-                ClearDirtMarks();
             }
-            base.Update(time);
+            Dirty = false;
+            ClearDirtMarks();
         }
 
         protected override void Dispose(bool disposing)
@@ -179,10 +178,8 @@ namespace GeneralShare.UI
             {
                 lock (SyncRoot)
                 {
-                    for (int i = 0, count = _transforms.Count; i < count; i++)
-                    {
+                    for (int i = _transforms.Count; i -- > 0;)
                         _transforms[i].MarkedDirty -= Transform_MarkedDirty;
-                    }
                     _transforms = null;
                 }
 

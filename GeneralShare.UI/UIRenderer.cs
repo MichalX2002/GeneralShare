@@ -19,7 +19,7 @@ namespace GeneralShare.UI
                 bool isBatching = false;
                 SamplingMode lastSampling = SamplingMode.LinearClamp;
 
-                var transforms = Manager.GetSortedTransforms();
+                var transforms = Manager.GetSortedTransformList();
                 for (int i = 0, count = transforms.Count; i < count; i++)
                 {
                     UITransform transform = transforms[i];

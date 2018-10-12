@@ -1,4 +1,5 @@
 ﻿using MonoGame.Extended.BitmapFonts;
+using System.Text;
 
 namespace GeneralShare.UI
 {
@@ -17,6 +18,11 @@ namespace GeneralShare.UI
 
         public UIText(BitmapFont font) : this(null, font)
         {
+        }
+
+        public void SetTextNow(StringBuilder value)
+        {
+            SetAndProcessText(value);
         }
     }
 }

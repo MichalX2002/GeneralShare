@@ -69,8 +69,8 @@ namespace GeneralShare.UI
                     UpdateSprite();
                     Dirty = false;
                 }
+                batch.Draw(_region.Texture, _sprite);
             }
-            batch.Draw(_region.Texture, _sprite);
         }
     }
 }
