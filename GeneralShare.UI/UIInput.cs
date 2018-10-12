@@ -199,9 +199,7 @@ namespace GeneralShare.UI
                         {
                             int index = _caretIndex - SpecialProcessedTextLength;
                             if (index >= 0 && index < Value.Length)
-                            {
                                 Value = Value.Remove(index, 1);
-                            }
                             MarkDirty(DirtMarkType.CaretIndex, true);
                         }
                         break;
@@ -213,10 +211,11 @@ namespace GeneralShare.UI
 
                     default:
                         char c = e.Character;
-                        if (char.IsLetterOrDigit(c) ||
-                            char.IsPunctuation(c) ||
+                        if (char.IsLetter(c) ||
+                            char.IsNumber(c) ||
+                            char.IsSymbol(c) ||
                             char.IsWhiteSpace(c) ||
-                            char.IsSymbol(c))
+                            char.IsPunctuation(c))
                         {
                             Insert(c);
                         }
@@ -250,17 +249,11 @@ namespace GeneralShare.UI
             _totalTextLength = valueLength + prefixLength;
 
             if (index > _totalTextLength)
-            {
                 index = _totalTextLength;
-            }
             else if (index < prefixLength)
-            {
                 index = prefixLength;
-            }
             else if (index < 0)
-            {
                 index = 0;
-            }
         }
 
         private RectangleF GetCaretPosition()
@@ -279,8 +272,6 @@ namespace GeneralShare.UI
                 PrepareCaretIndex(ref _caretIndex);
                 if (_caretIndex > 0 && _caretIndex <= _totalTextLength)
                 {
-                    Console.WriteLine(_caretIndex + " | Count: " + _textSprites.Count);
-
                     Vector3 lastPos = _textSprites.GetReferenceAt(_caretIndex - 1).Sprite.TR.Position;
                     double rawDistance = (lastPos.Y - globalPos.Y) / Font.LineHeight;
                     double line = Math.Floor(rawDistance / Scale.Y);
@@ -330,9 +321,7 @@ namespace GeneralShare.UI
                         else
                             batch.DrawPoint(rect.Bounds.Position.ToVector2(), Color.Green, 2);
                     }
-
                     batch.DrawRectangle(ree.Boundary, Color.Blue);
-
                     if (ree.Divided)
                     {
                         DrawTree(ree.TopLeft);
@@ -341,7 +330,6 @@ namespace GeneralShare.UI
                         DrawTree(ree.BottomRight);
                     }
                 }
-
                 DrawTree(_charQuadTree.CurrentTree);
                 */
             }
@@ -349,9 +337,9 @@ namespace GeneralShare.UI
 
         protected override void SpecialBeforeTextProcessing()
         {
-            var colorOutput = _prefixExpressions ? _expressionColors : null;
-            SpecialTextFormat.Format(_prefix, _processedText,
-                _basePrefixColor, Font, _keepPrefixExpressions, colorOutput);
+            SpecialTextFormat.Format(
+                _prefix, _processedText, _basePrefixColor, Font,
+                _keepPrefixExpressions, _prefixExpressions ? _expressionColors : null);
         }
 
         protected override void SpecialPostTextProcessing()
@@ -360,9 +348,7 @@ namespace GeneralShare.UI
             {
                 int length = _processedText.Length - _prefix.Length;
                 for (int i = _prefix.Length; i < length; i++)
-                {
                     _processedText[i] = _obscureChar;
-                }
             }
         }
 
