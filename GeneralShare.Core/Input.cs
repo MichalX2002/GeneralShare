@@ -259,12 +259,12 @@ namespace GeneralShare
             _keysHeld.Clear();
             for (int i = 0; i < _keysDown.Count; i++)
             {
-                CheckLastHeldKey(time.Delta, _keysDown[i]);
+                AddHeldKey(time.Delta, _keysDown[i]);
             }
             _lastKeysHeld.Clear(false);
         }
 
-        private static void CheckLastHeldKey(float delta, Keys key)
+        private static void AddHeldKey(float delta, Keys key)
         {
             for (int i = 0; i < _lastKeysHeld.Count; i++)
             {
@@ -273,11 +273,11 @@ namespace GeneralShare
                 {
                     last._time += delta;
                     _keysHeld.Add(last);
-                    return; // return as we only want one HeldKey in the list
+                    return; // return as we only want one (the previous) HeldKey in the list
                 }
             }
 
-            // we add a new HeldKey if it didn't exist before
+            // add a new HeldKey if it didn't exist before
             _keysHeld.Add(new HeldKey(key));
         }
         
