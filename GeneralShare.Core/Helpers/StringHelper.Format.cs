@@ -40,18 +40,6 @@ namespace GeneralShare
             }
         }
 
-        public static string Format(this string value, object arg0, object arg1, object arg2, object arg3)
-        {
-            try
-            {
-                return string.Format(value, arg0, arg1, arg2, arg3);
-            }
-            catch
-            {
-                return FormatError(value, arg0, arg1, arg2, arg3);
-            }
-        }
-
         public static string Format(this string value, params object[] args)
         {
             try
@@ -66,7 +54,7 @@ namespace GeneralShare
 
         private static string FormatError(string value, params object[] args)
         {
-            string errorFormat = $"Format Error: \"{value}\": ";
+            string errorFormat = $"Format Exception: \"{value}\": ";
             var b = new StringBuilder(errorFormat, errorFormat.Length + args.Length * 2);
             for (int i = 0; i < args.Length; i++)
             {
