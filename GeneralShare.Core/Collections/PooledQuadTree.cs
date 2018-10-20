@@ -21,9 +21,7 @@ namespace GeneralShare.Collections
             if(_pool.Count > 0)
             {
                 int index = _pool.Count - 1;
-                var item = _pool[index];
-                _pool.RemoveAt(index);
-                return item;
+                return _pool.GetAndRemoveAt(index);
             }
 
             return new ListArray<QuadTree<T>.Item>();

@@ -264,13 +264,25 @@ namespace GeneralShare.Collections
             }
             return false;
         }
-
+        
         public void RemoveAt(int index)
+        {
+            GetAndRemoveAt(index);
+        }
+
+        public T GetAndRemoveAt(int index)
         {
             if (index >= Count || index < 0)
                 throw new IndexOutOfRangeException();
 
-            RemoveAtInternal(index);
+            return RemoveAtInternal(index);
+        }
+
+        public T GetAndRemoveLast()
+        {
+            if (Count > 0)
+                return GetAndRemoveAt(Count - 1);
+            return default;
         }
 
         public int FindIndex(Predicate<T> predicate)
@@ -283,7 +295,7 @@ namespace GeneralShare.Collections
             return -1;
         }
         
-        private void RemoveAtInternal(int index)
+        private T RemoveAtInternal(int index)
         {
             CheckAccessibility();
 
@@ -292,8 +304,10 @@ namespace GeneralShare.Collections
             {
                 Array.Copy(InnerArray, index + 1, InnerArray, index, Count - index);
             }
+            T item = InnerArray[Count];
             InnerArray[Count] = default;
             Version++;
+            return item;
         }
         
         public int IndexOf(T item)

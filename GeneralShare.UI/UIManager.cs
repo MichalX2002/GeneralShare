@@ -181,8 +181,7 @@ namespace GeneralShare.UI
             }
             else
             {
-                Transforms[index].MarkedDirty -= Transform_MarkedDirty;
-                Transforms.RemoveAt(index);
+                Transforms.GetAndRemoveAt(index).MarkedDirty -= Transform_MarkedDirty;
                 return true;
             }
         }

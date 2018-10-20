@@ -8,29 +8,32 @@ namespace GeneralShare
     {
         public const string DEFAULT_FILENAME = "versiontag.json";
 
-        [JsonProperty("VersionMajor")]
-        private string _versionMajor;
+        [JsonProperty("Major")]
+        private string _major;
 
-        [JsonProperty("VersionMinor")]
-        private string _versionMinor;
-
-        [JsonIgnore]
-        private string _version;
+        [JsonProperty("Minor")]
+        private string _minor;
 
         [JsonIgnore]
-        public string VersionMajor => _versionMajor;
+        private string _value;
 
         [JsonIgnore]
-        public string VersionMinor => _versionMinor;
+        public string Major => _major;
 
         [JsonIgnore]
-        public string Version => _version;
+        public string Minor => _minor;
+
+        [JsonIgnore]
+        public string Value => _value;
 
         [JsonConstructor]
-        public VersionTag(string versionMajor, string versionMinor)
+        public VersionTag(string major, string minor)
         {
-            _versionMajor = versionMajor;
-            _versionMinor = versionMinor;
+            if (string.IsNullOrWhiteSpace(major) || string.IsNullOrWhiteSpace(minor))
+                major = major;
+
+            _major = major;
+            _minor = minor;
             CombineVersion();
         }
 
@@ -44,9 +47,7 @@ namespace GeneralShare
         /// </summary>
         public VersionTag()
         {
-            _version = "undefined";
-            _versionMajor = _version;
-            _versionMinor = _version;
+            _major = _minor = _value = "undefined";
         }
 
         protected void SetVersion(string version)
@@ -56,19 +57,19 @@ namespace GeneralShare
                 throw new ArgumentException(
                     "Could not split version into major and minor.", nameof(version));
 
-            _versionMajor = split[0].Trim();
-            _versionMinor = split[1].Trim();
+            _major = split[0].Trim();
+            _minor = split[1].Trim();
             CombineVersion();
         }
 
         private void CombineVersion()
         {
-            _version = $"{_versionMajor}.{_versionMinor}";
+            _value = $"{_major}.{_minor}";
         }
 
         public override string ToString()
         {
-            return _version;
+            return _value;
         }
     }
 }
