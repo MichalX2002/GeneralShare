@@ -8,11 +8,11 @@ namespace GeneralShare
 {
     public static class JsonUtils
     {
-        private const Formatting DefaultFormatting = Formatting.None;
+        public const Formatting DEFAULT_FORMATTING = Formatting.None;
 
         [ThreadStatic]
         private static JsonSerializer __defaultUniqueSerializer;
-        private static JsonSerializer DefaultUniqueSerializer
+        private static JsonSerializer DefaultSerializer
         {
             get
             {
@@ -20,16 +20,17 @@ namespace GeneralShare
                 {
                     __defaultUniqueSerializer = new JsonSerializer
                     {
-                        Formatting = DefaultFormatting
+                        Formatting = DEFAULT_FORMATTING
                     };
                 }
                 return __defaultUniqueSerializer;
             }
         }
 
+        #region Stream-based Serialize
         public static void Serialize<T>(T value, JsonSerializer serializer, Stream stream, bool leaveOpen = false)
         {
-            using (var streamWriter = new StreamWriter(stream, Encoding.UTF8, 1024 * 8, leaveOpen))
+            using (var streamWriter = new StreamWriter(stream, Encoding.UTF8, 1024 * 4, leaveOpen))
             using (var jsonWriter = new JsonTextWriter(streamWriter))
             {
                 serializer.Serialize(jsonWriter, value);
@@ -38,17 +39,38 @@ namespace GeneralShare
 
         public static void Serialize<T>(T value, Formatting formatting, Stream stream, bool leaveOpen = false)
         {
-            var serializer = DefaultUniqueSerializer;
+            var serializer = DefaultSerializer;
             serializer.Formatting = formatting;
             Serialize(value, serializer, stream, leaveOpen);
-            serializer.Formatting = DefaultFormatting;
+            serializer.Formatting = DEFAULT_FORMATTING;
         }
 
         public static void Serialize<T>(T value, Stream stream, bool leaveOpen = false)
         {
-            Serialize(value, DefaultUniqueSerializer, stream, leaveOpen);
+            Serialize(value, DefaultSerializer, stream, leaveOpen);
+        }
+        #endregion
+
+        #region Path-based Serialize
+        public static void Serialize<T>(T value, Formatting formatting, string path)
+        {
+            using (var fs = new FileStream(path, FileMode.Create))
+                Serialize(value, formatting, fs);
         }
 
+        public static void Serialize<T>(T value, JsonSerializer serializer, string path)
+        {
+            using (var fs = new FileStream(path, FileMode.Create))
+                Serialize(value, serializer, fs);
+        }
+
+        public static void Serialize<T>(T value, string path)
+        {
+            Serialize(value, DefaultSerializer, path);
+        }
+        #endregion
+
+        #region Stream-based Deserialize
         public static T Deserialize<T>(JsonSerializer serializer, Stream stream, bool leaveOpen = false)
         {
             return serializer.Deserialize<T>(stream, leaveOpen);
@@ -56,7 +78,21 @@ namespace GeneralShare
 
         public static T Deserialize<T>(Stream stream, bool leaveOpen = false)
         {
-            return Deserialize<T>(DefaultUniqueSerializer, stream, leaveOpen);
+            return Deserialize<T>(DefaultSerializer, stream, leaveOpen);
         }
+        #endregion
+
+        #region Path-based Deserialize
+        public static T Deserialize<T>(JsonSerializer serializer, string path)
+        {
+            using (var fs = new FileStream(path, FileMode.Open))
+                return Deserialize<T>(serializer, fs);
+        }
+
+        public static T Deserialize<T>(string path)
+        {
+            return Deserialize<T>(DefaultSerializer, path);
+        }
+        #endregion
     }
 }
