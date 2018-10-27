@@ -9,18 +9,15 @@ namespace GeneralShare
             if (timeSpan.TotalSeconds < 0.1)
             {
                 float millis =
-                    timeSpan.TotalSeconds < 0.01 ?
-                    (int)(timeSpan.TotalMilliseconds * 100f) / 100f : timeSpan.Milliseconds;
+                    timeSpan.TotalSeconds < 0.01 ? (int)(timeSpan.TotalMilliseconds * 100f) / 100f : timeSpan.Milliseconds;
 
                 return $"{millis}ms";
             }
             else
             {
                 float seconds =
-                    timeSpan.TotalSeconds < 1 ?
-                    (int)(timeSpan.TotalSeconds * 100) / 100f :
-                    timeSpan.TotalSeconds < 10 ?
-                    (int)(timeSpan.TotalSeconds * 10) / 10f :
+                    timeSpan.TotalSeconds < 1 ? (int)(timeSpan.TotalSeconds * 100) / 100f :
+                    timeSpan.TotalSeconds < 10 ? (int)(timeSpan.TotalSeconds * 10) / 10f :
                     timeSpan.Seconds;
                 return $"{seconds}s";
             }
