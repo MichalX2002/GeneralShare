@@ -27,6 +27,7 @@ namespace GeneralShare
             }
         }
 
+        #region Serialize
         #region Stream-based Serialize
         public static void Serialize<T>(T value, JsonSerializer serializer, Stream stream, bool leaveOpen = false)
         {
@@ -52,21 +53,54 @@ namespace GeneralShare
         #endregion
 
         #region Path-based Serialize
-        public static void Serialize<T>(T value, Formatting formatting, string path)
-        {
-            using (var fs = new FileStream(path, FileMode.Create))
-                Serialize(value, formatting, fs);
-        }
-
         public static void Serialize<T>(T value, JsonSerializer serializer, string path)
         {
             using (var fs = new FileStream(path, FileMode.Create))
                 Serialize(value, serializer, fs);
         }
 
+        public static void Serialize<T>(T value, Formatting formatting, string path)
+        {
+            using (var fs = new FileStream(path, FileMode.Create))
+                Serialize(value, formatting, fs);
+        }
+
         public static void Serialize<T>(T value, string path)
         {
             Serialize(value, DefaultSerializer, path);
+        }
+        #endregion
+
+        #region FileInfo-based Serialize
+        public static void Serialize<T>(T value, JsonSerializer serializer, FileInfo file)
+        {
+            Serialize(value, serializer, file.FullName);
+        }
+
+        public static void Serialize<T>(T value, Formatting formatting, FileInfo file)
+        {
+            Serialize(value, formatting, file.FullName);
+        }
+
+        public static void Serialize<T>(T value, FileInfo file)
+        {
+            Serialize(value, DefaultSerializer, file);
+        }
+        #endregion
+        #endregion
+
+        #region Deserialize
+        #region String-based Deserialize 
+        public static T DeserializeString<T>(JsonSerializer serializer, string json)
+        {
+            using (var sr = new StringReader(json))
+            using (var jr = new JsonTextReader(sr))
+                return serializer.Deserialize<T>(jr);
+        }
+
+        public static T DeserializeString<T>(string json)
+        {
+            return DeserializeString<T>(DefaultSerializer, json);
         }
         #endregion
 
@@ -85,7 +119,7 @@ namespace GeneralShare
         #region Path-based Deserialize
         public static T Deserialize<T>(JsonSerializer serializer, string path)
         {
-            using (var fs = new FileStream(path, FileMode.Open))
+            using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
                 return Deserialize<T>(serializer, fs);
         }
 
@@ -93,6 +127,19 @@ namespace GeneralShare
         {
             return Deserialize<T>(DefaultSerializer, path);
         }
+        #endregion
+
+        #region FileInfo-based Deserialize
+        public static T Deserialize<T>(JsonSerializer serializer, FileInfo file)
+        {
+            return Deserialize<T>(serializer, file.FullName);
+        }
+
+        public static T Deserialize<T>(FileInfo file)
+        {
+            return Deserialize<T>(DefaultSerializer, file);
+        }
+        #endregion
         #endregion
     }
 }

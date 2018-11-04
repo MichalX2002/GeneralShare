@@ -17,6 +17,14 @@ namespace GeneralShare
             return fullName.Substring(0, fullName.Length - extLength);
         }
 
+        public static string GetNameWithoutExtension(this FileInfo file)
+        {
+            int extLength = file.Extension.Length;
+            string name = file.Name;
+
+            return name.Substring(0, name.Length - extLength);
+        }
+
         public static double ToReadableLength(this FileInfo file, int decimals, out string suffix)
         {
             return ToReadableLength(file.Length, decimals, out suffix);

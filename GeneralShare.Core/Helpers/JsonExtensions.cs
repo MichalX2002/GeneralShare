@@ -15,8 +15,13 @@ namespace GeneralShare
 
         public static T Deserialize<T>(this JsonSerializer serializer, string filePath)
         {
-            using (var fs = new FileStream(filePath, FileMode.Open))
+            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                 return Deserialize<T>(serializer, fs);
+        }
+
+        public static T Deserialize<T>(this JsonSerializer serializer, FileInfo file)
+        {
+            return Deserialize<T>(serializer, file.FullName);
         }
     }
 }

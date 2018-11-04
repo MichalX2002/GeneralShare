@@ -153,9 +153,8 @@ namespace GeneralShare
         private static bool IsMPressedInternal(MB buttons,
             in MouseState pressedState, in MouseState releasedState)
         {
-            return
-                GetMState(pressedState, buttons, BS.Pressed) &&
-                GetMState(releasedState, buttons, BS.Released);
+            return GetMState(pressedState, buttons, BS.Pressed) 
+                && GetMState(releasedState, buttons, BS.Released);
         }
 
         private static bool IsAnyMPressedInternal(

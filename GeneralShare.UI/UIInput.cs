@@ -224,8 +224,11 @@ namespace GeneralShare.UI
                         {
                             int index = _caretIndex - SpecialProcessedTextLength;
                             if (index >= 0 && index < Value.Length)
+                            {
                                 Value = Value.Remove(index, 1);
-                            MarkDirty(DirtMarkType.CaretIndex, true);
+                                MarkDirty(DirtMarkType.CaretIndex, true);
+                                PauseCaretAnimation();
+                            }
                         }
                         break;
 
