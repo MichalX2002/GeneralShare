@@ -113,7 +113,7 @@ namespace GeneralShare.Collections
             return Insert(new Item(bounds, value));
         }
 
-        public bool Insert(in Item item)
+        public bool Insert(Item item)
         {
             if (Boundary.Contains(item.Bounds) == false)
                 return false;
@@ -239,7 +239,7 @@ namespace GeneralShare.Collections
             public RectangleF Bounds;
             public T Value;
 
-            internal Item(in RectangleF bounds, in T value)
+            internal Item(RectangleF bounds, T value)
             {
                 Bounds = bounds;
                 Value = value;

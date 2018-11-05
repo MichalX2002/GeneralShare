@@ -29,8 +29,11 @@ namespace GeneralShare
         [JsonConstructor]
         public VersionTag(string major, string minor)
         {
-            if (string.IsNullOrWhiteSpace(major) || string.IsNullOrWhiteSpace(minor))
-                major = major;
+            if (string.IsNullOrWhiteSpace(major))
+                throw new ArgumentNullException(nameof(major));
+
+            if (string.IsNullOrWhiteSpace(minor))
+                throw new ArgumentNullException(nameof(minor));
 
             _major = major;
             _minor = minor;
