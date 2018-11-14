@@ -167,7 +167,7 @@ namespace GeneralShare.Collections
             __version = value;
         }
 
-        public void AddRef(in T item)
+        public void AddRef(ref T item)
         {
             AddCheck();
             InnerArray[Count++] = item;
@@ -309,13 +309,8 @@ namespace GeneralShare.Collections
             Version++;
             return item;
         }
-        
-        public int IndexOf(T item)
-        {
-            return IndexOf(in item);
-        }
 
-        public int IndexOf(in T item)
+        public int IndexOf(T item)
         {
             if (item == null)
             {
@@ -344,7 +339,7 @@ namespace GeneralShare.Collections
             InternalInsert(index, item);
         }
 
-        private void InternalInsert(int index, in T item)
+        private void InternalInsert(int index, T item)
         {
             if (index > Capacity)
                 throw new IndexOutOfRangeException();
