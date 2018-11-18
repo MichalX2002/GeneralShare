@@ -6,43 +6,44 @@ namespace GeneralShare
     [JsonObject]
     public class VersionTag
     {
-        public const string DEFAULT_FILENAME = "versiontag.json";
+        public const string RESOURCE_NAME = "versiontag.json";
+        public const string DEFAULT_SUBVALUE = "0";
+        
+        [JsonIgnore] public string Value { get; private set; }
 
-        [JsonProperty("Major")]
-        private string _major;
-
-        [JsonProperty("Minor")]
-        private string _minor;
-
-        [JsonIgnore]
-        private string _value;
-
-        [JsonIgnore]
-        public string Major => _major;
-
-        [JsonIgnore]
-        public string Minor => _minor;
-
-        [JsonIgnore]
-        public string Value => _value;
+        [JsonProperty] public string Major { get; private set; }
+        [JsonProperty] public string Minor { get; private set; }
+        [JsonProperty] public string Patch { get; private set; }
 
         [JsonConstructor]
-        public VersionTag(string major, string minor)
+        public VersionTag(string major, string minor, string patch)
         {
             if (string.IsNullOrWhiteSpace(major))
                 throw new ArgumentNullException(nameof(major));
 
             if (string.IsNullOrWhiteSpace(minor))
-                throw new ArgumentNullException(nameof(minor));
+                minor = DEFAULT_SUBVALUE;
 
-            _major = major;
-            _minor = minor;
+            if (string.IsNullOrWhiteSpace(patch))
+                patch = DEFAULT_SUBVALUE;
+
+            Major = major;
+            Minor = minor;
+            Patch = patch;
             CombineVersion();
         }
 
         public VersionTag(string version)
         {
-            SetVersion(version);
+            string[] split = version.Split('.');
+            if (split == null || split.Length != 3)
+                throw new ArgumentException(
+                    "Could not split version into major, minor and patch.");
+
+            Major = split[0];
+            Minor = split[1];
+            Patch = split[2];
+            CombineVersion();
         }
 
         /// <summary>
@@ -50,29 +51,17 @@ namespace GeneralShare
         /// </summary>
         public VersionTag()
         {
-            _major = _minor = _value = "undefined";
-        }
-
-        protected void SetVersion(string version)
-        {
-            string[] split = version.Split('.');
-            if (split == null || split.Length != 2)
-                throw new ArgumentException(
-                    "Could not split version into major and minor.", nameof(version));
-
-            _major = split[0].Trim();
-            _minor = split[1].Trim();
-            CombineVersion();
+            Major = Minor = Patch = Value = "undefined";
         }
 
         private void CombineVersion()
         {
-            _value = $"{_major}.{_minor}";
+            Value = $"{Major}.{Minor}.{Patch}";
         }
 
         public override string ToString()
         {
-            return _value;
+            return Value;
         }
     }
 }

@@ -13,7 +13,7 @@ namespace GeneralShare
         public static readonly DateTime StartTime;
 
         public static TimeSpan TimeSinceStart => DateTime.Now - StartTime;
-        public static bool DebuggerAttached => Debugger.IsAttached;
+        public static bool IsDebuggerAttached => Debugger.IsAttached;
         public static long TotalMemoryUsage => GetTotalMemoryUsage();
         public static long ManagedMemoryUsage => GC.GetTotalMemory(false);
 
