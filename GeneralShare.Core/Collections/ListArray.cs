@@ -1,4 +1,4 @@
-﻿using MonoGame.Extended;
+﻿using MonoGame.Extended.Collections;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -11,13 +11,11 @@ namespace GeneralShare.Collections
         IReadOnlyList<T>, IEnumerable<T>, IReferenceList<T>
     {
         public delegate void VersionChangedDelegate(int oldVersion, int newVersion);
-
-        private const int _defaultCapacity = 4;
-        private static readonly T[] _emptyArray = Array.Empty<T>();
-        
-        private int __version;
-
         public event VersionChangedDelegate Changed;
+        
+        private const int _defaultCapacity = 4;
+
+        private int __version;
 
         public bool IsReadOnly { get; private set; }
         public bool IsFixedCapacity { get; private set; }
@@ -72,7 +70,7 @@ namespace GeneralShare.Collections
                     }
                     else
                     {
-                        InnerArray = _emptyArray;
+                        InnerArray = Array.Empty<T>();
                     }
                     Version++;
                 }
@@ -81,7 +79,7 @@ namespace GeneralShare.Collections
 
         public ListArray()
         {
-            InnerArray = _emptyArray;
+            InnerArray = Array.Empty<T>();
         }
 
         public ListArray(int capacity)
@@ -123,7 +121,7 @@ namespace GeneralShare.Collections
                 int count = c.Count;
                 if (count == 0)
                 {
-                    InnerArray = _emptyArray;
+                    InnerArray = Array.Empty<T>();
                 }
                 else
                 {
@@ -135,7 +133,7 @@ namespace GeneralShare.Collections
             else
             {
                 Count = 0;
-                InnerArray = _emptyArray;
+                InnerArray = Array.Empty<T>();
 
                 AddRange(collection);
             }
