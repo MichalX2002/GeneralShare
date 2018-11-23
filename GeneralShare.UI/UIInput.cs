@@ -196,7 +196,7 @@ namespace GeneralShare.UI
 
                     int insertIndex = _caretIndex - SpecialProcessedTextLength;
                     if (Value.Length < _maxCharCount)
-                    {
+                    { 
                         _caretIndex++;
                         PauseCaretAnimation();
 
@@ -272,8 +272,8 @@ namespace GeneralShare.UI
 
         private void PrepareCaretIndex(ref int index)
         {
-            int valueLength = Value == null ? 0 : Value.Length;
-            int prefixLength = _prefix == null ? 0 : _prefix.Length;
+            int valueLength = Value == null ? 0 : Value.Length - Value.LineCount() - 1;
+            int prefixLength = _prefix == null ? 0 : _prefix.Length - _prefix.LineCount() - 1;
             _totalTextLength = valueLength + prefixLength;
 
             if (index > _totalTextLength)
@@ -298,17 +298,14 @@ namespace GeneralShare.UI
                 };
 
                 PrepareCaretIndex(ref _caretIndex);
-                if (_caretIndex > 0 && _caretIndex <= _totalTextLength)
-                {
-                    Vector3 lastPos = _textSprites.GetReferenceAt(_caretIndex - 1).Sprite.TR.Position;
-                    double rawDistance = (lastPos.Y - globalPos.Y) / Font.LineHeight;
-                    double line = Math.Floor(rawDistance / Scale.Y);
-                    double yOffset = Math.Round(globalPos.Y + line * Font.LineHeight * Scale.Y - 0.5f);
+                Vector3 lastPos = _textSprites.GetReferenceAt(_caretIndex - 1).Sprite.TR.Position;
+                double rawDistance = (lastPos.Y - globalPos.Y) / Font.LineHeight;
+                double line = Math.Floor(rawDistance / Scale.Y);
+                double yOffset = Math.Round(globalPos.Y + line * Font.LineHeight * Scale.Y - 0.5f);
 
-                    output.X = lastPos.X;
-                    output.Y = (float)yOffset;
-                }
-                
+                output.X = lastPos.X;
+                output.Y = (float)yOffset;
+
                 return output;
             }
         }

@@ -7,14 +7,12 @@ namespace GeneralShare
     {
         public static int LineCount(this string value)
         {
-            if (value == null)
-                throw new ArgumentNullException(nameof(value));
-            if (value == string.Empty || value.Length == 0)
+            if (string.IsNullOrEmpty(value))
                 return 0;
 
             int index = -1;
             int count = 1;
-            while (-1 != (index = value.IndexOf(Environment.NewLine, index + 1)))
+            while (-1 != (index = value.IndexOf('\n', index + 1)))
                 count++;
 
             return count;

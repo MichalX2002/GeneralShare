@@ -192,21 +192,21 @@ namespace GeneralShare.UI
 
                         if (_buildCharQuadTree)
                             PrepareQuadTree();
-
-                        int expressionCount = _expressionColors.Count;
-                        int itemCount = _textSprites.Count;
-                        for (int i = 0; i < itemCount; i++)
+                        
+                        for (int i = 0; i < _textSprites.Count; i++)
                         {
                             ref var sprite = ref _textSprites.GetReferenceAt(i);
                             if (_buildCharQuadTree)
                                 AddTextQuadItem(ref pos, ref sprite);
 
-                            if (_valueExpressions && i < expressionCount)
+                            if (_valueExpressions && i < _expressionColors.Count)
                                 sprite.SetColor(_expressionColors[i]);
                         }
 
                         MarkDirty(DirtMarkType.ShadowMath, true);
                     }
+                    else
+                        _textSprites.Clear(false);
                 }
 
                 if (DirtMarks.HasAnyFlag(DirtMarkType.BuildQuadTree))

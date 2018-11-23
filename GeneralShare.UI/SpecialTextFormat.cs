@@ -206,12 +206,24 @@ namespace GeneralShare.UI
 
             public Input(StringBuilder builder)
             {
+                if (builder == null)
+                {
+                    Length = 0;
+                    _getChar = (i) => default;
+                    return;
+                }
                 Length = builder.Length;
                 _getChar = (i) => builder[i];
             }
 
             public Input(string value)
             {
+                if(value == null)
+                {
+                    Length = 0;
+                    _getChar = (i) => default;
+                    return;
+                }
                 Length = value.Length;
                 _getChar = (i) => value[i];
             }

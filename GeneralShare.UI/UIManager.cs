@@ -68,10 +68,10 @@ namespace GeneralShare.UI
         public UIManager(GraphicsDevice device, TextureRegion2D grayscaleRegion)
         {
             GrayscaleRegion = grayscaleRegion ?? throw new ArgumentNullException(nameof(grayscaleRegion));
-            if (GrayscaleRegion.Width < 1) throw new ArgumentException();
-            if (GrayscaleRegion.Height < 2) throw new ArgumentException();
-
-            WhitePixelRegion = new TextureRegion2D(grayscaleRegion.Texture, 0, 0, 1, 1);
+            if (GrayscaleRegion.Width < 1) throw new ArgumentException(nameof(grayscaleRegion));
+            if (GrayscaleRegion.Height < 2) throw new ArgumentException(nameof(grayscaleRegion));
+            
+            WhitePixelRegion = new TextureRegion2D(grayscaleRegion.Texture, GrayscaleRegion.X + 1, GrayscaleRegion.Y + 1, 1, 1);
             GraphicsDevice = device;
 
             SyncRoot = new object();
