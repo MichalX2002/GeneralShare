@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using GeneralShare;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended.BitmapFonts;
 
 namespace GeneralShare.UI
 {
-    public static class SpecialTextFormat
+    public static partial class TextFormat
     {
         [ThreadStatic]
         private static byte[] __colorBuffer;
@@ -22,7 +21,8 @@ namespace GeneralShare.UI
                 if (__colorBuffer == null)
                     __colorBuffer = new byte[4];
                 else
-                    Array.Clear(__colorBuffer, 0, 3);
+                    for (int i = 0; i < 3; i++)
+                        __colorBuffer[i] = 0;
 
                 // Set alpha to max as default
                 __colorBuffer[3] = 255;
@@ -116,7 +116,7 @@ namespace GeneralShare.UI
         // Think of adding a font selecting char as first char in a sequence
         // and use a font collection instead of BitmapFont (in TextBox).
         // Switching fonts while building will need some work,
-        // but special color format application should be the same.
+        // but applying the color format should be the same.
         private static int GetSequence(Input input, int start, out StringBuilder sequence)
         {
             int tail = start;
@@ -134,11 +134,9 @@ namespace GeneralShare.UI
 
                 if (input[tail] == ']')
                 {
-                    var seqBuilder = SequenceBuilder;
-
-                    for (int j = start; j < tail; j++)
-                        seqBuilder.Append(input[j]);
-
+                    StringBuilder seqBuilder = SequenceBuilder;
+                    for (int i = start; i < tail; i++)
+                        seqBuilder.Append(input[i]);
                     sequence = seqBuilder;
                     return tail;
                 }
@@ -157,30 +155,29 @@ namespace GeneralShare.UI
         public static Color GetHexColor(StringBuilder seq)
         {
             byte[] buffer = ColorBuffer;
-
             int offset = seq[0] == '#' ? 1 : 0;
             StringHelper.HexToByteArray(seq, offset, buffer);
-
             return new Color(buffer[0], buffer[1], buffer[2], buffer[3]);
         }
 
         private static byte FastParse(StringBuilder value, int offset, int count)
         {
-            int temp = 0;
+            int tmp = 0;
             int length = count + offset;
             for (int i = offset; i < length; i++)
-                temp = temp * 10 + (value[i] - '0');
-            return (byte)temp;
+                tmp = tmp * 10 + (value[i] - '0');
+            if (tmp > 255)
+                tmp = 255;
+            return (byte)tmp;
         }
 
         public static Color GetRgb(StringBuilder seq)
         {
             byte[] buffer = ColorBuffer;
-
             int itemCount = 0;
             int lastOffset = 0;
-            int seqLength = seq.Length;
-            for (int i = 0; i < seqLength; i++)
+
+            for (int i = 0; i < seq.Length; i++)
             {
                 if(seq[i] == ',')
                 {
@@ -192,41 +189,9 @@ namespace GeneralShare.UI
                         break;
                 }
             }
-            buffer[itemCount] = FastParse(seq, lastOffset, seqLength - lastOffset);
+            buffer[itemCount] = FastParse(seq, lastOffset, seq.Length - lastOffset);
 
             return new Color(buffer[0], buffer[1], buffer[2], buffer[3]);
-        }
-        
-        public struct Input
-        {
-            private Func<int, char> _getChar;
-
-            public char this[int index] => _getChar(index);
-            public int Length { get; }
-
-            public Input(StringBuilder builder)
-            {
-                if (builder == null)
-                {
-                    Length = 0;
-                    _getChar = (i) => default;
-                    return;
-                }
-                Length = builder.Length;
-                _getChar = (i) => builder[i];
-            }
-
-            public Input(string value)
-            {
-                if(value == null)
-                {
-                    Length = 0;
-                    _getChar = (i) => default;
-                    return;
-                }
-                Length = value.Length;
-                _getChar = (i) => value[i];
-            }
         }
     }
 }

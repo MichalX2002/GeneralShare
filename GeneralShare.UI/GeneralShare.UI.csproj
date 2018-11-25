@@ -57,16 +57,15 @@
   <ItemGroup>
     <Compile Include="DirtMarkType.cs" />
     <Compile Include="DrawExtensions.cs" />
+    <Compile Include="TextFormat.cs" />
+    <Compile Include="TextRenderer.cs" />
     <Compile Include="UIContainer.cs" />
     <Compile Include="UIDrawable.cs" />
-    <Compile Include="UIInput.cs" />
     <Compile Include="PivotPosition.cs" />
     <Compile Include="UIProgressBar.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SamplingMode.cs" />
-    <Compile Include="SpecialTextFormat.cs" />
     <Compile Include="TextAlignment.cs" />
-    <Compile Include="UIText.cs" />
     <Compile Include="UIAnchor.cs" />
     <Compile Include="UICollisionLayer.cs" />
     <Compile Include="UIManager.cs" />
@@ -74,7 +73,6 @@
     <Compile Include="UIElement.cs" />
     <Compile Include="UIRenderer.cs" />
     <Compile Include="UISprite.cs" />
-    <Compile Include="UITextBase.cs" />
     <Compile Include="UITransform.cs" />
     <Compile Include="ViewportExtensions.cs" />
   </ItemGroup>

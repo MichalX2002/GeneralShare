@@ -297,12 +297,6 @@ namespace GeneralShare.UI
             return TransformKey;
         }
 
-        internal void FastDispose()
-        {
-            Dispose(false);
-            GC.SuppressFinalize(this);
-        }
-
         protected virtual void Dispose(bool disposing)
         {
             if (!IsDisposed)
@@ -315,6 +309,12 @@ namespace GeneralShare.UI
 
                 IsDisposed = true;
             }
+        }
+
+        internal void FastDispose()
+        {
+            Dispose(false);
+            GC.SuppressFinalize(this);
         }
 
         public void Dispose()

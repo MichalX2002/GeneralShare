@@ -31,9 +31,8 @@ namespace GeneralShare.UI
         public ListArray<UITransform> Transforms { get; }
 
         /// <summary>
-        /// The currently selected <see cref="UIElement"/> that (primarily) receives keyboard
-        /// events (use <see cref="UIElement.IsSelected"/> to check if an element is selected in
-        /// conjunction with <see cref="UIElement.IsSelectable"/> set to <see langword="true"/>).
+        /// The currently selected <see cref="UIElement"/> (<see cref="UIElement.IsSelectable"/>
+        /// needs to be <see langword="true"/>) that receives keyboard and events.
         /// </summary>
         public UIElement SelectedElement
         {
@@ -281,7 +280,7 @@ namespace GeneralShare.UI
 
         private void UpdateTransformsAndTriggerEvents(GameTime time)
         {
-            var freshViewport = GraphicsDevice.Viewport;
+            Viewport freshViewport = GraphicsDevice.Viewport;
             bool viewportChanged = _lastViewport.EqualsTo(freshViewport);
             _lastViewport = freshViewport;
 
@@ -297,7 +296,7 @@ namespace GeneralShare.UI
             // mouse hover events "Enter" and "Leave" is important
             bool cursorIntercepted = false;
 
-            var transforms = GetSortedTransformList();
+            ListArray<UITransform> transforms = GetSortedTransformList();
             for (int i = 0, count = transforms.Count; i < count; i++)
             {
                 var transform = transforms[i];
