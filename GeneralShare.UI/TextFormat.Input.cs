@@ -1,36 +1,46 @@
-﻿using System;
+﻿using MonoGame.Extended.BitmapFonts;
+using System;
 using System.Text;
 
 namespace GeneralShare.UI
 {
     public static partial class TextFormat
     {
-        public struct Input
+        public struct TextInput : BitmapFont.ITextIterator
         {
             private Func<int, char> _getChar;
-
-            public char this[int index] => _getChar(index + Offset);
+            
             public int Offset { get; }
-            public int Length { get; }
+            public int Count { get; }
+            public int TotalCount { get; }
 
-            public Input(StringBuilder builder, int offset, int length)
+            public TextInput(StringBuilder builder, int offset, int count)
             {
                 if (builder == null)
                     throw new ArgumentNullException(nameof(builder));
 
                 Offset = offset;
-                Length = length;
+                Count = count;
+                TotalCount = builder.Length;
                 _getChar = (i) => builder[i];
             }
 
-            public Input(string value, int offset, int length)
+            public TextInput(string value, int offset, int count)
             {
                 if (value == null)
                     throw new ArgumentNullException(nameof(value));
 
                 Offset = offset;
-                Length = length;
+                Count = count;
+                TotalCount = value.Length;
                 _getChar = (i) => value[i];
+            }
+
+            public int GetCharacter(ref int index)
+            {
+                return char.IsHighSurrogate(_getChar(index)) && ++index < TotalCount
+                    ? char.ConvertToUtf32(_getChar(index - 1), _getChar(index))
+                    : _getChar(index);
             }
         }
     }

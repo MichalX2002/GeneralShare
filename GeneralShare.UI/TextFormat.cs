@@ -45,15 +45,15 @@ namespace GeneralShare.UI
         }
 
         public static StringBuilder ColorFormat(
-            Input input, Color startColor, BitmapFont font, ICollection<Color> output)
+            TextInput input, Color startColor, BitmapFont font, ICollection<Color> output)
         {
-            var outputB = new StringBuilder(input.Length);
+            var outputB = new StringBuilder(input.Count);
             Format(input, outputB, startColor, font, true, output);
             return outputB;
         }
 
         public static void Format(
-            Input input, StringBuilder textOutput,
+            TextInput input, StringBuilder textOutput,
             Color baseColor, BitmapFont font,
             bool keepSequences, ICollection<Color> colorOutput)
         {
@@ -72,7 +72,7 @@ namespace GeneralShare.UI
             }
 
             bool inSequence = false;
-            int inputLength = input.Length;
+            int inputLength = input.Count;
             for (int i = 0; i < inputLength; i++)
             {
                 if (input[i] == '§')
@@ -117,16 +117,16 @@ namespace GeneralShare.UI
         // and use a font collection instead of BitmapFont (in TextBox).
         // Switching fonts while building will need some work,
         // but applying the color format should be the same.
-        private static int GetSequence(Input input, int start, out StringBuilder sequence)
+        private static int GetSequence(TextInput input, int start, out StringBuilder sequence)
         {
             int tail = start;
-            while (tail < input.Length)
+            while (tail < input.Count)
             {
                 tail++;
 
                 // Don't bother going beyond text length or 15 chars 
                 // ("255,255,255,255" is 15 chars)
-                if (tail == input.Length)
+                if (tail == input.Count)
                 {
                     sequence = null;
                     return 0;
