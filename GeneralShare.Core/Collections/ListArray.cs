@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
 
 namespace GeneralShare.Collections
 {
@@ -15,36 +16,44 @@ namespace GeneralShare.Collections
         
         private const int _defaultCapacity = 4;
 
+        private T[] _innerArray;
+        private int _count;
         private int __version;
 
         public bool IsReadOnly { get; private set; }
         public bool IsFixedCapacity { get; private set; }
-        public int Version { get => __version; protected set => SetVersion(value); }
+        public int Version
+        {
+            get => __version;
 
-        public T[] InnerArray { get; private set; }
-        public int Count { get; private set; }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            protected set => SetVersion(value);
+        }
+
+        public T[] InnerArray => _innerArray;
+        public int Count => _count;
 
         public T this[int index]
         {
             get
             {
-                if (index >= Count)
+                if (index >= _count)
                     throw new ArgumentOutOfRangeException(nameof(index));
 
-                return InnerArray[index];
+                return _innerArray[index];
             }
             set
             {
                 CheckAccessibility();
 
-                InnerArray[index] = value;
+                _innerArray[index] = value;
                 Version++;
             }
         }
 
         public int Capacity
         {
-            get => InnerArray.Length;
+            get => _innerArray.Length;
             set
             {
                 if (IsFixedCapacity)
@@ -53,24 +62,24 @@ namespace GeneralShare.Collections
 
                 CheckAccessibility();
 
-                if (value != InnerArray.Length)
+                if (value != _innerArray.Length)
                 {
-                    if (value < Count)
+                    if (value < _count)
                         throw new ArgumentException(
                             "The new capacity is not enough to contain existing items.", nameof(value));
 
                     if (value > 0)
                     {
                         T[] newItems = new T[value];
-                        if (Count > 0)
+                        if (_count > 0)
                         {
-                            Array.Copy(InnerArray, 0, newItems, 0, Count);
+                            Array.Copy(_innerArray, 0, newItems, 0, _count);
                         }
-                        InnerArray = newItems;
+                        _innerArray = newItems;
                     }
                     else
                     {
-                        InnerArray = Array.Empty<T>();
+                        _innerArray = Array.Empty<T>();
                     }
                     Version++;
                 }
@@ -79,12 +88,12 @@ namespace GeneralShare.Collections
 
         public ListArray()
         {
-            InnerArray = Array.Empty<T>();
+            _innerArray = Array.Empty<T>();
         }
 
         public ListArray(int capacity)
         {
-            InnerArray = new T[capacity];
+            _innerArray = new T[capacity];
         }
 
         public ListArray(int capacity, bool fixedCapacity) : this(capacity)
@@ -94,8 +103,8 @@ namespace GeneralShare.Collections
 
         public ListArray(T[] sourceArray, int startOffset, int count)
         {
-            InnerArray = sourceArray;
-            Count = count;
+            _innerArray = sourceArray;
+            _count = count;
             Capacity = sourceArray.Length;
             IsFixedCapacity = true;
 
@@ -121,19 +130,19 @@ namespace GeneralShare.Collections
                 int count = c.Count;
                 if (count == 0)
                 {
-                    InnerArray = Array.Empty<T>();
+                    _innerArray = Array.Empty<T>();
                 }
                 else
                 {
-                    InnerArray = new T[count];
-                    c.CopyTo(InnerArray, 0);
-                    Count = count;
+                    _innerArray = new T[count];
+                    c.CopyTo(_innerArray, 0);
+                    _count = count;
                 }
             }
             else
             {
-                Count = 0;
-                InnerArray = Array.Empty<T>();
+                _count = 0;
+                _innerArray = Array.Empty<T>();
 
                 AddRange(collection);
             }
@@ -145,6 +154,7 @@ namespace GeneralShare.Collections
         {
         }
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void CheckAccessibility()
         {
             if (IsReadOnly)
@@ -153,48 +163,43 @@ namespace GeneralShare.Collections
 
         public ref T GetReferenceAt(int index)
         {
-            if (index >= Count)
+            if (index >= _count)
                 throw new IndexOutOfRangeException();
 
-            return ref InnerArray[index];
+            return ref _innerArray[index];
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetVersion(int value)
         {
             Changed?.Invoke(__version, value);
             __version = value;
         }
-
-        public void AddRef(ref T item)
-        {
-            AddCheck();
-            InnerArray[Count++] = item;
-            Version++;
-        }
-
+        
         public void Add(T item)
         {
             AddCheck();
-            InnerArray[Count++] = item;
+            _innerArray[_count++] = item;
             Version++;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void AddCheck()
         {
             CheckAccessibility();
 
-            if (Count == InnerArray.Length)
-                EnsureCapacity(Count + 1);
+            if (_count == _innerArray.Length)
+                EnsureCapacity(_count + 1);
         }
 
         public void AddRange(IEnumerable<T> collection)
         {
-            InsertRange(Count, collection);
+            InsertRange(_count, collection);
         }
 
         public void Sort(IComparer<T> comparer)
         {
-            Sort(0, Count, comparer);
+            Sort(0, _count, comparer);
         }
 
         public void Sort(int index, int count, IComparer<T> comparer)
@@ -208,36 +213,23 @@ namespace GeneralShare.Collections
                 throw new ArgumentOutOfRangeException(
                     nameof(count), "Needs a non-negative number.");
 
-            if (Count - index < count)
+            if (_count - index < count)
                 throw new ArgumentException("Invalid offset length.");
 
-            Array.Sort(InnerArray, index, count, comparer);
+            Array.Sort(_innerArray, index, count, comparer);
             Version++;
         }
-
+        
         public void Clear()
-        {
-            Clear(true);
-        }
-
-        /// <summary>
-        /// Clears the list with the option to make all elements their default (to null if <typeparamref name="T"/> is a class).
-        /// </summary>
-        /// <param name="setToDefault">
-        /// <see langword="true"/> to clear the <see cref="InnerArray"/>
-        /// (only available if <typeparamref name="T"/> is a value type).
-        /// </param>
-        public void Clear(bool setToDefault)
         {
             CheckAccessibility();
 
-            if (Count > 0)
+            if (_count > 0)
             {
-                if (setToDefault || !typeof(T).IsValueType)
-                {
-                    Array.Clear(InnerArray, 0, Count);
-                }
-                Count = 0;
+                if (!typeof(T).IsValueType)
+                    Array.Clear(_innerArray, 0, _count);
+
+                _count = 0;
                 Version++;
             }
         }
@@ -249,7 +241,7 @@ namespace GeneralShare.Collections
 
         public void CopyTo(T[] array, int arrayIndex)
         {
-            Array.ConstrainedCopy(InnerArray, 0, array, arrayIndex, Count);
+            Array.ConstrainedCopy(_innerArray, 0, array, arrayIndex, _count);
         }
 
         public bool Remove(T item)
@@ -270,7 +262,7 @@ namespace GeneralShare.Collections
 
         public T GetAndRemoveAt(int index)
         {
-            if (index >= Count || index < 0)
+            if (index >= _count || index < 0)
                 throw new IndexOutOfRangeException();
 
             return RemoveAtInternal(index);
@@ -278,16 +270,16 @@ namespace GeneralShare.Collections
 
         public T GetAndRemoveLast()
         {
-            if (Count > 0)
-                return GetAndRemoveAt(Count - 1);
+            if (_count > 0)
+                return GetAndRemoveAt(_count - 1);
             return default;
         }
 
         public int FindIndex(Predicate<T> predicate)
         {
-            for (int i = 0; i < Count; i++)
+            for (int i = 0; i < _count; i++)
             {
-                if (predicate.Invoke(InnerArray[i]) == true)
+                if (predicate.Invoke(_innerArray[i]) == true)
                     return i;
             }
             return -1;
@@ -297,13 +289,13 @@ namespace GeneralShare.Collections
         {
             CheckAccessibility();
 
-            Count--;
-            if (index < Count)
+            _count--;
+            if (index < _count)
             {
-                Array.Copy(InnerArray, index + 1, InnerArray, index, Count - index);
+                Array.Copy(_innerArray, index + 1, _innerArray, index, _count - index);
             }
-            T item = InnerArray[Count];
-            InnerArray[Count] = default;
+            T item = _innerArray[_count];
+            _innerArray[_count] = default;
             Version++;
             return item;
         }
@@ -312,17 +304,17 @@ namespace GeneralShare.Collections
         {
             if (item == null)
             {
-                for (int i = 0; i < Count; i++)
+                for (int i = 0; i < _count; i++)
                 {
-                    if (InnerArray[i] == null)
+                    if (_innerArray[i] == null)
                         return i;
                 }
             }
             else
             {
-                for (int i = 0; i < Count; i++)
+                for (int i = 0; i < _count; i++)
                 {
-                    T obj = InnerArray[i];
+                    T obj = _innerArray[i];
                     if (obj != null && obj.Equals(item))
                         return i;
                 }
@@ -342,16 +334,14 @@ namespace GeneralShare.Collections
             if (index > Capacity)
                 throw new IndexOutOfRangeException();
 
-            if (Count == InnerArray.Length)
-                EnsureCapacity(Count + 1);
+            if (_count == _innerArray.Length)
+                EnsureCapacity(_count + 1);
 
-            if (index < Count)
-            {
-                Array.Copy(InnerArray, index, InnerArray, index + 1, Count - index);
-            }
+            if (index < _count)
+                Array.Copy(_innerArray, index, _innerArray, index + 1, _count - index);
 
-            InnerArray[index] = item;
-            Count++;
+            _innerArray[index] = item;
+            _count++;
             Version++;
         }
 
@@ -364,22 +354,22 @@ namespace GeneralShare.Collections
                 int count = c.Count;
                 if (count > 0)
                 {
-                    EnsureCapacity(Count + count);
-                    if (index < Count)
+                    EnsureCapacity(_count + count);
+                    if (index < _count)
                     {
-                        Array.Copy(InnerArray, index, InnerArray, index + count, count - index);
+                        Array.Copy(_innerArray, index, _innerArray, index + count, count - index);
                     }
 
                     if (c == this)
                     {
-                        Array.Copy(InnerArray, 0, InnerArray, index, index);
-                        Array.Copy(InnerArray, index + count, InnerArray, index * 2, Count - index);
+                        Array.Copy(_innerArray, 0, _innerArray, index, index);
+                        Array.Copy(_innerArray, index + count, _innerArray, index * 2, _count - index);
                     }
                     else
                     {
-                        c.CopyTo(InnerArray, index);
+                        c.CopyTo(_innerArray, index);
                     }
-                    Count += count;
+                    _count += count;
                 }
             }
             else
@@ -408,9 +398,9 @@ namespace GeneralShare.Collections
 
         private void EnsureCapacity(int min)
         {
-            if (InnerArray.Length < min)
+            if (_innerArray.Length < min)
             {
-                int newCapacity = InnerArray.Length == 0 ? _defaultCapacity : InnerArray.Length * 2;
+                int newCapacity = _innerArray.Length == 0 ? _defaultCapacity : _innerArray.Length * 2;
                 if (newCapacity < min)
                     newCapacity = min;
 
@@ -430,7 +420,7 @@ namespace GeneralShare.Collections
             {
                 get
                 {
-                    if (_index == 0 || _index == _list.Count + 1)
+                    if (_index == 0 || _index == _list._count + 1)
                     {
                         throw new InvalidOperationException(
                             "Either MoveNext has not been called or index is beyond item count.");
@@ -449,9 +439,9 @@ namespace GeneralShare.Collections
 
             public bool MoveNext()
             {
-                if (_version == _list.__version && _index < _list.Count)
+                if (_version == _list.__version && _index < _list._count)
                 {
-                    Current = _list.InnerArray[_index];
+                    Current = _list._innerArray[_index];
                     _index++;
                     return true;
                 }
@@ -465,7 +455,7 @@ namespace GeneralShare.Collections
                     throw GetVersionException();
                 }
 
-                _index = _list.Count + 1;
+                _index = _list._count + 1;
                 Current = default;
                 return false;
             }

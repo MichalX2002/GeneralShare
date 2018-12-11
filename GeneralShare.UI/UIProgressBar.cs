@@ -35,8 +35,8 @@ namespace GeneralShare.UI
         public float Value { get => _value; set => SetValue(value); }
         public float FillPercentage => Mathf.Map(_value, _range.Min, _range.Max, 0, 1);
 
-        public Color MainColor { get => _mainSprite.TL.Color; set => SetMainColor(value); }
-        public Color BackgroundColor { get => _backSprite.TL.Color; set => SetBackColor(value); }
+        public Color MainColor { get => _mainSprite.TL.Color; set => SetMainColor(ref value); }
+        public Color BackgroundColor { get => _backSprite.TL.Color; set => SetBackColor(ref value); }
 
         public UIProgressBar(
             UIManager manager, TextureRegion2D mainBarRegion, TextureRegion2D backBarRegion) :
@@ -62,14 +62,14 @@ namespace GeneralShare.UI
         {
         }
 
-        private void SetMainColor(Color value)
+        private void SetMainColor(ref Color value)
         {
-            _mainSprite.SetColor(value);
+            _mainSprite.SetColor(ref value);
         }
 
-        private void SetBackColor(Color value)
+        private void SetBackColor(ref Color value)
         {
-            _backSprite.SetColor(value);
+            _backSprite.SetColor(ref value);
         }
 
         private void SetThickness(int value)

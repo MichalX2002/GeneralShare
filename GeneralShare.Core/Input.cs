@@ -213,7 +213,7 @@ namespace GeneralShare
             _oldMS = _newMS;
             _newMS = Mouse.GetState();
             
-            _oldKeysDown.Clear(false);
+            _oldKeysDown.Clear();
             _oldKeysDown.AddRange(_keysDown);
 
             // Getting KeyList updates it's internal keyboard state (and Modifiers) on DirectX, 
@@ -221,7 +221,7 @@ namespace GeneralShare
             // therefore call UpdateModifiers *after* getting KeyList.
             var keyList = Keyboard.KeyList;
 
-            _keysDown.Clear(false);
+            _keysDown.Clear();
             _keysDown.AddRange(keyList);
             UpdateModifiers(); 
 
@@ -243,7 +243,7 @@ namespace GeneralShare
         private static void GetKeyDifferences(
             ListArray<Keys> output, ListArray<Keys> keys1, ListArray<Keys> keys2)
         {
-            output.Clear(false);
+            output.Clear();
             for (int i = 0; i < keys1.Count; i++)
             {
                 Keys key = keys1[i];
@@ -260,7 +260,7 @@ namespace GeneralShare
             {
                 AddHeldKey(time.Delta, _keysDown[i]);
             }
-            _lastKeysHeld.Clear(false);
+            _lastKeysHeld.Clear();
         }
 
         private static void AddHeldKey(float delta, Keys key)

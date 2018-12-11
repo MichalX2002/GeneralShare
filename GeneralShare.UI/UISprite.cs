@@ -15,7 +15,7 @@ namespace GeneralShare.UI
         public override RectangleF Boundaries => _boundaries;
 
         public TextureRegion2D Region { get => _region; set => SetTexture(value); }
-        public Color Color { get => _sprite.TL.Color; set => _sprite.SetColor(value); }
+        public Color Color { get => _sprite.TL.Color; set => _sprite.SetColor(ref value); }
         public RectangleF Destination { get => _destination; set => SetDestination(value); }
         public bool IsUsingDestination => Destination.Width > 0 && Destination.Height > 0;
 
@@ -43,7 +43,7 @@ namespace GeneralShare.UI
                 var srcSize = _region.Bounds.Size.ToVector2();
                 if (IsUsingDestination)
                 {
-                    var matrix = BatchedSprite.GetMatrixFromRect(_destination, Origin, -Rotation, srcSize);
+                    var matrix = BatchedSpriteExtensions.GetMatrixFromRect(_destination, Origin, -Rotation, srcSize);
                     _sprite.SetTransform(matrix, srcSize);
                 }
                 else

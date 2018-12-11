@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Microsoft.Xna.Framework;
 using MonoGame.Extended.BitmapFonts;
+using MonoGame.Extended.Collections;
 
 namespace GeneralShare.UI
 {
@@ -13,6 +14,9 @@ namespace GeneralShare.UI
 
         [ThreadStatic]
         private static StringBuilder __sequenceBuilder;
+
+        [ThreadStatic]
+        private static char[] __charBuffer;
 
         private static byte[] ColorBuffer
         {
@@ -37,79 +41,114 @@ namespace GeneralShare.UI
             {
                 if (__sequenceBuilder == null)
                     __sequenceBuilder = new StringBuilder();
-                else
-                    __sequenceBuilder.Clear();
-
                 return __sequenceBuilder;
             }
         }
 
-        public static StringBuilder ColorFormat(
-            TextInput input, Color startColor, BitmapFont font, ICollection<Color> output)
+        private static char[] CharBuffer
         {
-            var outputB = new StringBuilder(input.Count);
-            Format(input, outputB, startColor, font, true, output);
-            return outputB;
+            get
+            {
+                if (__charBuffer == null)
+                    __charBuffer = new char[2];
+                return __charBuffer;
+            }
         }
 
-        public static void Format(
-            TextInput input, StringBuilder textOutput,
+        public static ICharIterator ColorFormat(
+            ICharIterator input, Color baseColor, BitmapFont font, IReferenceList<Color> output)
+        {
+            var builder = CharIteratorPool.RentBuilder(input.Count);
+            ColorFormat(input, builder, baseColor, font, false, output);
+            var iterator = CharIteratorPool.Rent(builder, 0, builder.Length);
+            CharIteratorPool.ReturnBuilder(builder);
+            return iterator;
+        }
+
+        public static int ConvertFromUtf32(int utf32, char[] buffer)
+        {
+            if (utf32 < 0 || utf32 > 0x10ffff || (utf32 >= 0x00d800 && utf32 <= 0x00dfff))
+                return 0;
+
+            if (utf32 < 0x10000)
+            {
+                buffer[0] = (char)utf32;
+                return 1;
+            }
+
+            utf32 -= 0x10000;
+            buffer[0] = (char)((utf32 / 0x400) + '\ud800');
+            buffer[1] = (char)((utf32 % 0x400) + '\udc00');
+            return 2;
+        }
+
+        private static int AppendUtf32(StringBuilder builder, int utf32, char[] buffer)
+        {
+            int count = ConvertFromUtf32(utf32, buffer);
+            for (int i = 0; i < count; i++)
+                builder.Append(buffer[i]);
+            return count;
+        }
+
+        public static void ColorFormat(
+            ICharIterator input, StringBuilder textOutput,
             Color baseColor, BitmapFont font,
             bool keepSequences, ICollection<Color> colorOutput)
         {
+            char[] charBuffer = CharBuffer;
+            StringBuilder seqBuilder = SequenceBuilder;
             Color currentColor = baseColor;
-            bool processColor = colorOutput != null;
-
-            void AddCurrent(int index)
-            {
-                if (processColor)
-                {
-                    if (font.GetCharacterRegion(input[index], out var reg))
-                        colorOutput.Add(currentColor);
-                }
-
-                textOutput.Append(input[index]);
-            }
 
             bool inSequence = false;
             int inputLength = input.Count;
             for (int i = 0; i < inputLength; i++)
             {
-                if (input[i] == '§')
+                void AddAtLoopIndex(ref int index)
                 {
-                    if (inSequence == true)
-                    {
-                        if(keepSequences)
-                            AddCurrent(i);
+                    int utf32 = input.GetCharacter(ref index);
+                    int count = AppendUtf32(textOutput, utf32, charBuffer);
+                    if (colorOutput != null && font.GetCharacterRegion(utf32, out var reg))
+                        for (int c = 0; c < count; c++)
+                            colorOutput.Add(currentColor);
+                }
 
-                        currentColor = baseColor;
-                        inSequence = false;
-                        continue;
-                    }
-                    else
+                if (input.GetCharacter(ref i) != '§')
+                {
+                    AddAtLoopIndex(ref i);
+                    continue;
+                }
+
+                if (inSequence) // DONT ADD
+                {
+                    if (keepSequences)
+                        AddAtLoopIndex(ref i);
+                    
+                    currentColor = baseColor;
+                    inSequence = false;
+                }
+                else
+                {
+                    i++;
+                    if (i < input.Count)
                     {
-                        int startOffset = i + 1;
-                        if (startOffset < inputLength)
+                        if (input.GetCharacter(ref i) == '[')
                         {
-                            if (input[startOffset] == '[')
+                            seqBuilder.Clear();
+                            int tailOffset = GetSequence(input, i + 1, seqBuilder, charBuffer, out var seq);
+                            if (tailOffset > 0)
                             {
-                                int tailOffset = GetSequence(input, startOffset + 1, out var seq);
-                                if (tailOffset > 0)
-                                {
-                                    inSequence = true;
+                                if (colorOutput != null)
+                                    currentColor = seq[0] == '#' ? GetHexColor(seq) : GetRgb(seq);
 
-                                    if(processColor)
-                                        currentColor = seq[0] == '#' ? GetHexColor(seq) : GetRgb(seq);
+                                if (keepSequences == false)
+                                    i = tailOffset + 1;
 
-                                    if (keepSequences == false)
-                                        i = tailOffset + 1;
-                                }
+                                inSequence = true;
                             }
                         }
                     }
+                    AddAtLoopIndex(ref i);
                 }
-
-                AddCurrent(i);
             }
         }
 
@@ -117,7 +156,9 @@ namespace GeneralShare.UI
         // and use a font collection instead of BitmapFont (in TextBox).
         // Switching fonts while building will need some work,
         // but applying the color format should be the same.
-        private static int GetSequence(TextInput input, int start, out StringBuilder sequence)
+        private static int GetSequence(
+            ICharIterator input, int start,
+            StringBuilder seqBuilder, char[] buffer, out StringBuilder sequence)
         {
             int tail = start;
             while (tail < input.Count)
@@ -132,11 +173,13 @@ namespace GeneralShare.UI
                     return 0;
                 }
 
-                if (input[tail] == ']')
+                if (input.GetCharacter(ref tail) == ']')
                 {
-                    StringBuilder seqBuilder = SequenceBuilder;
                     for (int i = start; i < tail; i++)
-                        seqBuilder.Append(input[i]);
+                    {
+                        int c = input.GetCharacter(ref i);
+                        AppendUtf32(seqBuilder, c, buffer);
+                    }
                     sequence = seqBuilder;
                     return tail;
                 }
