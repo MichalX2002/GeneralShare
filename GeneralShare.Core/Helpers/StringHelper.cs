@@ -93,7 +93,7 @@ namespace GeneralShare
             return length;
         }
 
-        public static int HexToByteArray(StringBuilder hex, int offset, byte[] output)
+        public static int HexToByteArray(StringBuilder hex, int offset, Span<byte> output)
         {
             int valueLength = hex.Length - offset;
 

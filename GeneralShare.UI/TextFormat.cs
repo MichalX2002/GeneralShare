@@ -10,31 +10,8 @@ namespace GeneralShare.UI
     public static partial class TextFormat
     {
         [ThreadStatic]
-        private static byte[] __colorBuffer;
-
-        [ThreadStatic]
         private static StringBuilder __sequenceBuilder;
-
-        [ThreadStatic]
-        private static char[] __charBuffer;
-
-        private static byte[] ColorBuffer
-        {
-            get
-            {
-                if (__colorBuffer == null)
-                    __colorBuffer = new byte[4];
-                else
-                    for (int i = 0; i < 3; i++)
-                        __colorBuffer[i] = 0;
-
-                // Set alpha to max as default
-                __colorBuffer[3] = 255;
-
-                return __colorBuffer;
-            }
-        }
-
+        
         private static StringBuilder SequenceBuilder
         {
             get
@@ -42,16 +19,6 @@ namespace GeneralShare.UI
                 if (__sequenceBuilder == null)
                     __sequenceBuilder = new StringBuilder();
                 return __sequenceBuilder;
-            }
-        }
-
-        private static char[] CharBuffer
-        {
-            get
-            {
-                if (__charBuffer == null)
-                    __charBuffer = new char[2];
-                return __charBuffer;
             }
         }
 
@@ -65,7 +32,7 @@ namespace GeneralShare.UI
             return iterator;
         }
 
-        public static int ConvertFromUtf32(int utf32, char[] buffer)
+        public static int ConvertFromUtf32(int utf32, Span<char> buffer)
         {
             if (utf32 < 0 || utf32 > 0x10ffff || (utf32 >= 0x00d800 && utf32 <= 0x00dfff))
                 return 0;
@@ -82,20 +49,12 @@ namespace GeneralShare.UI
             return 2;
         }
 
-        private static int AppendUtf32(StringBuilder builder, int utf32, char[] buffer)
-        {
-            int count = ConvertFromUtf32(utf32, buffer);
-            for (int i = 0; i < count; i++)
-                builder.Append(buffer[i]);
-            return count;
-        }
-
         public static void ColorFormat(
             ICharIterator input, StringBuilder textOutput,
             Color baseColor, BitmapFont font,
             bool keepSequences, ICollection<Color> colorOutput)
         {
-            char[] charBuffer = CharBuffer;
+            Span<char> charBuffer = stackalloc char[2];
             StringBuilder seqBuilder = SequenceBuilder;
             Color currentColor = baseColor;
 
@@ -103,25 +62,30 @@ namespace GeneralShare.UI
             int inputLength = input.Count;
             for (int i = 0; i < inputLength; i++)
             {
-                void AddAtLoopIndex(ref int index)
+                void AddAtLoopIndex(Span<char> buffer, ref int index)
                 {
                     int utf32 = input.GetCharacter(ref index);
-                    int count = AppendUtf32(textOutput, utf32, charBuffer);
-                    if (colorOutput != null && font.GetCharacterRegion(utf32, out var reg))
-                        for (int c = 0; c < count; c++)
+                    int count = ConvertFromUtf32(utf32, buffer);
+                    bool addColor = colorOutput != null && font.ContainsCharacterRegion(utf32);
+
+                    for (int charIndex = 0; charIndex < count; charIndex++)
+                    {
+                        if (addColor)
                             colorOutput.Add(currentColor);
+                        textOutput.Append(buffer[charIndex]);
+                    }
                 }
 
                 if (input.GetCharacter(ref i) != '§')
                 {
-                    AddAtLoopIndex(ref i);
+                    AddAtLoopIndex(charBuffer, ref i);
                     continue;
                 }
 
-                if (inSequence) // DONT ADD
+                if (inSequence)
                 {
                     if (keepSequences)
-                        AddAtLoopIndex(ref i);
+                        AddAtLoopIndex(charBuffer, ref i);
                     
                     currentColor = baseColor;
                     inSequence = false;
@@ -147,7 +111,7 @@ namespace GeneralShare.UI
                             }
                         }
                     }
-                    AddAtLoopIndex(ref i);
+                    AddAtLoopIndex(charBuffer, ref i);
                 }
             }
         }
@@ -158,7 +122,7 @@ namespace GeneralShare.UI
         // but applying the color format should be the same.
         private static int GetSequence(
             ICharIterator input, int start,
-            StringBuilder seqBuilder, char[] buffer, out StringBuilder sequence)
+            StringBuilder seqBuilder, Span<char> buffer, out StringBuilder sequence)
         {
             int tail = start;
             while (tail < input.Count)
@@ -177,8 +141,10 @@ namespace GeneralShare.UI
                 {
                     for (int i = start; i < tail; i++)
                     {
-                        int c = input.GetCharacter(ref i);
-                        AppendUtf32(seqBuilder, c, buffer);
+                        int utf32 = input.GetCharacter(ref i);
+                        int count = ConvertFromUtf32(utf32, buffer);
+                        for (int charIndex = 0; charIndex < count; charIndex++)
+                            seqBuilder.Append(buffer[charIndex]);
                     }
                     sequence = seqBuilder;
                     return tail;
@@ -197,7 +163,9 @@ namespace GeneralShare.UI
 
         public static Color GetHexColor(StringBuilder seq)
         {
-            byte[] buffer = ColorBuffer;
+            Span<byte> buffer = stackalloc byte[4];
+            buffer[3] = 255;
+
             int offset = seq[0] == '#' ? 1 : 0;
             StringHelper.HexToByteArray(seq, offset, buffer);
             return new Color(buffer[0], buffer[1], buffer[2], buffer[3]);
@@ -216,9 +184,11 @@ namespace GeneralShare.UI
 
         public static Color GetRgb(StringBuilder seq)
         {
-            byte[] buffer = ColorBuffer;
             int itemCount = 0;
             int lastOffset = 0;
+
+            Span<byte> buffer = stackalloc byte[4];
+            buffer[3] = 255;
 
             for (int i = 0; i < seq.Length; i++)
             {
