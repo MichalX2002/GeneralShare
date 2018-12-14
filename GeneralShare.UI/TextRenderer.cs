@@ -37,19 +37,19 @@ namespace GeneralShare.UI
         }
 
         public ICharIterator GetColorFormat(
-            BitmapFont font, ICharIterator chars, Color baseColor, IReferenceList<Color> output)
+            BitmapFont font, ICharIterator chars, Color baseColor, bool keepSequences, IReferenceList<Color> output)
         {
-            return TextFormat.ColorFormat(chars, baseColor, font, output);
+            return TextFormat.ColorFormat(chars, baseColor, font, keepSequences, output);
         }
 
         public SizeF GetColoredSprites(
-            BitmapFont font, ICharIterator chars, Color startColor,
+            BitmapFont font, ICharIterator chars, Color startColor, bool keepSequences,
             Vector2 position, Vector2 origin, Vector2 scale,
             IReferenceList<FontGlyph> glyphOutput,
             IReferenceList<GlyphSprite> spriteOutput,
             IReferenceList<Color> colorOutput)
         {
-            ICharIterator result = GetColorFormat(font, chars, startColor, colorOutput);
+            ICharIterator result = GetColorFormat(font, chars, startColor, keepSequences, colorOutput);
             SizeF size = font.GetGlyphs(result, glyphOutput);
             BitmapFontExtensions.GetGlyphSprites(glyphOutput, spriteOutput, position, Color.White, 0, origin, scale, 0, null);
             CharIteratorPool.Return(result);

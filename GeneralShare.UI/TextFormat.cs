@@ -56,10 +56,10 @@ namespace GeneralShare.UI
         }
 
         public static ICharIterator ColorFormat(
-            ICharIterator input, Color baseColor, BitmapFont font, IReferenceList<Color> output)
+            ICharIterator input, Color baseColor, BitmapFont font, bool keepSequences, IReferenceList<Color> output)
         {
             var builder = CharIteratorPool.RentBuilder(input.Count);
-            ColorFormat(input, builder, baseColor, font, false, output);
+            ColorFormat(input, builder, baseColor, font, keepSequences, output);
             var iterator = CharIteratorPool.Rent(builder, 0, builder.Length);
             CharIteratorPool.ReturnBuilder(builder);
             return iterator;
@@ -142,6 +142,11 @@ namespace GeneralShare.UI
 
                                 if (keepSequences == false)
                                     i = tailOffset + 1;
+                                else
+                                {
+                                    colorOutput.Add(currentColor);
+                                    textOutput.Append('§');
+                                }
 
                                 inSequence = true;
                             }
@@ -228,7 +233,7 @@ namespace GeneralShare.UI
                     lastOffset = i + 1;
 
                     itemCount++;
-                    if (itemCount == 3)
+                    if (itemCount == 4)
                         break;
                 }
             }
