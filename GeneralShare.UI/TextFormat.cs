@@ -54,6 +54,7 @@ namespace GeneralShare.UI
             Color baseColor, BitmapFont font,
             bool keepSequences, ICollection<Color> colorOutput)
         {
+            Span<byte> colorBuffer = stackalloc byte[4];
             Span<char> charBuffer = stackalloc char[2];
             StringBuilder seqBuilder = SequenceBuilder;
             Color currentColor = baseColor;
@@ -102,7 +103,10 @@ namespace GeneralShare.UI
                             if (tailOffset > 0)
                             {
                                 if (colorOutput != null)
-                                    currentColor = seq[0] == '#' ? GetHexColor(seq) : GetRgb(seq);
+                                {
+                                    currentColor = seq[0] == '#' ?
+                                        GetHexColor(colorBuffer, seq) : GetRgba(colorBuffer, seq);
+                                }
 
                                 if (keepSequences == false)
                                     i = tailOffset + 1;
@@ -166,11 +170,9 @@ namespace GeneralShare.UI
             return -1;
         }
 
-        public static Color GetHexColor(StringBuilder seq)
+        public static Color GetHexColor(Span<byte> buffer, StringBuilder seq)
         {
-            Span<byte> buffer = stackalloc byte[4];
             buffer[3] = 255;
-
             int offset = seq[0] == '#' ? 1 : 0;
             StringHelper.HexToByteArray(seq, offset, buffer);
             return new Color(buffer[0], buffer[1], buffer[2], buffer[3]);
@@ -187,13 +189,11 @@ namespace GeneralShare.UI
             return (byte)tmp;
         }
 
-        public static Color GetRgb(StringBuilder seq)
+        public static Color GetRgba(Span<byte> buffer, StringBuilder seq)
         {
+            buffer[3] = 255;
             int itemCount = 0;
             int lastOffset = 0;
-
-            Span<byte> buffer = stackalloc byte[4];
-            buffer[3] = 255;
 
             for (int i = 0; i < seq.Length; i++)
             {
