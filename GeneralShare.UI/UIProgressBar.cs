@@ -39,8 +39,7 @@ namespace GeneralShare.UI
         public Color BackgroundColor { get => _backSprite.TL.Color; set => SetBackColor(ref value); }
 
         public UIProgressBar(
-            UIManager manager, TextureRegion2D mainBarRegion, TextureRegion2D backBarRegion) :
-            base(manager)
+            UIManager manager, TextureRegion2D mainBarRegion, TextureRegion2D backBarRegion) : base(manager)
         {
             _mainBarRegion = mainBarRegion;
             _backBarRegion = backBarRegion;

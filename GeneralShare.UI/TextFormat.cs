@@ -12,10 +12,10 @@ namespace GeneralShare.UI
         public static ICharIterator ColorFormat(
             ICharIterator input, Color baseColor, BitmapFont font, bool keepSequences, IReferenceList<Color> output)
         {
-            var builder = CharIteratorPool.RentBuilder(input.Length);
+            var builder = StringBuilderPool.Rent(input.Length);
             ColorFormat(input, builder, baseColor, font, keepSequences, output);
             var iterator = CharIteratorPool.Rent(builder, 0, builder.Length);
-            CharIteratorPool.ReturnBuilder(builder);
+            StringBuilderPool.Return(builder);
             return iterator;
         }
 
