@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Text;
 
 namespace GeneralShare
@@ -63,11 +64,13 @@ namespace GeneralShare
             return output;
         }
 
+        [DebuggerHidden]
         private static ArgumentException GetKeyException()
         {
             return new ArgumentException("The binary key cannot have an odd number of digits");
         }
 
+        [DebuggerHidden]
         private static ArgumentException GetTooShortException()
         {
             return new ArgumentException("The output array was too short for given binary key.");
@@ -78,38 +81,34 @@ namespace GeneralShare
             if (hex.Length % 2 == 1)
                 throw GetKeyException();
 
-            int length = hex.Length >> 1;
-
+            int length = hex.Length / 2;
             if (output.Length < length)
                 throw GetTooShortException();
 
             for (int i = 0; i < length; ++i)
             {
                 output[i] = (byte)(
-                    (GetHexValue(hex[i << 1]) << 4) +
-                    (GetHexValue(hex[(i << 1) + 1])));
+                    GetHexValue(hex[i * 2]) * 16 +
+                    GetHexValue(hex[i * 2 + 1]));
             }
 
             return length;
         }
 
-        public static int HexToByteArray(StringBuilder hex, int offset, Span<byte> output)
+        public static int HexToByteSpan(Span<char> hex, int offset, int count, Span<byte> output)
         {
-            int valueLength = hex.Length - offset;
-
-            if (valueLength % 2 == 1)
+            if (count % 2 == 1)
                 throw GetKeyException();
 
-            int length = valueLength >> 1;
-
+            int length = count / 2;
             if (output.Length < length)
                 GetTooShortException();
 
-            for (int i = offset; i < length; ++i)
+            for (int i = 0; i < length; ++i)
             {
                 output[i] = (byte)(
-                    (GetHexValue(hex[i << 1]) << 4) +
-                    (GetHexValue(hex[(i << 1) + 1])));
+                    GetHexValue(hex[offset + i * 2]) * 16 +
+                    GetHexValue(hex[offset + i * 2 + 1]));
             }
 
             return length;
