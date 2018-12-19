@@ -54,11 +54,6 @@ namespace GeneralShare.UI
             this(manager, manager.WhitePixelRegion, manager.WhitePixelRegion)
         {
         }
-        
-        public UIProgressBar(TextureRegion2D mainBarRegion, TextureRegion2D backBarRegion) :
-            this(null, mainBarRegion, backBarRegion)
-        {
-        }
 
         private void SetMainColor(ref Color value)
         {
@@ -72,7 +67,7 @@ namespace GeneralShare.UI
 
         private void SetThickness(int value)
         {
-            MarkDirtyE(ref _barThickness, value, DirtMarkType.BarThickness);
+            MarkDirty(ref _barThickness, value, DirtMarkType.BarThickness);
         }
 
         private void SetDirection(BarDirection value)
@@ -82,17 +77,17 @@ namespace GeneralShare.UI
 
         private void SetDestination(Vector2 value)
         {
-            MarkDirtyE(ref _destination, value, DirtMarkType.Destination);
+            MarkDirty(ref _destination, value, DirtMarkType.Destination);
         }
 
         private void SetValue(float value)
         {
-            MarkDirtyE(ref _value, MathHelper.Clamp(value, _range.Min, _range.Max), DirtMarkType.Value);
+            MarkDirty(ref _value, MathHelper.Clamp(value, _range.Min, _range.Max), DirtMarkType.Value);
         }
         
         private void SetRange(Range<float> value)
         {
-            MarkDirtyE(ref _range, value, DirtMarkType.Range);
+            MarkDirty(ref _range, value, DirtMarkType.Range);
         }
 
         public void Report(float value)

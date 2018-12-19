@@ -17,7 +17,7 @@ namespace GeneralShare.UI
 
         private void SetDestination(RectangleF value)
         {
-            MarkDirtyE(ref _destination, value, DirtMarkType.Destination);
+            MarkDirty(ref _destination, value, DirtMarkType.Destination);
         }
 
         protected override void OnMarkedDirty(DirtMarkType type)

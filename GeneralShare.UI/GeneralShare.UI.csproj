@@ -71,6 +71,8 @@
   <ItemGroup>
     <Compile Include="DirtMarkType.cs" />
     <Compile Include="DrawExtensions.cs" />
+    <Compile Include="SpriteBatchExtensions.cs" />
+    <Compile Include="TextSegment.cs" />
     <Compile Include="TextFormat.cs" />
     <Compile Include="TextRenderer.cs" />
     <Compile Include="UIContainer.cs" />

@@ -1,5 +1,4 @@
-﻿using Microsoft.Xna.Framework;
-using MonoGame.Extended;
+﻿using MonoGame.Extended;
 using MonoGame.Extended.BitmapFonts;
 using System.Text;
 
@@ -14,25 +13,17 @@ namespace GeneralShare.UI
         public BitmapFont Font
         {
             get => _font;
-            set
-            {
-
-            }
+            set => MarkDirty(ref _font, value, DirtMarkType.Font);
         }
+
+
         
         public override RectangleF Boundaries => _boundaries;
-
-        public UIText(BitmapFont font) : base(null)
-        {
-
-        }
 
         public UIText(UIManager manager, BitmapFont font) : base(manager)
         {
 
         }
-
-
 
         public void SetText(string value, int offset, int length)
         {

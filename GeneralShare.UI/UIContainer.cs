@@ -22,96 +22,44 @@ namespace GeneralShare.UI
             IsDrawable = false;
         }
 
-        public UIContainer() : this(null)
-        {
-        }
-
-        private void Transform_MarkedDirty(DirtMarkType marks)
+        private void Transform_MarkedDirty(UITransform transform, DirtMarkType marks)
         {
             if (marks.HasAnyFlag(DirtMarkType.Boundaries, DirtMarkType.Enabled))
                 _needsBoundsUpdate = true;
         }
-
-        private void AddInternal(UITransform transform)
-        {
-            _transforms.Add(transform);
-            lock (transform.SyncRoot)
-            {
-                transform.SetContainer(this);
-                transform.MarkedDirty += Transform_MarkedDirty;
-            }
-        }
-
+        
         public void Add(UITransform transform)
         {
-            lock (SyncRoot)
-            {
-                AddInternal(transform);
-                _needsBoundsUpdate = true;
-            }
+            _transforms.Add(transform);
+            transform.Container = null;
+            transform.MarkedDirty += Transform_MarkedDirty;
+            _needsBoundsUpdate = true;
         }
 
         public void AddRange(IEnumerable<UITransform> transforms)
         {
-            lock (SyncRoot)
-            {
-                foreach (var item in transforms)
-                {
-                    AddInternal(item);
-                }
-                _needsBoundsUpdate = true;
-            }
+            foreach (var transform in transforms)
+                Add(transform);
         }
-
-        private bool RemoveInternal(UITransform original, UITransform candidate, int i)
-        {
-            lock (original.SyncRoot)
-            {
-                if (original.Container == this)
-                    original.SetContainer(null);
-
-                original.MarkedDirty -= Transform_MarkedDirty;
-            }
-            if (candidate.Equals(original))
-            {
-                _transforms.RemoveAt(i);
-                return true;
-            }
-            return false;
-        }
-
+        
         public bool Remove(UITransform transform)
         {
-            lock (SyncRoot)
-            {
-                for (int i = 0, count = _transforms.Count; i < count; i++)
-                {
-                    if (RemoveInternal(transform, _transforms[i], i))
-                        return true;
-                }
-                _needsBoundsUpdate = true;
-                return false;
-            }
+            if (transform.Container == this)
+                transform.Container = null;
+            transform.MarkedDirty -= Transform_MarkedDirty;
+
+            _transforms.Remove(transform);
+            _needsBoundsUpdate = true;
+            return false;
         }
 
         public int RemoveRange(IEnumerable<UITransform> transforms)
         {
-            lock (SyncRoot)
-            {
-                int items = 0;
-                foreach (var original in transforms)
-                {
-                    for (int i = _transforms.Count; i-- > 0;)
-                    {
-                        if (RemoveInternal(original, _transforms[i], i))
-                        {
-                            items += 1;
-                        }
-                    }
-                }
-                _needsBoundsUpdate = true;
-                return items;
-            }
+            int count = 0;
+            foreach (var candidate in transforms)
+                if (Remove(candidate))
+                    count++;
+            return count;
         }
         
         private RectangleF GetBounds()
@@ -126,27 +74,18 @@ namespace GeneralShare.UI
 
         private void UpdateBounds()
         {
-            lock (SyncRoot)
+            bool hasOriginRect = false;
+            for (int i = 0; i < _transforms.Count; i++)
             {
-                bool hasOriginRect = false;
-                for (int i = 0, count = _transforms.Count; i < count; i++)
+                var transform = _transforms[i];
+                if (transform is UIElement element && element.IsEnabled)
                 {
-                    var transform = _transforms[i];
-                    if (transform is UIElement element)
+                    if (hasOriginRect)
+                        RectangleF.Union(_bounds, element.Boundaries, out _bounds);
+                    else
                     {
-                        lock (element.SyncRoot)
-                        {
-                            if (element.IsEnabled)
-                            {
-                                if (hasOriginRect)
-                                    RectangleF.Union(_bounds, element.Boundaries, out _bounds);
-                                else
-                                {
-                                    _bounds = element.Boundaries;
-                                    hasOriginRect = true;
-                                }
-                            }
-                        }
+                        _bounds = element.Boundaries;
+                        hasOriginRect = true;
                     }
                 }
             }
@@ -161,11 +100,10 @@ namespace GeneralShare.UI
             DirtMarkType marks = FULL_TRANSFORM_UPDATE;
             if (HasAnyDirtMark(DirtMarkType.Enabled))
                 marks |= DirtMarkType.Enabled;
-            lock (SyncRoot)
-            {
-                for (int i = 0, count = _transforms.Count; i < count; i++)
-                    _transforms[i].InvokeMarkedDirty(marks);
-            }
+
+            for (int i = 0; i < _transforms.Count; i++)
+                _transforms[i].InvokeMarkedDirty(marks);
+
             MarkClean();
         }
 
@@ -173,12 +111,9 @@ namespace GeneralShare.UI
         {
             if (!IsDisposed)
             {
-                lock (SyncRoot)
-                {
-                    for (int i = _transforms.Count; i -- > 0;)
-                        _transforms[i].MarkedDirty -= Transform_MarkedDirty;
-                    _transforms = null;
-                }
+                for (int i = 0; i < _transforms.Count; i++)
+                    _transforms[i].MarkedDirty -= Transform_MarkedDirty;
+                _transforms = null;
 
                 base.Dispose(disposing);
             }

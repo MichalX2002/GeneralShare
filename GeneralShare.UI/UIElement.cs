@@ -48,7 +48,7 @@ namespace GeneralShare.UI
         /// </summary>
         public bool IsSelectable { get; set; }
         
-        public UIElement(string name, UIManager manager) : base(manager)
+        public UIElement(UIManager manager, string name) : base(manager)
         {
             Name = name ?? string.Empty;
             TriggerMouseEvents = false;
@@ -56,7 +56,9 @@ namespace GeneralShare.UI
             IsIntercepting = true;
         }
 
-        public UIElement(UIManager manager) : this(null, manager) { }
+        public UIElement(UIManager manager) : this(manager, string.Empty)
+        {
+        }
         
         internal void TriggerOnTextInput(TextInputEventArgs e)
         {

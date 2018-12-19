@@ -62,15 +62,12 @@ namespace GeneralShare.UI
 
         public override void Draw(GameTime time, SpriteBatch batch)
         {
-            lock (SyncRoot)
+            if (IsDirty)
             {
-                if (IsDirty)
-                {
-                    UpdateSprite();
-                    MarkClean();
-                }
-                batch.Draw(_region.Texture, _sprite);
+                UpdateSprite();
+                MarkClean();
             }
+            batch.Draw(_region.Texture, _sprite);
         }
     }
 }

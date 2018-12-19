@@ -11,11 +11,7 @@ namespace GeneralShare.UI
             Vector3 position, Vector2 origin, Vector2 scale, float rotation);
 
         public event DrawDelegate OnDraw;
-
-        public UIDrawable()
-        {
-        }
-
+        
         public UIDrawable(UIManager manager) : base(manager)
         {
         }

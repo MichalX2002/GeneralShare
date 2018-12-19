@@ -14,38 +14,33 @@ namespace GeneralShare.UI
 
         public virtual void Draw(GameTime time, SpriteBatch spriteBatch)
         {
-            lock (Manager.SyncRoot)
+            bool isBatching = false;
+            SamplingMode lastSampling = SamplingMode.LinearClamp;
+
+            foreach (var transform in Manager.Transforms)
             {
-                bool isBatching = false;
-                SamplingMode lastSampling = SamplingMode.LinearClamp;
+                if (transform.IsActive == false || !transform.IsDrawable)
+                    continue;
 
-                var transforms = Manager.GetSortedTransformList();
-                for (int i = 0, count = transforms.Count; i < count; i++)
+                if (lastSampling != transform.PreferredSampling)
                 {
-                    UITransform transform = transforms[i];
-                    if (transform.IsActive == false || !transform.IsDrawable)
-                        continue;
-                    
-                    if (lastSampling != transform.PreferredSampling)
+                    if (isBatching)
                     {
-                        if (isBatching)
-                        {
-                            spriteBatch.End();
-                            isBatching = false;
-                        }
-                        lastSampling = transform.PreferredSampling;
+                        spriteBatch.End();
+                        isBatching = false;
                     }
-
-                    if (!isBatching)
-                    {
-                        spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, GetSamplerState(lastSampling));
-                        isBatching = true;
-                    }
-
-                    transform.Draw(time, spriteBatch);
+                    lastSampling = transform.PreferredSampling;
                 }
-                spriteBatch.End();
+
+                if (!isBatching)
+                {
+                    spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, GetSamplerState(lastSampling));
+                    isBatching = true;
+                }
+
+                transform.Draw(time, spriteBatch);
             }
+            spriteBatch.End();
         }
 
         public SamplerState GetSamplerState(SamplingMode samplingMode)
