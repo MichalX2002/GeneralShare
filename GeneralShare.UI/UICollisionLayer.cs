@@ -12,7 +12,6 @@ namespace GeneralShare.UI
 
         public UICollisionLayer(UIManager manager) : base(manager)
         {
-            MarkedDirty += UILayer_MarkedDirty;
             IsDrawable = false;
         }
 
@@ -21,7 +20,7 @@ namespace GeneralShare.UI
             MarkDirtyE(ref _destination, value, DirtMarkType.Destination);
         }
 
-        private void UILayer_MarkedDirty(DirtMarkType type)
+        protected override void OnMarkedDirty(DirtMarkType type)
         {
             if (type.HasAnyFlag(DirtMarkType.Transform, DirtMarkType.Destination))
             {
@@ -32,6 +31,7 @@ namespace GeneralShare.UI
                 float h = Destination.Height * Scale.Y;
                 _boundaries = new RectangleF(x, y, w, h);
 
+                MarkClean(DirtMarkType.Transform | DirtMarkType.Destination);
                 InvokeMarkedDirty(DirtMarkType.Boundaries);
             }
         }

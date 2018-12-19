@@ -21,7 +21,6 @@ namespace GeneralShare.UI
         public event MarkedCleanDelegate MarkedClean;
 
         private bool _updateViewportOnEnable;
-        private bool _dirty;
         private bool _enabled;
         private Vector3 _position;
         private Vector2 _origin;
@@ -31,25 +30,23 @@ namespace GeneralShare.UI
         private UIAnchor _anchor;
         private int _drawOrder;
 
+        public UIManager Manager { get; }
+        public UIContainer Container { get => _container; set => SetContainer(value); }
+        public UIAnchor Anchor { get => _anchor; set => SetAnchor(value); }
+        public PivotPosition AnchorPivot => _anchor != null ? _anchor.Pivot : PivotPosition.None;
+        public Vector3 AnchorOffset => _anchor != null ? _anchor.Offset : Vector3.Zero;
+
         public readonly int TransformKey;
         public object SyncRoot { get; }
         public bool IsDisposed { get; private set; }
         public bool IsDrawable { get; protected set; }
         public bool IsEnabled { get => _enabled; set { SetEnabled(value); } }
-        public bool IsActive => _enabled && (_container == null ? true : _container.IsEnabled);
+        public bool IsActive => _enabled && (_container != null ? _container.IsEnabled : true);
+        public bool IsDirty => DirtMarks != DirtMarkType.None;
+
         public int DrawOrder { get => _drawOrder; set => SetDrawOrder(value); }
         public DirtMarkType DirtMarks { get; private set; }
         public SamplingMode PreferredSampling { get; set; }
-
-        public UIManager Manager { get; }
-        public UIContainer Container { get => _container; set => SetContainer(value); }
-        public UIAnchor Anchor { get => _anchor; set => SetAnchor(value); }
-        public PivotPosition AnchorPivot => _anchor == null ? _anchor.Pivot : PivotPosition.None;
-        public Vector3 AnchorOffset => _anchor == null ? _anchor.Offset : Vector3.Zero;
-        
-        public Vector3 GlobalPosition => GetGlobalPosition();
-        public Vector2 GlobalScale => GetGlobalScale();   
-        public float GlobalRotation => GetGlobalRotation();
 
         public Vector3 Position { get => _position; set => SetPosition(value); }
         public Vector2 Origin { get => _origin; set => SetOrigin(value); }
@@ -58,23 +55,22 @@ namespace GeneralShare.UI
         public float X { get => _position.X; set => SetPositionF(value, _position.Y, _position.Z); }
         public float Y { get => _position.Y; set => SetPositionF(_position.X, value, _position.Z); }
         public float Z { get => _position.Z; set => SetPositionF(_position.X, _position.Y, value); }
-
-        public bool Dirty
+        
+        public float GlobalRotation => Container != null ? _rotation + Container.Rotation : _rotation;
+        public Vector2 GlobalScale => Container != null ? _scale * Container.Scale : _scale;
+        public Vector3 GlobalPosition
         {
-            get => _dirty;
-            protected set
+            get
             {
-                lock (SyncRoot)
-                {
-                    _dirty = value;
-                    if (value == false)
-                    {
-                        MarkedClean?.Invoke();
-                    }
-                }
+                Vector3 pos = _position;
+                if (_container != null)
+                    pos += _container.Position;
+                if (_anchor != null && _anchor.Pivot != PivotPosition.None)
+                    pos += _anchor.Position;
+                return pos;
             }
         }
-
+        
         private UITransform(UIManager manager, Vector2 scale)
         {
             TransformKey = Interlocked.Increment(ref _lastTransformKey);
@@ -88,9 +84,7 @@ namespace GeneralShare.UI
                 PreferredSampling = manager.PreferredSamplingMode;
             }
             else
-            {
                 PreferredSampling = SamplingMode.LinearClamp;
-            }
 
             IsDrawable = true;
             IsEnabled = true;
@@ -124,30 +118,6 @@ namespace GeneralShare.UI
         private void SetAnchor(UIAnchor value)
         {
             MarkDirty(ref _anchor, value, DirtMarkType.Position);
-        }
-
-        private Vector2 GetGlobalScale()
-        {
-            if (Container == null)
-                return _scale;
-            return _scale * Container.Scale;
-        }
-
-        private float GetGlobalRotation()
-        {
-            if (Container == null)
-                return _rotation;
-            return _rotation + Container.Rotation;
-        }
-        
-        private Vector3 GetGlobalPosition()
-        {
-            Vector3 pos = _position;
-            if(_container != null)
-                pos += _container.Position;
-            if (_anchor != null && _anchor.Pivot != PivotPosition.None)
-                pos += _anchor.Position;
-            return pos;
         }
 
         private void SetEnabled(bool value)
@@ -185,7 +155,7 @@ namespace GeneralShare.UI
 
         private void SetPosition(Vector3 value)
         {
-            MarkDirtyE(ref _position, value, DirtMarkType.Position | DirtMarkType.Transform);
+            MarkDirtyE(ref _position, value, DirtMarkType.Position);
         }
 
         private void SetPositionF(float x, float y, float z)
@@ -195,38 +165,23 @@ namespace GeneralShare.UI
 
         private void SetRotation(float value)
         {
-            MarkDirtyE(ref _rotation, value, DirtMarkType.Rotation | DirtMarkType.Transform);
+            MarkDirtyE(ref _rotation, value, DirtMarkType.Rotation);
         }
 
         private void SetScale(Vector2 value)
         {
-            MarkDirtyE(ref _scale, value, DirtMarkType.Scale | DirtMarkType.Transform);
+            MarkDirtyE(ref _scale, value, DirtMarkType.Scale);
         }
 
         private void SetOrigin(Vector2 value)
         {
-            MarkDirtyE(ref _origin, value, DirtMarkType.Origin | DirtMarkType.Transform);
+            MarkDirtyE(ref _origin, value, DirtMarkType.Origin);
         }
-
-        public bool HasAnyDirtMark(DirtMarkType marks)
-        {
-            return (DirtMarks & marks) != 0;
-        }
-
-        protected void ClearDirtMarks(DirtMarkType marks)
-        {
-            DirtMarks &= ~marks;
-        }
-
-        protected void ClearDirtMarks()
-        {
-            DirtMarks = 0;
-        }
-
+        
         protected bool MarkDirtyE<T>(ref T oldValue, T newValue, DirtMarkType marks)
             where T : IEquatable<T>
         {
-            if (oldValue == null || oldValue.Equals(newValue) == false)
+            if (oldValue == null || !oldValue.Equals(newValue))
             {
                 oldValue = newValue;
                 MarkDirty(marks);
@@ -237,7 +192,7 @@ namespace GeneralShare.UI
 
         protected bool MarkDirty<T>(ref T oldValue, T newValue, DirtMarkType marks)
         {
-            if (oldValue == null || oldValue.Equals(newValue) == false)
+            if (oldValue == null || !oldValue.Equals(newValue))
             {
                 oldValue = newValue;
                 MarkDirty(marks);
@@ -249,7 +204,7 @@ namespace GeneralShare.UI
         protected bool MarkDirty<T>(
             ref T oldValue, T newValue, DirtMarkType marks, IEqualityComparer<T> comparer)
         {
-            if (oldValue == null || comparer.Equals(oldValue, newValue) == false)
+            if (oldValue == null || !comparer.Equals(oldValue, newValue))
             {
                 oldValue = newValue;
                 MarkDirty(marks);
@@ -260,11 +215,16 @@ namespace GeneralShare.UI
 
         protected void MarkDirty(DirtMarkType marks, bool onlyMark)
         {
-            _dirty = true;
             DirtMarks |= marks;
 
             if (onlyMark == false)
-                InvokeMarkedDirty(marks);
+            {
+                lock (SyncRoot)
+                {
+                    OnMarkedDirty(marks);
+                    MarkedDirty?.Invoke(marks);
+                }
+            }
         }
 
         protected void MarkDirty(DirtMarkType marks)
@@ -272,17 +232,32 @@ namespace GeneralShare.UI
             MarkDirty(marks, false);
         }
 
-        protected void InvokeMarkedDirty(DirtMarkType marks)
+        internal void InvokeMarkedDirty(DirtMarkType marks)
+        {
+            MarkDirty(marks);
+        }
+
+        public bool HasAnyDirtMark(DirtMarkType marks)
+        {
+            return (DirtMarks & marks) != 0;
+        }
+
+        protected void MarkClean(DirtMarkType marks)
+        {
+            DirtMarks &= ~marks;
+        }
+
+        protected void MarkClean()
         {
             lock (SyncRoot)
             {
-                MarkedDirty?.Invoke(marks);
+                DirtMarks = DirtMarkType.None;
+                MarkedClean?.Invoke();
             }
         }
 
-        internal void InvokeMarkedDirtyInternal(DirtMarkType marks)
+        protected virtual void OnMarkedDirty(DirtMarkType marks)
         {
-            MarkDirty(marks);
         }
 
         public override bool Equals(object obj)

@@ -6,7 +6,6 @@ namespace GeneralShare.UI
 {
     public abstract class UIElement : UITransform
     {
-        public delegate void ContentStateDelegate(bool hadContentBefore);
         public delegate void MouseHoverDelegate(MouseState mouseState);
         public delegate void GenericMouseDelegate(MouseState mouseState, MouseButton buttons);
         public delegate void GenericKeyboardDelegate(Keys key);

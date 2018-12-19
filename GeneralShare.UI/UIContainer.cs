@@ -72,7 +72,7 @@ namespace GeneralShare.UI
 
                 original.MarkedDirty -= Transform_MarkedDirty;
             }
-            if (candidate.TransformKey == original.TransformKey)
+            if (candidate.Equals(original))
             {
                 _transforms.RemoveAt(i);
                 return true;
@@ -150,26 +150,23 @@ namespace GeneralShare.UI
                     }
                 }
             }
-            InvokeMarkedDirty(DirtMarkType.Boundaries);
+            MarkDirty(DirtMarkType.Boundaries);
         }
 
         public override void Update(GameTime time)
         {
-            if (Dirty == false)
+            if (IsDirty == false)
                 return;
 
             DirtMarkType marks = FULL_TRANSFORM_UPDATE;
-            if (DirtMarks.HasAnyFlag(DirtMarkType.Enabled))
+            if (HasAnyDirtMark(DirtMarkType.Enabled))
                 marks |= DirtMarkType.Enabled;
             lock (SyncRoot)
             {
                 for (int i = 0, count = _transforms.Count; i < count; i++)
-                {
-                    _transforms[i].InvokeMarkedDirtyInternal(marks);
-                }
+                    _transforms[i].InvokeMarkedDirty(marks);
             }
-            Dirty = false;
-            ClearDirtMarks();
+            MarkClean();
         }
 
         protected override void Dispose(bool disposing)

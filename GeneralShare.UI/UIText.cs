@@ -7,17 +7,20 @@ namespace GeneralShare.UI
 {
     public class UIText : UIElement
     {
-        //public ICharIterator Text { get; }
-        public string Text;
-        public Color BaseColor;
-        public Vector2 Scale = new Vector2(2f);
-        public bool UseShadow = true;
-        public Color ShadowColor = new Color(245, 245, 245, 150);
-        public TextAlignment Alignment;
-        public SizeF Measure;
-        public RectangleF ShadowOffset = new RectangleF(-3, -4, 7, 7);
+        private BitmapFont _font;
+        private RectangleF _boundaries;
 
-        public override RectangleF Boundaries => Rectangle.Empty;
+        public ICharIterator Text { get; }
+        public BitmapFont Font
+        {
+            get => _font;
+            set
+            {
+
+            }
+        }
+        
+        public override RectangleF Boundaries => _boundaries;
 
         public UIText(BitmapFont font) : base(null)
         {
@@ -29,9 +32,16 @@ namespace GeneralShare.UI
 
         }
 
+
+
         public void SetText(string value, int offset, int length)
         {
             
+        }
+
+        public void SetText(string value)
+        {
+            SetText(value, 0, value.Length);
         }
 
         public void SetText(StringBuilder value, int offset, int length)

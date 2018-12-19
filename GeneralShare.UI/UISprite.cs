@@ -37,9 +37,9 @@ namespace GeneralShare.UI
 
         private void UpdateSprite()
         {
-            if (DirtMarks.HasAnyFlag(DirtMarkType.Transform, DirtMarkType.Value, DirtMarkType.Destination))
+            if (HasAnyDirtMark(DirtMarkType.Transform | DirtMarkType.Value | DirtMarkType.Destination))
             {
-                ClearDirtMarks();
+                MarkClean();
                 var srcSize = _region.Bounds.Size.ToVector2();
                 if (IsUsingDestination)
                 {
@@ -64,10 +64,10 @@ namespace GeneralShare.UI
         {
             lock (SyncRoot)
             {
-                if (Dirty)
+                if (IsDirty)
                 {
                     UpdateSprite();
-                    Dirty = false;
+                    MarkClean();
                 }
                 batch.Draw(_region.Texture, _sprite);
             }

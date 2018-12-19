@@ -5,11 +5,14 @@ namespace GeneralShare.UI
     [Flags]
     public enum DirtMarkType
     {
+        None = 0,
+
         // Transform
-        Position = 1 << 0,
-        Origin = 1 << 1,
-        Scale = 1 << 2,
-        Rotation = 1 << 3,
+        Transform = 1 << 22,
+        Position = 1 << 0 | Transform,
+        Origin = 1 << 1 | Transform,
+        Scale = 1 << 2 | Transform,
+        Rotation = 1 << 3 | Transform,
 
         // TextBox
         Font = 1 << 4,
@@ -36,7 +39,6 @@ namespace GeneralShare.UI
         // General
         ClipRectangle = 1 << 20,
         Color = 1 << 21,
-        Transform = 1 << 22,
         Value = 1 << 23,
         ValueProcessed = 1 << 24,
         ObscureValue = 1 << 25,

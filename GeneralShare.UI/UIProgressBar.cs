@@ -22,7 +22,6 @@ namespace GeneralShare.UI
         private Vector2 _destination;
         private Vector2 _headPos;
         private RectangleF _mainRect;
-        private bool _needsSpriteUpdate;
 
         public override RectangleF Boundaries { get { UpdateBar(); return _boundaries; } }
         public int BackBarThickness { get => _barThickness; set => SetThickness(value); }
@@ -152,7 +151,7 @@ namespace GeneralShare.UI
 
         private void UpdateBar()
         {
-            if (Dirty == false)
+            if (IsDirty == false)
                 return;
 
             UpdateMainRect();
@@ -164,23 +163,16 @@ namespace GeneralShare.UI
             _boundaries.Height = Scale.Y * _destination.Y / _backBarRegion.Height;
             InvokeMarkedDirty(DirtMarkType.Boundaries);
 
-            _needsSpriteUpdate = true;
-            ClearDirtMarks();
-            Dirty = false;
+            CalculateMainSprite(_mainRect);
+            if (DirtMarks != DirtMarkType.BarThickness)
+                CalculateBackSprite();
+            MarkClean();
         }
 
         public override void Draw(GameTime time, SpriteBatch batch)
         {
             UpdateBar();
-            if (_needsSpriteUpdate)
-            {
-                CalculateMainSprite(_mainRect);
-                if (DirtMarks != DirtMarkType.BarThickness)
-                    CalculateBackSprite();
-
-                _needsSpriteUpdate = false;
-            }
-
+            
             if (BackBarThickness >= 0)
                 batch.Draw(_backBarRegion.Texture, _backSprite);
             batch.Draw(_mainBarRegion.Texture, _mainSprite);
