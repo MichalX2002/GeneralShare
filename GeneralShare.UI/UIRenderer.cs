@@ -17,9 +17,11 @@ namespace GeneralShare.UI
             bool isBatching = false;
             SamplingMode lastSampling = SamplingMode.LinearClamp;
 
-            foreach (var transform in Manager.Transforms)
+            var transforms = Manager.GetSortedTransformList();
+            for (int i = 0; i < transforms.Count; i++)
             {
-                if (transform.IsActive == false || !transform.IsDrawable)
+                var transform = transforms[i];
+                if (!transform.IsActive || !transform.IsDrawable)
                     continue;
 
                 if (lastSampling != transform.PreferredSampling)

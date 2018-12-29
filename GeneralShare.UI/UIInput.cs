@@ -18,11 +18,11 @@ namespace GeneralShare.UI
         public TextAlignment Alignment;
         public SizeF Measure;
 
-        public override RectangleF Boundaries => Rectangle.Empty;
+        public override RectangleF Boundaries => new RectangleF(GlobalPosition.ToVector2(), SizeF.Empty);
 
         public UIInput(UIManager manager, BitmapFont font) : base(manager)
         {
-
+            Font = font;
         }
 
         public void AddCharToBlacklist(char value)

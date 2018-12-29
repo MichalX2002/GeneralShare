@@ -233,11 +233,11 @@ namespace GeneralShare
         private static void UpdateModifiers()
         {
             ModifiersDown = Keyboard.Modifiers;
-            CtrlDown = ModifiersDown.HasAnyFlag(KeyModifier.Ctrl, KeyModifier.LeftCtrl, KeyModifier.RightCtrl);
-            AltDown = ModifiersDown.HasAnyFlag(KeyModifier.Alt, KeyModifier.LeftAlt, KeyModifier.RightAlt);
-            ShiftDown = ModifiersDown.HasAnyFlag(KeyModifier.Shift, KeyModifier.LeftShift, KeyModifier.RightShift);
-            NumLock = ModifiersDown.HasAnyFlag(KeyModifier.NumLock);
-            CapsLock = ModifiersDown.HasAnyFlag(KeyModifier.CapsLock);
+            CtrlDown = ModifiersDown.HasFlags(KeyModifier.Ctrl, KeyModifier.LeftCtrl, KeyModifier.RightCtrl);
+            AltDown = ModifiersDown.HasFlags(KeyModifier.Alt, KeyModifier.LeftAlt, KeyModifier.RightAlt);
+            ShiftDown = ModifiersDown.HasFlags(KeyModifier.Shift, KeyModifier.LeftShift, KeyModifier.RightShift);
+            NumLock = ModifiersDown.HasFlags(KeyModifier.NumLock);
+            CapsLock = ModifiersDown.HasFlags(KeyModifier.CapsLock);
         }
 
         private static void GetKeyDifferences(

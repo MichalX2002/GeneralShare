@@ -173,7 +173,7 @@ namespace GeneralShare.UI
 
         private void Transform_MarkedDirty(UITransform transform, DirtMarkType type)
         {
-            if (type.HasAnyFlag(DirtMarkType.DrawOrder))
+            if (type.HasFlags(DirtMarkType.DrawOrder))
                 FlagForSort();
         }
         
@@ -242,7 +242,9 @@ namespace GeneralShare.UI
                 if (transform.IsActive == false)
                     continue;
 
+                transform.TriggerCleanup();
                 transform.Update(time);
+
                 if (transform is UIElement element)
                 {
                     if (element != __selectedElement)

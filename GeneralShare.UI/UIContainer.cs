@@ -1,5 +1,4 @@
 ﻿using GeneralShare.Collections;
-using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 using System.Collections.Generic;
 
@@ -9,7 +8,7 @@ namespace GeneralShare.UI
     {
         private ListArray<UITransform> _transforms;
         private RectangleF _bounds;
-        private bool _needsBoundsUpdate;
+        private bool _boundsNeedUpdate;
 
         public override RectangleF Boundaries => GetBounds();
         public IReadOnlyList<UITransform> Children { get; }
@@ -24,8 +23,8 @@ namespace GeneralShare.UI
 
         private void Transform_MarkedDirty(UITransform transform, DirtMarkType marks)
         {
-            if (marks.HasAnyFlag(DirtMarkType.Boundaries, DirtMarkType.Enabled))
-                _needsBoundsUpdate = true;
+            if (marks.HasFlags(DirtMarkType.Boundaries, DirtMarkType.Enabled))
+                _boundsNeedUpdate = true;
         }
         
         public void Add(UITransform transform)
@@ -33,7 +32,7 @@ namespace GeneralShare.UI
             _transforms.Add(transform);
             transform.Container = null;
             transform.MarkedDirty += Transform_MarkedDirty;
-            _needsBoundsUpdate = true;
+            _boundsNeedUpdate = true;
         }
 
         public void AddRange(IEnumerable<UITransform> transforms)
@@ -49,7 +48,7 @@ namespace GeneralShare.UI
             transform.MarkedDirty -= Transform_MarkedDirty;
 
             _transforms.Remove(transform);
-            _needsBoundsUpdate = true;
+            _boundsNeedUpdate = true;
             return false;
         }
 
@@ -64,10 +63,10 @@ namespace GeneralShare.UI
         
         private RectangleF GetBounds()
         {
-            if (_needsBoundsUpdate)
+            if (_boundsNeedUpdate)
             {
                 UpdateBounds();
-                _needsBoundsUpdate = false;
+                _boundsNeedUpdate = false;
             }
             return _bounds;
         }
@@ -89,16 +88,13 @@ namespace GeneralShare.UI
                     }
                 }
             }
-            MarkDirty(DirtMarkType.Boundaries);
+            InvokeMarkedDirty(DirtMarkType.Boundaries);
         }
 
-        public override void Update(GameTime time)
+        protected override void NeedsCleanup()
         {
-            if (IsDirty == false)
-                return;
-
-            DirtMarkType marks = FULL_TRANSFORM_UPDATE;
-            if (HasAnyDirtMark(DirtMarkType.Enabled))
+            var marks = DirtMarkType.Transform;
+            if (HasDirtMarks(DirtMarkType.Enabled))
                 marks |= DirtMarkType.Enabled;
 
             for (int i = 0; i < _transforms.Count; i++)
@@ -106,7 +102,7 @@ namespace GeneralShare.UI
 
             MarkClean();
         }
-
+        
         protected override void Dispose(bool disposing)
         {
             if (!IsDisposed)

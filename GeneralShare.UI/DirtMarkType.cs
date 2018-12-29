@@ -5,14 +5,17 @@ namespace GeneralShare.UI
     [Flags]
     public enum DirtMarkType
     {
+        // 1<< 22 is free
+        // 1<< 10 is free
+
         None = 0,
 
         // Transform
-        Transform = 1 << 22,
-        Position = 1 << 0 | Transform,
-        Origin = 1 << 1 | Transform,
-        Scale = 1 << 2 | Transform,
-        Rotation = 1 << 3 | Transform,
+        Position = 1 << 0,
+        Rotation = 1 << 1,
+        Origin = 1 << 2,
+        Scale = 1 << 3,
+        Transform = Position | Rotation | Origin | Scale,
 
         // TextBox
         Font = 1 << 4,
@@ -20,8 +23,7 @@ namespace GeneralShare.UI
         KeepTextExpressions = 1 << 6,
         ShadowOffset = 1 << 7,
         ShadowColor = 1 << 8,
-        UseShadow = 1 << 9,
-        ShadowMath = 1 << 10,
+        Shadowed = 1 << 9,
         BuildQuadTree = 1 << 11,
         TextAlignment = 1 << 27,
 

@@ -1,4 +1,5 @@
-﻿using MonoGame.Extended;
+﻿using Microsoft.Xna.Framework;
+using MonoGame.Extended;
 
 namespace GeneralShare.UI
 {
@@ -20,16 +21,17 @@ namespace GeneralShare.UI
             MarkDirty(ref _destination, value, DirtMarkType.Destination);
         }
 
-        protected override void OnMarkedDirty(DirtMarkType type)
+        protected override void NeedsCleanup()
         {
-            if (type.HasAnyFlag(DirtMarkType.Transform, DirtMarkType.Destination))
+            if (HasDirtMarks(DirtMarkType.Transform | DirtMarkType.Destination))
             {
-                var globalPos = GlobalPosition;
-                float x = globalPos.X + _destination.X - Origin.X * Scale.X;
-                float y = globalPos.Y + _destination.Y - Origin.Y * Scale.Y;
-                float w = Destination.Width * Scale.X;
-                float h = Destination.Height * Scale.Y;
-                _boundaries = new RectangleF(x, y, w, h);
+                Vector3 pos = GlobalPosition;
+                Vector2 scale = GlobalScale;
+
+                _boundaries.X = pos.X + _destination.X - Origin.X * scale.X;
+                _boundaries.Y = pos.Y + _destination.Y - Origin.Y * scale.Y;
+                _boundaries.Width = Destination.Width * scale.X;
+                _boundaries.Height = Destination.Height * scale.Y;
 
                 MarkClean(DirtMarkType.Transform | DirtMarkType.Destination);
                 InvokeMarkedDirty(DirtMarkType.Boundaries);

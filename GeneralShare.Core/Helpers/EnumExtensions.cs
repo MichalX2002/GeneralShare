@@ -10,16 +10,16 @@ namespace GeneralShare
         /// </summary>
         /// <typeparam name="TEnum">The type of the enum.</typeparam>
         /// <param name="value">The value.</param>
-        /// <param name="flag">The flag.</param>
+        /// <param name="flags">The flag.</param>
         /// <returns>
         ///  <c>true</c> if the specified value has flags; otherwise, <c>false</c>.
         /// </returns>
-        public static bool HasAnyFlag<TEnum>(this TEnum value, TEnum flag) where TEnum : Enum
+        public static bool HasFlags<TEnum>(this TEnum value, TEnum flags) where TEnum : Enum
         {
-            return EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag);
+            return EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flags);
         }
 
-        public static bool HasAnyFlag<TEnum>(
+        public static bool HasFlags<TEnum>(
             this TEnum value, TEnum flag0, TEnum flag1) where TEnum : Enum
         {
             if (EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag0) ||
@@ -28,7 +28,7 @@ namespace GeneralShare
             return false;
         }
 
-        public static bool HasAnyFlag<TEnum>(
+        public static bool HasFlags<TEnum>(
             this TEnum value, TEnum flag0, TEnum flag1, TEnum flag2) where TEnum : Enum
         {
             if (EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag0) ||
@@ -38,7 +38,7 @@ namespace GeneralShare
             return false;
         }
 
-        public static bool HasAnyFlag<TEnum>(
+        public static bool HasFlags<TEnum>(
             this TEnum value, TEnum flag0, TEnum flag1, TEnum flag2, TEnum flag3) where TEnum : Enum
         {
             if (EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag0) ||
@@ -49,7 +49,7 @@ namespace GeneralShare
             return false;
         }
 
-        public static bool HasAnyFlag<TEnum>(
+        public static bool HasFlags<TEnum>(
             this TEnum value, TEnum flag0, TEnum flag1, TEnum flag2, TEnum flag3, TEnum flag4) where TEnum : Enum
         {
             if (EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag0) ||
@@ -61,7 +61,7 @@ namespace GeneralShare
             return false;
         }
 
-        public static bool HasAnyFlag<TEnum>(
+        public static bool HasFlags<TEnum>(
             this TEnum value, TEnum flag0, TEnum flag1, TEnum flag2, TEnum flag3, TEnum flag4, TEnum flag5) where TEnum : Enum
         {
             if (EnumExtensionsInternal<TEnum>.HasFlagsDelegate(value, flag0) ||
@@ -83,7 +83,7 @@ namespace GeneralShare
         /// <returns>
         ///  <c>true</c> if the specified value has any flag; otherwise, <c>false</c>.
         /// </returns>
-        public static bool HasAnyFlag<TEnum>(this TEnum value, params TEnum[] flags) where TEnum : Enum
+        public static bool HasFlags<TEnum>(this TEnum value, params TEnum[] flags) where TEnum : Enum
         {
             for (int i = 0; i < flags.Length; i++)
             {
@@ -96,7 +96,7 @@ namespace GeneralShare
         private static class EnumExtensionsInternal<TEnum> where TEnum : Enum
         {
             public static readonly Func<TEnum, TEnum, bool> HasFlagsDelegate = CreateHasFlagDelegate();
-            
+
             private static Func<TEnum, TEnum, bool> CreateHasFlagDelegate()
             {
                 ParameterExpression valueExpression = Expression.Parameter(typeof(TEnum));
@@ -104,31 +104,26 @@ namespace GeneralShare
                 ParameterExpression flagValueVariable = Expression.Variable(
                     Type.GetTypeCode(typeof(TEnum)) == TypeCode.UInt64 ? typeof(ulong) : typeof(long));
 
-                Expression<Func<TEnum, TEnum, bool>> lambdaExpression = Expression.Lambda<Func<TEnum, TEnum, bool>>(
-                  Expression.Block(
+                var body = Expression.Block(
                     new[] { flagValueVariable },
+
                     Expression.Assign(
-                      flagValueVariable,
-                      Expression.Convert(
-                        flagExpression,
-                        flagValueVariable.Type
-                      )
-                    ),
-                    Expression.Equal(
-                      Expression.And(
+                        flagValueVariable,
                         Expression.Convert(
-                          valueExpression,
-                          flagValueVariable.Type
-                        ),
-                        flagValueVariable
-                      ),
-                      flagValueVariable
-                    )
-                  ),
-                  valueExpression,
-                  flagExpression
+                            flagExpression, flagValueVariable.Type)),
+
+                    Expression.Equal(
+                        Expression.And(
+                            Expression.Convert(
+                                valueExpression, flagValueVariable.Type),
+                            flagValueVariable),
+                        flagValueVariable)
                 );
-                return lambdaExpression.Compile();
+
+                var lambda = Expression.Lambda<Func<TEnum, TEnum, bool>>(
+                    body, valueExpression, flagExpression);
+
+                return lambda.Compile();
             }
         }
     }

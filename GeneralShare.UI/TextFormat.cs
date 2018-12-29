@@ -10,10 +10,10 @@ namespace GeneralShare.UI
     public static partial class TextFormat
     {
         public static ICharIterator ColorFormat(
-            ICharIterator input, Color baseColor, BitmapFont font, bool keepSequences, IReferenceList<Color> output)
+            ICharIterator input, BitmapFont font, bool keepSequences, IReferenceList<Color?> output)
         {
             var builder = StringBuilderPool.Rent(input.Length);
-            ColorFormat(input, builder, baseColor, font, keepSequences, output);
+            ColorFormat(input, builder, font, keepSequences, output);
             var iterator = CharIteratorPool.Rent(builder, 0, builder.Length);
             StringBuilderPool.Return(builder);
             return iterator;
@@ -38,13 +38,16 @@ namespace GeneralShare.UI
 
         public static void ColorFormat(
             ICharIterator input, StringBuilder textOutput,
-            Color baseColor, BitmapFont font,
-            bool keepSequences, ICollection<Color> colorOutput)
+            BitmapFont font, bool keepSequences, ICollection<Color?> colorOutput)
         {
+            if (input == null) throw new ArgumentNullException(nameof(input));
+            if (textOutput == null) throw new ArgumentNullException(nameof(textOutput));
+            if (font == null) throw new ArgumentNullException(nameof(font));
+
             Span<byte> colorBuffer = stackalloc byte[4];
             Span<char> charBuffer = stackalloc char[2];
             Span<char> sequenceBuffer = stackalloc char[16];
-            Color currentColor = baseColor;
+            Color? currentColor = null;
 
             bool inSequence = false;
             for (int i = 0; i < input.Length; i++)
@@ -77,7 +80,7 @@ namespace GeneralShare.UI
                     if (keepSequences)
                         AddAtLoopIndex(charBuffer, ref i);
                     
-                    currentColor = baseColor;
+                    currentColor = null;
                     inSequence = false;
                 }
                 else

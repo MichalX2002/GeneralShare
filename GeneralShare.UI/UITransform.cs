@@ -7,12 +7,6 @@ namespace GeneralShare.UI
 {
     public class UITransform : IDisposable
     {
-        internal const DirtMarkType FULL_TRANSFORM_UPDATE =
-            DirtMarkType.Transform | DirtMarkType.Position |
-            DirtMarkType.Origin | DirtMarkType.Scale | DirtMarkType.Rotation;
-
-        private static int _lastTransformKey;
-
         public delegate void MarkedDirtyDelegate(UITransform sender, DirtMarkType marks);
         public delegate void MarkedCleanDelegate(UITransform sender);
 
@@ -70,22 +64,22 @@ namespace GeneralShare.UI
 
         public UITransform(UIManager manager)
         {
-            if (manager == null)
-                throw new ArgumentNullException(nameof(manager));
-
+            Manager = manager ?? throw new ArgumentNullException(nameof(manager));
             Manager.Add(this);
             PreferredSampling = manager.PreferredSampling;
 
             _scale = Vector2.One;
             IsDrawable = true;
             IsEnabled = true;
+
+            MarkDirty(DirtMarkType.Transform);
         }
 
         private void SetContainer(UIContainer value)
         {
-            MarkDirty(ref _container, value, FULL_TRANSFORM_UPDATE);
+            MarkDirty(ref _container, value, DirtMarkType.Transform);
         }
-               
+
         private void SetDrawOrder(int value)
         {
             MarkDirty(ref _drawOrder, value, DirtMarkType.DrawOrder);
@@ -114,16 +108,26 @@ namespace GeneralShare.UI
         {
         }
 
+        public virtual void ViewportChanged(Viewport viewport)
+        {
+        }
+
+        protected virtual void NeedsCleanup()
+        {
+        }
+
+        public void TriggerCleanup()
+        {
+            if (IsDirty)
+                NeedsCleanup();
+        }
+
         internal void OnViewportChange(Viewport viewport)
         {
             if (_enabled == false)
                 _updateViewportOnEnable = true;
             else
                 ViewportChanged(viewport);
-        }
-
-        public virtual void ViewportChanged(Viewport viewport)
-        {
         }
 
         private void SetPosition(Vector3 value)
@@ -151,20 +155,17 @@ namespace GeneralShare.UI
             MarkDirty(ref _origin, value, DirtMarkType.Origin);
         }
 
-        private bool AreEqual<T>(T x, T y)
+        public static bool AreEqual<T>(T x, T y)
         {
-            if (x == null && y != null)
+            if (x == default && y != default)
                 return false;
 
-            if (x is IEquatable<T> equatableX)
-                return equatableX.Equals(y);
-
-            return x.Equals(y);
+            return EqualityComparer<T>.Default.Equals(x, y);
         }
         
         protected bool MarkDirty<T>(ref T oldValue, T newValue, DirtMarkType marks)
         {
-            if (oldValue == null || !AreEqual(oldValue, newValue))
+            if (!AreEqual(oldValue, newValue))
             {
                 oldValue = newValue;
                 MarkDirty(marks);
@@ -173,9 +174,19 @@ namespace GeneralShare.UI
             return false;
         }
 
+        protected bool MarkDirty<T>(T oldValue, T newValue, DirtMarkType marks)
+        {
+            if (!AreEqual(oldValue, newValue))
+            {
+                MarkDirty(marks);
+                return true;
+            }
+            return false;
+        }
+
         protected bool MarkDirty<T>(ref T oldValue, T newValue, DirtMarkType marks, IEqualityComparer<T> comparer)
         {
-            if (oldValue == null || !comparer.Equals(oldValue, newValue))
+            if (!comparer.Equals(oldValue, newValue))
             {
                 oldValue = newValue;
                 MarkDirty(marks);
@@ -188,11 +199,8 @@ namespace GeneralShare.UI
         {
             DirtMarks |= marks;
 
-            if (onlyMark == false)
-            {
-                MarkedDirty?.Invoke(this, marks);
-                OnMarkedDirty(marks);
-            }
+            if (!onlyMark)
+                InvokeMarkedDirty(marks);
         }
 
         protected void MarkDirty(DirtMarkType marks)
@@ -200,29 +208,50 @@ namespace GeneralShare.UI
             MarkDirty(marks, false);
         }
 
-        internal void InvokeMarkedDirty(DirtMarkType marks)
-        {
-            MarkDirty(marks);
-        }
-
-        public bool HasAnyDirtMark(DirtMarkType marks)
+        public bool HasDirtMarks(DirtMarkType marks)
         {
             return (DirtMarks & marks) != 0;
         }
 
-        protected void MarkClean(DirtMarkType marks)
+        internal void InvokeMarkedDirty(DirtMarkType marks)
         {
-            DirtMarks &= ~marks;
+            MarkedDirty?.Invoke(this, marks);
         }
 
-        protected void MarkClean()
+        /// <summary>
+        /// Removes the specified marks from this transform.
+        /// Returns <see langword="true"/> if there are no marks left.
+        /// </summary>
+        /// <param name="marks"></param>
+        /// <returns><see langword="true"/> if there are no marks left, otherwise <see langword="false"/>.</returns>
+        protected bool MarkClean(DirtMarkType marks)
         {
-            DirtMarks = DirtMarkType.None;
-            MarkedClean?.Invoke(this);
+            if (DirtMarks != DirtMarkType.None)
+            {
+                DirtMarks &= ~marks;
+                if (DirtMarks == DirtMarkType.None)
+                {
+                    MarkedClean?.Invoke(this);
+                    return true;
+                }
+            }
+            return false;
         }
 
-        protected virtual void OnMarkedDirty(DirtMarkType marks)
+        /// <summary>
+        /// Removes all marks from this transform.
+        /// Returns <see langword="true"/> if any marks were removed.
+        /// </summary>
+        /// <returns><see langword="true"/> if there are no marks left, otherwise <see langword="false"/>.</returns>
+        protected bool MarkClean()
         {
+            if (DirtMarks != DirtMarkType.None)
+            {
+                DirtMarks = DirtMarkType.None;
+                MarkedClean?.Invoke(this);
+                return true;
+            }
+            return false;
         }
 
         protected virtual void Dispose(bool disposing)

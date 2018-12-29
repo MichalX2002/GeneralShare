@@ -26,7 +26,7 @@ namespace GeneralShare.UI
         public event Input.TextInputDelegate OnTextInput;
 
         public abstract RectangleF Boundaries { get; }
-        public string Name { get; private set; }
+        public string Name { get; set; }
         public bool TriggerMouseEvents { get; set; }
         public bool TriggerKeyEvents { get; set; }
         public bool IsSelected { get; internal set; }
@@ -48,16 +48,11 @@ namespace GeneralShare.UI
         /// </summary>
         public bool IsSelectable { get; set; }
         
-        public UIElement(UIManager manager, string name) : base(manager)
+        public UIElement(UIManager manager) : base(manager)
         {
-            Name = name ?? string.Empty;
             TriggerMouseEvents = false;
             TriggerKeyEvents = false;
             IsIntercepting = true;
-        }
-
-        public UIElement(UIManager manager) : this(manager, string.Empty)
-        {
         }
         
         internal void TriggerOnTextInput(TextInputEventArgs e)

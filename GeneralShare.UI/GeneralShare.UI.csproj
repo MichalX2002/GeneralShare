@@ -72,6 +72,7 @@
     <Compile Include="DirtMarkType.cs" />
     <Compile Include="DrawExtensions.cs" />
     <Compile Include="SpriteBatchExtensions.cs" />
+    <Compile Include="TextAlignment.cs" />
     <Compile Include="TextSegment.cs" />
     <Compile Include="TextFormat.cs" />
     <Compile Include="TextRenderer.cs" />
@@ -82,7 +83,6 @@
     <Compile Include="UIProgressBar.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SamplingMode.cs" />
-    <Compile Include="TextAlignment.cs" />
     <Compile Include="UIAnchor.cs" />
     <Compile Include="UICollisionLayer.cs" />
     <Compile Include="UIManager.cs" />

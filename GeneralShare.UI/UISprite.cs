@@ -13,7 +13,6 @@ namespace GeneralShare.UI
         private RectangleF _destination;
 
         public override RectangleF Boundaries => _boundaries;
-
         public TextureRegion2D Region { get => _region; set => SetTexture(value); }
         public Color Color { get => _sprite.TL.Color; set => _sprite.SetColor(ref value); }
         public RectangleF Destination { get => _destination; set => SetDestination(value); }
@@ -35,12 +34,11 @@ namespace GeneralShare.UI
             MarkDirty(ref _destination, value, DirtMarkType.Destination);
         }
 
-        private void UpdateSprite()
+        protected override void NeedsCleanup()
         {
-            if (HasAnyDirtMark(DirtMarkType.Transform | DirtMarkType.Value | DirtMarkType.Destination))
+            if (HasDirtMarks(DirtMarkType.Transform | DirtMarkType.Value | DirtMarkType.Destination))
             {
-                MarkClean();
-                var srcSize = _region.Bounds.Size.ToVector2();
+                Size srcSize = _region.Size;
                 if (IsUsingDestination)
                 {
                     var matrix = BatchedSpriteExtensions.GetMatrixFromRect(_destination, Origin, -Rotation, srcSize);
@@ -48,25 +46,21 @@ namespace GeneralShare.UI
                 }
                 else
                 {
-                    _boundaries = new RectangleF(X, Y, Region.Width * Scale.X, Region.Height * Scale.Y);
-
-                    var pos = GlobalPosition.ToVector2();
-                    _sprite.SetTransform(pos, -Rotation, Scale, Origin * srcSize, srcSize);
+                    Vector2 pos = GlobalPosition.ToVector2();
+                    Vector2 scale = GlobalScale;
+                    _boundaries = new RectangleF(pos.X, pos.Y, Region.Width * scale.X, Region.Height * scale.Y);
+                    _sprite.SetTransform(pos, -GlobalRotation, scale, Origin * srcSize, srcSize);
                 }
                 _sprite.SetDepth(Z);
                 _sprite.SetTexCoords(_region);
 
                 InvokeMarkedDirty(DirtMarkType.Boundaries);
             }
+            MarkClean();
         }
 
         public override void Draw(GameTime time, SpriteBatch batch)
         {
-            if (IsDirty)
-            {
-                UpdateSprite();
-                MarkClean();
-            }
             batch.Draw(_region.Texture, _sprite);
         }
     }

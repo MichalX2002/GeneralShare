@@ -44,7 +44,8 @@ namespace GeneralShare.UI
         private void UpdatePivotPosition()
         {
             Viewport view = Manager.Viewport;
-            Vector3 pos = new Vector3(view.X + _pivotOffset.X, view.Y + _pivotOffset.Y, _pivotOffset.Z);
+            var pos = new Vector3(view.X + _pivotOffset.X, view.Y + _pivotOffset.Y, _pivotOffset.Z);
+
             switch (_pivot)
             {
                 // Bottom
@@ -94,7 +95,6 @@ namespace GeneralShare.UI
                     break;
             }
             Position = pos;
-            InvokeMarkedDirty(DirtMarkType.Position);
         }
     }
 }

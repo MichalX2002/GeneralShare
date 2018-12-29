@@ -1,16 +1,28 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.IO;
+using System.Reflection;
 
 namespace GeneralShare
 {
     [JsonObject]
     public class VersionTag
     {
-        public const string RESOURCE_NAME = "versiontag.json";
+        public const string RESOURCE_FILENAME = "versiontag.json";
         public const string DEFAULT_SUBVALUE = "0";
-        
-        [JsonIgnore] public string Value { get; private set; }
 
+        private static VersionTag _undefined;
+        public static VersionTag Undefined
+        {
+            get
+            {
+                if(_undefined == null)
+                    _undefined = new VersionTag();
+                return _undefined;
+            }
+        }
+
+        [JsonIgnore] public string Value { get; private set; }
         [JsonProperty] public string Major { get; private set; }
         [JsonProperty] public string Minor { get; private set; }
         [JsonProperty] public string Patch { get; private set; }
@@ -45,11 +57,8 @@ namespace GeneralShare
             Patch = split[2];
             CombineVersion();
         }
-
-        /// <summary>
-        /// Constructs a new <see cref="VersionTag"/> with an 'undefined' version.
-        /// </summary>
-        public VersionTag()
+        
+        private VersionTag()
         {
             Major = Minor = Patch = Value = "undefined";
         }
@@ -62,6 +71,17 @@ namespace GeneralShare
         public override string ToString()
         {
             return Value;
+        }
+        
+        public static VersionTag LoadFrom(Assembly assembly)
+        {
+            var assemblyName = assembly.GetName().Name.Replace(".", string.Empty);
+            var resourceName = $"{assemblyName}.{RESOURCE_FILENAME}";
+            
+            var stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream == null)
+                throw new FileNotFoundException("Version resource \"" + resourceName + "\" cannot be found.");
+            return JsonUtils.Deserialize<VersionTag>(stream);
         }
     }
 }

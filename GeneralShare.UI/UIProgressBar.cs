@@ -23,11 +23,11 @@ namespace GeneralShare.UI
         private Vector2 _headPos;
         private RectangleF _mainRect;
 
-        public override RectangleF Boundaries { get { UpdateBar(); return _boundaries; } }
+        public override RectangleF Boundaries { get { AssertPure(); return _boundaries; } }
         public int BackBarThickness { get => _barThickness; set => SetThickness(value); }
         public Vector2 Destination { get => _destination; set => SetDestination(value); }
-        public RectangleF MainBarRect { get { UpdateBar(); return _mainRect; } }
-        public Vector2 BarHeadPosition { get { UpdateBar(); return _headPos; } }
+        public RectangleF MainBarRect { get { AssertPure(); return _mainRect; } }
+        public Vector2 BarHeadPosition { get { AssertPure(); return _headPos; } }
         public BarDirection Direction { get => _direction; set => SetDirection(value); }
 
         public Range<float> Range { get => _range; set => SetRange(value); }
@@ -53,6 +53,12 @@ namespace GeneralShare.UI
         public UIProgressBar(UIManager manager) :
             this(manager, manager.WhitePixelRegion, manager.WhitePixelRegion)
         {
+        }
+
+        private void AssertPure()
+        {
+            if (IsDirty)
+                NeedsCleanup();
         }
 
         private void SetMainColor(ref Color value)
@@ -97,7 +103,7 @@ namespace GeneralShare.UI
         
         private void CalculateBackSprite()
         {
-            var matrix = Matrix2.CreateFrom(GlobalPosition.ToVector2(), Rotation, Boundaries.Size, Origin);
+            var matrix = Matrix2.CreateFrom(GlobalPosition.ToVector2(), Rotation, _boundaries.Size, Origin);
             _backSprite.SetTransform(matrix, _backBarRegion.Bounds.Size);
             _backSprite.SetDepth(Z);
             _backSprite.SetTexCoords(_backBarRegion);
@@ -110,7 +116,8 @@ namespace GeneralShare.UI
             mainDst.Width -= _barThickness * 2;
             mainDst.Height -= _barThickness * 2;
 
-            var size = new Vector2(Scale.X * mainDst.Width, Scale.Y * mainDst.Height);
+            Vector2 scale = GlobalScale;
+            var size = new Vector2(scale.X * mainDst.Width, scale.Y * mainDst.Height);
             var matrix = Matrix2.CreateFrom(mainDst.Position, Rotation, size, Origin);
             
             _mainSprite.SetTransform(matrix, _mainBarRegion.Bounds.Size);
@@ -122,40 +129,39 @@ namespace GeneralShare.UI
         {
             float w = _destination.X * FillPercentage;
             float h = _destination.Y / _mainBarRegion.Height;
-            Vector3 globalPos = GlobalPosition;
+            Vector3 pos = GlobalPosition;
+
             switch (_direction)
             {
                 //TODO: Add more directions
 
                 case BarDirection.ToRight:
-
                     _headPos = new Vector2(w, 0);
-                    _mainRect = new RectangleF(globalPos.X, globalPos.Y, w, h);
+                    _mainRect = new RectangleF(pos.X, pos.Y, w, h);
                     break;
 
                 case BarDirection.ToLeft:
-                    float hPos = globalPos.X + _destination.X - w;
-                    _headPos = new Vector2(hPos, 0);
-                    _mainRect = new RectangleF(hPos, globalPos.Y, w, h);
+                    float headX = pos.X + _destination.X - w;
+                    _headPos = new Vector2(headX, 0);
+                    _mainRect = new RectangleF(headX, pos.Y, w, h);
                     break;
 
                 default:
-                    throw new NotImplementedException();
+                    throw new NotImplementedException(_direction.ToString());
             }
         }
 
-        private void UpdateBar()
+        protected override void NeedsCleanup()
         {
-            if (IsDirty == false)
-                return;
-
             UpdateMainRect();
 
-            Vector3 globalPos = GlobalPosition;
-            _boundaries.X = globalPos.X;
-            _boundaries.Y = globalPos.Y;
-            _boundaries.Width = Scale.X * _destination.X / _backBarRegion.Width;
-            _boundaries.Height = Scale.Y * _destination.Y / _backBarRegion.Height;
+            Vector3 pos = GlobalPosition;
+            _boundaries.X = pos.X;
+            _boundaries.Y = pos.Y;
+
+            Vector2 scale = GlobalScale;
+            _boundaries.Width = scale.X * _destination.X / _backBarRegion.Width;
+            _boundaries.Height = scale.Y * _destination.Y / _backBarRegion.Height;
             InvokeMarkedDirty(DirtMarkType.Boundaries);
 
             CalculateMainSprite(_mainRect);
@@ -166,8 +172,6 @@ namespace GeneralShare.UI
 
         public override void Draw(GameTime time, SpriteBatch batch)
         {
-            UpdateBar();
-            
             if (BackBarThickness >= 0)
                 batch.Draw(_backBarRegion.Texture, _backSprite);
             batch.Draw(_mainBarRegion.Texture, _mainSprite);

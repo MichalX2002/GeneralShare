@@ -45,7 +45,6 @@ namespace GeneralShare.Collections
             set
             {
                 CheckAccessibility();
-
                 _innerArray[index] = value;
                 Version++;
             }
@@ -72,15 +71,12 @@ namespace GeneralShare.Collections
                     {
                         T[] newItems = new T[value];
                         if (_count > 0)
-                        {
                             Array.Copy(_innerArray, 0, newItems, 0, _count);
-                        }
                         _innerArray = newItems;
                     }
                     else
-                    {
                         _innerArray = Array.Empty<T>();
-                    }
+
                     Version++;
                 }
             }
@@ -128,22 +124,19 @@ namespace GeneralShare.Collections
             if (collection is ICollection<T> c)
             {
                 int count = c.Count;
-                if (count == 0)
-                {
-                    _innerArray = Array.Empty<T>();
-                }
-                else
+                if (count != 0)
                 {
                     _innerArray = new T[count];
                     c.CopyTo(_innerArray, 0);
                     _count = count;
                 }
+                else
+                    _innerArray = Array.Empty<T>();
             }
             else
             {
                 _count = 0;
                 _innerArray = Array.Empty<T>();
-
                 AddRange(collection);
             }
 
@@ -291,9 +284,8 @@ namespace GeneralShare.Collections
 
             _count--;
             if (index < _count)
-            {
                 Array.Copy(_innerArray, index + 1, _innerArray, index, _count - index);
-            }
+
             T item = _innerArray[_count];
             _innerArray[_count] = default;
             Version++;
@@ -302,30 +294,12 @@ namespace GeneralShare.Collections
 
         public int IndexOf(T item)
         {
-            if (item == null)
-            {
-                for (int i = 0; i < _count; i++)
-                {
-                    if (_innerArray[i] == null)
-                        return i;
-                }
-            }
-            else
-            {
-                for (int i = 0; i < _count; i++)
-                {
-                    T obj = _innerArray[i];
-                    if (obj != null && obj.Equals(item))
-                        return i;
-                }
-            }
-            return -1;
+            return Array.IndexOf(_innerArray, item, 0, _count);
         }
 
         public void Insert(int index, T item)
         {
             CheckAccessibility();
-
             InternalInsert(index, item);
         }
 
