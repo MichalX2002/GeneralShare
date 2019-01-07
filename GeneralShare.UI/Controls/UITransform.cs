@@ -116,7 +116,7 @@ namespace GeneralShare.UI
         {
         }
 
-        public void TriggerCleanup()
+        public void AssertPure()
         {
             if (IsDirty)
                 NeedsCleanup();

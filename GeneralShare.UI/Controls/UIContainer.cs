@@ -1,6 +1,7 @@
 ﻿using GeneralShare.Collections;
-using MonoGame.Extended;
+using Microsoft.Xna.Framework;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace GeneralShare.UI
 {
@@ -16,7 +17,7 @@ namespace GeneralShare.UI
         public UIContainer(UIManager manager) : base(manager)
         {
             _transforms = new ListArray<UITransform>();
-            Children = new ReadOnlyWrapper<UITransform>(_transforms);
+            Children = new ReadOnlyCollection<UITransform>(_transforms);
             IsIntercepting = false;
             IsDrawable = false;
         }

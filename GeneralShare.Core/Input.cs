@@ -20,6 +20,10 @@ namespace GeneralShare
         private static readonly ListArray<Keys> _keysPressed;
         private static readonly ListArray<Keys> _keysReleased;
 
+        private static GameWindow _window;
+        public static bool HasClipboardText => _window.HasClipboardText;
+        public static string ClipboardText { get => _window.ClipboardText; set => _window.ClipboardText = value; }
+
         private static MouseState _oldMS;
         private static MouseState _newMS;
         public static MouseState OldMouseState => _oldMS;
@@ -59,16 +63,22 @@ namespace GeneralShare
             KeysReleased = _keysReleased.AsReadOnly();
         }
 
-        public static void AddWindow(GameWindow window)
+        public static void SetWindow(GameWindow window)
         {
-            window.TextInput += Window_TextInput;
-        }
+            if (_window == window)
+                return;
 
-        public static void RemoveWindow(GameWindow window)
-        {
-            window.TextInput -= Window_TextInput;
+            _window = window;
+            if (window != null)
+            {
+                window.TextInput += Window_TextInput;
+            }
+            else
+            {
+                window.TextInput -= Window_TextInput;
+            }
         }
-
+        
         private static void Window_TextInput(object s, TextInputEventArgs e)
         {
             TextInput?.Invoke(e);
@@ -247,7 +257,7 @@ namespace GeneralShare
             for (int i = 0; i < keys1.Count; i++)
             {
                 Keys key = keys1[i];
-                if (keys2.Contains(key) == false)
+                if (!keys2.Contains(key))
                     output.Add(key);
             }
         }
@@ -272,7 +282,7 @@ namespace GeneralShare
                 {
                     last._time += delta;
                     _keysHeld.Add(last);
-                    return; // return as we only want one (the previous) HeldKey in the list
+                    return; // we only want one (the previous) HeldKey in the list
                 }
             }
 

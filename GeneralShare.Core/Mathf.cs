@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using MonoGame.Extended;
 
 namespace GeneralShare
 {
@@ -38,6 +39,13 @@ namespace GeneralShare
                 return min;
             if (value > max)
                 return max;
+            return value;
+        }
+
+        public static SizeF Clamp(SizeF value, SizeF min, SizeF max)
+        {
+            value.Width = Clamp(value.Width, min.Width, max.Width);
+            value.Height = Clamp(value.Height, min.Height, max.Height);
             return value;
         }
     }

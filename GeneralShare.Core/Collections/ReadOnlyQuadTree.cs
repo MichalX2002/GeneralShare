@@ -1,4 +1,4 @@
-﻿using MonoGame.Extended;
+﻿using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 
 namespace GeneralShare.Collections
@@ -7,7 +7,7 @@ namespace GeneralShare.Collections
     {
         private readonly QuadTree<T> _tree;
 
-        public bool Divided => _tree.Divided;
+        public bool Divided => _tree.IsDivided;
         public IReadOnlyList<QuadTree<T>.Item> Items => _tree.Items.AsReadOnly();
         public ReadOnlyQuadTree<T> TopLeft => _tree.TopLeft.AsReadOnly();
         public ReadOnlyQuadTree<T> TopRight => _tree.TopRight.AsReadOnly();

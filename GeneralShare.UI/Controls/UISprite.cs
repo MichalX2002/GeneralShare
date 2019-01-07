@@ -14,7 +14,7 @@ namespace GeneralShare.UI
 
         public override RectangleF Boundaries => _boundaries;
         public TextureRegion2D Region { get => _region; set => SetTexture(value); }
-        public Color Color { get => _sprite.TL.Color; set => _sprite.SetColor(ref value); }
+        public Color Color { get => _sprite.TL.Color; set => _sprite.SetColor(value); }
         public RectangleF Destination { get => _destination; set => SetDestination(value); }
         public bool IsUsingDestination => Destination.Width > 0 && Destination.Height > 0;
 
@@ -38,7 +38,7 @@ namespace GeneralShare.UI
         {
             if (HasDirtMarks(DirtMarkType.Transform | DirtMarkType.Value | DirtMarkType.Destination))
             {
-                Size srcSize = _region.Size;
+                SizeF srcSize = _region.Size;
                 if (IsUsingDestination)
                 {
                     var matrix = BatchedSpriteExtensions.GetMatrixFromRect(_destination, Origin, -Rotation, srcSize);

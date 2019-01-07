@@ -11,7 +11,7 @@ namespace GeneralShare.UI
         public delegate void GenericKeyboardDelegate(Keys key);
         public delegate void RepeatedKeyboardDelegate(Keys key, float timeDown);
         public delegate void ScrollDelegate(float amount);
-        
+
         public event GenericMouseDelegate OnMouseDown;
         public event GenericMouseDelegate OnMousePress;
         public event GenericMouseDelegate OnMouseRelease;
@@ -27,15 +27,20 @@ namespace GeneralShare.UI
 
         public abstract RectangleF Boundaries { get; }
         public string Name { get; set; }
-        public bool TriggerMouseEvents { get; set; }
-        public bool TriggerKeyEvents { get; set; }
-        public bool IsSelected { get; internal set; }
+        public bool IsMouseEventTrigger { get; set; }
+        public bool IsKeyboardEventTrigger { get; set; }
+
+        public bool IsSelected
+        {
+            get => Manager.SelectedElement == this;
+            set => Manager.SelectedElement = this;
+        }
 
         /// <summary>
         /// Returns <see langword="true"/> if the cursor is within
         /// this <see cref="UIElement"/>'s boundaries, otherwise <see langword="false"/>.
         /// </summary>
-        public bool IsHoveredOver { get; internal set; }
+        public bool IsHovered { get; internal set; }
 
         /// <summary>
         /// Dictates if this <see cref="UIElement"/> intercepts mouse events.
@@ -47,14 +52,14 @@ namespace GeneralShare.UI
         /// as <see cref="UIManager.SelectedElement"/>.
         /// </summary>
         public bool IsSelectable { get; set; }
-        
+
         public UIElement(UIManager manager) : base(manager)
         {
-            TriggerMouseEvents = false;
-            TriggerKeyEvents = false;
+            IsMouseEventTrigger = false;
+            IsKeyboardEventTrigger = false;
             IsIntercepting = true;
         }
-        
+
         internal void TriggerOnTextInput(TextInputEventArgs e)
         {
             OnTextInput?.Invoke(e);

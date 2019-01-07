@@ -1,4 +1,4 @@
-﻿using MonoGame.Extended;
+﻿using Microsoft.Xna.Framework;
 
 namespace GeneralShare.Collections
 {
@@ -14,6 +14,11 @@ namespace GeneralShare.Collections
             _pool = new ListArray<ListArray<QuadTree<T>.Item>>();
 
             CurrentTree = new QuadTree<T>(boundary, threshold, allowOverflow, GetList);
+        }
+
+        public PooledQuadTree(int threshold, bool allowOverflow) :
+            this(RectangleF.Empty, threshold, allowOverflow)
+        {
         }
 
         private ListArray<QuadTree<T>.Item> GetList()

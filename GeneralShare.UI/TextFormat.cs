@@ -12,6 +12,12 @@ namespace GeneralShare.UI
         public static ICharIterator ColorFormat(
             ICharIterator input, BitmapFont font, bool keepSequences, IReferenceList<Color?> output)
         {
+            if (input == null) throw new ArgumentNullException(nameof(input));
+            if (font == null) throw new ArgumentNullException(nameof(font));
+
+            if (input.Length == 0)
+                return input;
+
             var builder = StringBuilderPool.Rent(input.Length);
             ColorFormat(input, builder, font, keepSequences, output);
             var iterator = CharIteratorPool.Rent(builder, 0, builder.Length);
@@ -19,8 +25,18 @@ namespace GeneralShare.UI
             return iterator;
         }
 
+        /// <summary>
+        /// Non-allocating version of <see cref="char.ConvertFromUtf32(int)"/> as
+        /// this one uses buffer (that can be stack allocated) instead of returning a <see cref="string"/>.
+        /// </summary>
+        /// <param name="utf32">The Unicode character to decompose into <see cref="char"/>'s.</param>
+        /// <param name="buffer">A <see cref="char"/> buffer with at least 2 capacity.</param>
+        /// <returns>The amount of resulting <see cref="char"/>'s in the buffer. </returns>
         public static int ConvertFromUtf32(int utf32, Span<char> buffer)
         {
+            if (buffer.Length < 2)
+                throw new ArgumentException(nameof(buffer), "Insufficient capacity.");
+
             if (utf32 < 0 || utf32 > 0x10ffff || (utf32 >= 0x00d800 && utf32 <= 0x00dfff))
                 return 0;
 
@@ -43,6 +59,9 @@ namespace GeneralShare.UI
             if (input == null) throw new ArgumentNullException(nameof(input));
             if (textOutput == null) throw new ArgumentNullException(nameof(textOutput));
             if (font == null) throw new ArgumentNullException(nameof(font));
+
+            if (input.Length == 0)
+                return;
 
             Span<byte> colorBuffer = stackalloc byte[4];
             Span<char> charBuffer = stackalloc char[2];
@@ -206,8 +225,8 @@ namespace GeneralShare.UI
         {
             public static readonly CharSequence Invalid = new CharSequence(-1, 0);
 
-            public readonly int Tail;
-            public readonly int Length;
+            public int Tail { get; }
+            public int Length { get; }
 
             public CharSequence(int tail, int length)
             {

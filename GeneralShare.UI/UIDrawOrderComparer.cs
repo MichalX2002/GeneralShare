@@ -4,13 +4,8 @@ namespace GeneralShare.UI
 {
     public class UIDrawOrderComparer : IComparer<UITransform>
     {
-        public static readonly UIDrawOrderComparer Instance;
-
-        static UIDrawOrderComparer()
-        {
-            Instance = new UIDrawOrderComparer();
-        }
-
+        public static readonly UIDrawOrderComparer Instance = new UIDrawOrderComparer();
+        
         private UIDrawOrderComparer()
         {
         }

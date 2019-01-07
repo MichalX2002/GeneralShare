@@ -5,8 +5,6 @@ using MonoGame.Extended.Collections;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Text;
-using FontGlyph = MonoGame.Extended.BitmapFonts.BitmapFont.Glyph;
 using FontDict = System.Collections.Generic.Dictionary<string, MonoGame.Extended.BitmapFonts.BitmapFont>;
 
 namespace GeneralShare.UI
@@ -33,7 +31,6 @@ namespace GeneralShare.UI
 
         public TextRenderer(BitmapFont defaultFont) : this(defaultFont, null)
         {
-
         }
 
         public static ICharIterator GetColorFormat(

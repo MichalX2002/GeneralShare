@@ -15,7 +15,6 @@ namespace GeneralShare.UI
         public event TransformListSortedDelegate TransformListSorted;
 
         private static TextureRegion2D _grayscaleRegion;
-        private UIElement __selectedElement;
 
         public bool IsDisposed { get; private set; }
         public GraphicsDevice GraphicsDevice { get; }
@@ -31,19 +30,7 @@ namespace GeneralShare.UI
         /// The currently selected <see cref="UIElement"/> (<see cref="UIElement.IsSelectable"/>
         /// needs to be <see langword="true"/>) that receives keyboard and events.
         /// </summary>
-        public UIElement SelectedElement
-        {
-            get => __selectedElement;
-            set
-            {
-                if (__selectedElement != null)
-                    __selectedElement.IsSelected = false;
-
-                if (value != null)
-                    value.IsSelected = true;
-                __selectedElement = value;
-            }
-        }
+        public UIElement SelectedElement { get; set; }
 
         /// <summary>
         /// Constructs a <see cref="UIManager"/> instance using an existing grayscale region.
@@ -54,14 +41,17 @@ namespace GeneralShare.UI
         /// (this can be larger as linear filtering can stretch the texture).
         /// This texture is mostly used for better shading on elements.
         /// </param>
-        public UIManager(GraphicsDevice device, TextureRegion2D grayscaleRegion)
+        public UIManager(GraphicsDevice device, TextureRegion2D grayscaleRegion, TextureRegion2D whitePixelRegion)
         {
             GrayscaleRegion = grayscaleRegion ?? throw new ArgumentNullException(nameof(grayscaleRegion));
             if (GrayscaleRegion.Width < 1) throw new ArgumentException(nameof(grayscaleRegion));
             if (GrayscaleRegion.Height < 2) throw new ArgumentException(nameof(grayscaleRegion));
-            
-            WhitePixelRegion = new TextureRegion2D(grayscaleRegion.Texture, GrayscaleRegion.X + 1, GrayscaleRegion.Y + 1, 1, 1);
-            GraphicsDevice = device;
+
+            WhitePixelRegion = whitePixelRegion ?? throw new ArgumentNullException(nameof(whitePixelRegion));
+            if (WhitePixelRegion.Width < 1) throw new ArgumentException(nameof(whitePixelRegion));
+            if (WhitePixelRegion.Height < 1) throw new ArgumentException(nameof(whitePixelRegion));
+
+            GraphicsDevice = device ?? throw new ArgumentNullException(nameof(device));
 
             Transforms = new ListArray<UITransform>();
             Transforms.Changed += Transforms_Changed;
@@ -70,27 +60,28 @@ namespace GeneralShare.UI
             Input.TextInput += Input_TextInput;
         }
 
-        /// <summary>
-        /// Constructs a <see cref="UIManager"/> instance with a static grayscale texture.
-        /// </summary>
-        /// <param name="device">
-        /// The <see cref="GraphicsDevice"/> to use for creating a
-        /// grayscale texture if the existing static texture is null.
-        /// </param>
-        public UIManager(GraphicsDevice device) : this(device, GetRegion(device))
-        {
-        }
+        ///// <summary>
+        ///// Constructs a <see cref="UIManager"/> instance with a static grayscale texture.
+        ///// </summary>
+        ///// <param name="device">
+        ///// The <see cref="GraphicsDevice"/> to use for creating a
+        ///// grayscale texture if the existing static texture is null.
+        ///// </param>
+        //public UIManager(GraphicsDevice device) : this(device, GetRegion(device))
+        //{
+        //
+        //}
 
-        private static TextureRegion2D GetRegion(GraphicsDevice device)
-        {
-            if (_grayscaleRegion == null)
-            {
-                var tex = new Texture2D(device, 1, 4);
-                tex.SetData(new Color[4] { Color.White, Color.White, Color.White, Color.LightGray });
-                _grayscaleRegion = new TextureRegion2D(tex, 0, 2, 1, 2);
-            }
-            return _grayscaleRegion;
-        }
+        //private static TextureRegion2D GetRegion(GraphicsDevice device)
+        //{
+        //    if (_grayscaleRegion == null)
+        //    {
+        //        var tex = new Texture2D(device, 1, 4);
+        //        tex.SetData(new Color[4] { Color.White, Color.White, Color.White, Color.LightGray });
+        //        _grayscaleRegion = new TextureRegion2D(tex, 0, 2, 1, 2);
+        //    }
+        //    return _grayscaleRegion;
+        //}
 
         private void Transforms_Changed(int oldVersion, int newVersion)
         {
@@ -99,9 +90,9 @@ namespace GeneralShare.UI
 
         private void Input_TextInput(TextInputEventArgs e)
         {
-            if (IsDisposed == false)
+            if (!IsDisposed)
             {
-                if (SelectedElement != null)
+                if (SelectedElement != null && SelectedElement.IsKeyboardEventTrigger)
                     SelectedElement.TriggerOnTextInput(e);
             }
         }
@@ -193,7 +184,7 @@ namespace GeneralShare.UI
 
         public bool IsElementInputSensitive(UIElement element)
         {
-            return element.IsIntercepting || element.TriggerMouseEvents;
+            return element.IsIntercepting || element.IsMouseEventTrigger;
         }
 
         public IEnumerable<UIElement> GetInputSensitiveElements()
@@ -210,6 +201,9 @@ namespace GeneralShare.UI
 
         public void Update(GameTime time)
         {
+            if (Input.IsAnyMouseDown(out MouseButton tmp))
+                SelectedElement = null;
+
             UpdateTransformsAndTriggerEvents(time);
             TriggerKeyboardEvents(SelectedElement);
         }
@@ -239,34 +233,31 @@ namespace GeneralShare.UI
                 if (viewportChanged)
                     transform.OnViewportChange(freshViewport);
 
-                if (transform.IsActive == false)
+                if (!transform.IsActive)
                     continue;
 
-                transform.TriggerCleanup();
+                transform.AssertPure();
                 transform.Update(time);
 
                 if (transform is UIElement element)
                 {
-                    if (element != __selectedElement)
-                        element.IsSelected = false;
-
                     if (!IsElementInputSensitive(element))
                         continue;
 
-                    bool lastHoveredOver = element.IsHoveredOver;
-                    element.IsHoveredOver = element.Boundaries.Contains(mousePos);
-                    if (element.TriggerMouseEvents && element.IsHoveredOver != lastHoveredOver)
+                    bool lastHoveredOver = element.IsHovered;
+                    element.IsHovered = element.Boundaries.Contains(mousePos);
+                    if (element.IsMouseEventTrigger && element.IsHovered != lastHoveredOver)
                     {
-                        if (element.IsHoveredOver && lastHoveredOver == false)
+                        if (element.IsHovered && !lastHoveredOver)
                             element.TriggerOnMouseEnter(mouseState);
                         else
                             element.TriggerOnMouseLeave(mouseState);
                     }
 
-                    if (cursorIntercepted || !element.IsHoveredOver)
+                    if (cursorIntercepted || !element.IsHovered)
                         continue;
 
-                    if (element.TriggerMouseEvents)
+                    if (element.IsMouseEventTrigger)
                     {
                         element.TriggerOnMouseHover(mouseState);
 
@@ -287,7 +278,7 @@ namespace GeneralShare.UI
                         if (Input.IsAnyMouseDown(out var temp))
                             SelectedElement = element;
 
-                    if (element.IsIntercepting == true)
+                    if (element.IsIntercepting)
                         cursorIntercepted = true; // instead of a 'break;'
                 }
             }
@@ -298,7 +289,7 @@ namespace GeneralShare.UI
             if (element == null)
                 return;
 
-            if (element.TriggerKeyEvents == false)
+            if (!element.IsKeyboardEventTrigger)
                 return;
 
             var keysHeld = Input.KeysHeld;
@@ -324,7 +315,7 @@ namespace GeneralShare.UI
 
         protected virtual void Dispose(bool disposing)
         {
-            if(IsDisposed == false)
+            if(!IsDisposed)
             {
                 if (disposing)
                 {

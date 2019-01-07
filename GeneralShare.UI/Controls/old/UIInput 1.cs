@@ -57,7 +57,7 @@ namespace GeneralShare.UI
         public bool ObscureValue { get => _obscureValue; set => SetObscureValue(value); }
         public char ObscureChar { get => _obscureChar; set => SetObscureChar(value); }
         public int MaxCharCount { get => _maxCharCount; set => SetMaxCharCount(value); }
-        public IEnumerable<char> CharBlacklist =>  _excludedChars;
+        public IEnumerable<char> CharBlacklist => _readonlyExcludedChars;
 
         public UIInput(UIManager manager, BitmapFont font) : base(manager, font)
         {

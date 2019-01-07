@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace GeneralShare.Collections
@@ -17,27 +18,21 @@ namespace GeneralShare.Collections
         private const int _defaultCapacity = 4;
 
         private T[] _innerArray;
-        private int _count;
+        private int _size;
         private int __version;
 
         public bool IsReadOnly { get; private set; }
         public bool IsFixedCapacity { get; private set; }
-        public int Version
-        {
-            get => __version;
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            protected set => SetVersion(value);
-        }
+        public int Version => __version;
 
         public T[] InnerArray => _innerArray;
-        public int Count => _count;
+        public int Count => _size;
 
         public T this[int index]
         {
             get
             {
-                if (index >= _count)
+                if (index >= _size)
                     throw new ArgumentOutOfRangeException(nameof(index));
 
                 return _innerArray[index];
@@ -46,7 +41,7 @@ namespace GeneralShare.Collections
             {
                 CheckAccessibility();
                 _innerArray[index] = value;
-                Version++;
+                UpdateVersion();
             }
         }
 
@@ -63,21 +58,21 @@ namespace GeneralShare.Collections
 
                 if (value != _innerArray.Length)
                 {
-                    if (value < _count)
+                    if (value < _size)
                         throw new ArgumentException(
                             "The new capacity is not enough to contain existing items.", nameof(value));
 
                     if (value > 0)
                     {
                         T[] newItems = new T[value];
-                        if (_count > 0)
-                            Array.Copy(_innerArray, 0, newItems, 0, _count);
+                        if (_size > 0)
+                            Array.Copy(_innerArray, 0, newItems, 0, _size);
                         _innerArray = newItems;
                     }
                     else
                         _innerArray = Array.Empty<T>();
 
-                    Version++;
+                    UpdateVersion();
                 }
             }
         }
@@ -100,7 +95,7 @@ namespace GeneralShare.Collections
         public ListArray(T[] sourceArray, int startOffset, int count)
         {
             _innerArray = sourceArray;
-            _count = count;
+            _size = count;
             Capacity = sourceArray.Length;
             IsFixedCapacity = true;
 
@@ -128,14 +123,14 @@ namespace GeneralShare.Collections
                 {
                     _innerArray = new T[count];
                     c.CopyTo(_innerArray, 0);
-                    _count = count;
+                    _size = count;
                 }
                 else
                     _innerArray = Array.Empty<T>();
             }
             else
             {
-                _count = 0;
+                _size = 0;
                 _innerArray = Array.Empty<T>();
                 AddRange(collection);
             }
@@ -146,7 +141,16 @@ namespace GeneralShare.Collections
         public ListArray(IEnumerable<T> collection) : this(collection, false)
         {
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void UpdateVersion()
+        {
+            int newVersion = unchecked(__version + 1);
+            Changed?.Invoke(__version, newVersion);
+            __version = newVersion;
+        }
         
+        [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void CheckAccessibility()
         {
@@ -156,24 +160,17 @@ namespace GeneralShare.Collections
 
         public ref T GetReferenceAt(int index)
         {
-            if (index >= _count)
+            if (index >= _size)
                 throw new IndexOutOfRangeException();
 
             return ref _innerArray[index];
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void SetVersion(int value)
-        {
-            Changed?.Invoke(__version, value);
-            __version = value;
         }
         
         public void Add(T item)
         {
             AddCheck();
-            _innerArray[_count++] = item;
-            Version++;
+            _innerArray[_size++] = item;
+            UpdateVersion();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -181,18 +178,18 @@ namespace GeneralShare.Collections
         {
             CheckAccessibility();
 
-            if (_count == _innerArray.Length)
-                EnsureCapacity(_count + 1);
+            if (_size == _innerArray.Length)
+                EnsureCapacity(_size + 1);
         }
 
         public void AddRange(IEnumerable<T> collection)
         {
-            InsertRange(_count, collection);
+            InsertRange(_size, collection);
         }
 
         public void Sort(IComparer<T> comparer)
         {
-            Sort(0, _count, comparer);
+            Sort(0, _size, comparer);
         }
 
         public void Sort(int index, int count, IComparer<T> comparer)
@@ -206,24 +203,23 @@ namespace GeneralShare.Collections
                 throw new ArgumentOutOfRangeException(
                     nameof(count), "Needs a non-negative number.");
 
-            if (_count - index < count)
+            if (_size - index < count)
                 throw new ArgumentException("Invalid offset length.");
 
             Array.Sort(_innerArray, index, count, comparer);
-            Version++;
+            UpdateVersion();
         }
         
         public void Clear()
         {
             CheckAccessibility();
 
-            if (_count > 0)
+            if (_size > 0)
             {
-                if (!typeof(T).IsValueType)
-                    Array.Clear(_innerArray, 0, _count);
+                Array.Clear(_innerArray, 0, _size);
 
-                _count = 0;
-                Version++;
+                _size = 0;
+                UpdateVersion();
             }
         }
 
@@ -234,7 +230,7 @@ namespace GeneralShare.Collections
 
         public void CopyTo(T[] array, int arrayIndex)
         {
-            Array.ConstrainedCopy(_innerArray, 0, array, arrayIndex, _count);
+            Array.ConstrainedCopy(_innerArray, 0, array, arrayIndex, _size);
         }
 
         public bool Remove(T item)
@@ -255,7 +251,7 @@ namespace GeneralShare.Collections
 
         public T GetAndRemoveAt(int index)
         {
-            if (index >= _count || index < 0)
+            if (index >= _size || index < 0)
                 throw new IndexOutOfRangeException();
 
             return RemoveAtInternal(index);
@@ -263,95 +259,137 @@ namespace GeneralShare.Collections
 
         public T GetAndRemoveLast()
         {
-            if (_count > 0)
-                return GetAndRemoveAt(_count - 1);
+            if (_size > 0)
+                return GetAndRemoveAt(_size - 1);
             return default;
         }
 
-        public int FindIndex(Predicate<T> predicate)
+        public void RemoveRange(int index, int count)
         {
-            for (int i = 0; i < _count; i++)
+            if (index < 0)
+                throw new ArgumentOutOfRangeException(nameof(index));
+
+            if (count < 0)
+                throw new ArgumentOutOfRangeException(nameof(index));
+
+            if (_size - index < count)
+                throw new ArgumentException(
+                    $"{nameof(index)} and {nameof(count)} do not denote a valid range of elements.");
+
+            CheckAccessibility();
+
+            if (count > 0)
             {
-                if (predicate.Invoke(_innerArray[i]) == true)
-                    return i;
+                _size -= count;
+                if (index < _size)
+                    Array.Copy(_innerArray, index + count, _innerArray, index, _size - index);
+
+                Array.Clear(_innerArray, _size, count);
+                UpdateVersion();
             }
-            return -1;
         }
         
         private T RemoveAtInternal(int index)
         {
             CheckAccessibility();
 
-            _count--;
-            if (index < _count)
-                Array.Copy(_innerArray, index + 1, _innerArray, index, _count - index);
+            _size--;
+            if (index < _size)
+                Array.Copy(_innerArray, index + 1, _innerArray, index, _size - index);
 
-            T item = _innerArray[_count];
-            _innerArray[_count] = default;
-            Version++;
+            T item = _innerArray[_size];
+            _innerArray[_size] = default;
+            UpdateVersion();
             return item;
+        }
+
+        public int FindIndex(Predicate<T> predicate)
+        {
+            for (int i = 0; i < _size; i++)
+            {
+                if (predicate.Invoke(_innerArray[i]) == true)
+                    return i;
+            }
+            return -1;
         }
 
         public int IndexOf(T item)
         {
-            return Array.IndexOf(_innerArray, item, 0, _count);
+            return Array.IndexOf(_innerArray, item, 0, _size);
         }
 
         public void Insert(int index, T item)
         {
             CheckAccessibility();
-            InternalInsert(index, item);
-        }
 
-        private void InternalInsert(int index, T item)
-        {
             if (index > Capacity)
                 throw new IndexOutOfRangeException();
 
-            if (_count == _innerArray.Length)
-                EnsureCapacity(_count + 1);
+            if (_size == _innerArray.Length)
+                EnsureCapacity(_size + 1);
 
-            if (index < _count)
-                Array.Copy(_innerArray, index, _innerArray, index + 1, _count - index);
+            if (index < _size)
+                Array.Copy(_innerArray, index, _innerArray, index + 1, _size - index);
 
             _innerArray[index] = item;
-            _count++;
-            Version++;
+            _size++;
+            UpdateVersion();
         }
 
         public void InsertRange(int index, IEnumerable<T> collection)
         {
-            CheckAccessibility();
+            if (index > _size)
+                throw new ArgumentOutOfRangeException(nameof(index));
 
+            if (collection == null)
+                throw new ArgumentNullException(nameof(collection));
+
+            CheckAccessibility();
+            
             if (collection is ICollection<T> c)
             {
                 int count = c.Count;
                 if (count > 0)
                 {
-                    EnsureCapacity(_count + count);
-                    if (index < _count)
-                    {
+                    EnsureCapacity(_size + count);
+                    if (index < _size)
                         Array.Copy(_innerArray, index, _innerArray, index + count, count - index);
-                    }
 
                     if (c == this)
                     {
                         Array.Copy(_innerArray, 0, _innerArray, index, index);
-                        Array.Copy(_innerArray, index + count, _innerArray, index * 2, _count - index);
+                        Array.Copy(_innerArray, index + count, _innerArray, index * 2, _size - index);
                     }
                     else
-                    {
                         c.CopyTo(_innerArray, index);
-                    }
-                    _count += count;
+
+                    _size += count;
                 }
             }
             else
             {
                 foreach (var item in collection)
-                {
                     Insert(index++, item);
-                }
+            }
+        }
+
+        public void InsertRange(int index, int count, T item)
+        {
+            if (index > _size)
+                throw new ArgumentOutOfRangeException(nameof(index));
+
+            CheckAccessibility();
+
+            if (count > 0)
+            {
+                EnsureCapacity(_size + count);
+                if (index < _size)
+                    Array.Copy(_innerArray, index, _innerArray, index + count, count - index);
+
+                for (int i = 0; i < count; i++)
+                    _innerArray[index + i] = item;
+
+                _size += count;
             }
         }
 
@@ -360,14 +398,19 @@ namespace GeneralShare.Collections
             return new ReadOnlyCollection<T>(this);
         }
 
-        public IEnumerator<T> GetEnumerator()
+        public Enumerator GetEnumerator()
         {
             return new Enumerator(this);
         }
 
+        IEnumerator<T> IEnumerable<T>.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
         IEnumerator IEnumerable.GetEnumerator()
         {
-            throw new InvalidOperationException();
+            return GetEnumerator();
         }
 
         private void EnsureCapacity(int min)
@@ -382,7 +425,7 @@ namespace GeneralShare.Collections
             }
         }
 
-        struct Enumerator : IEnumerator<T>, IEnumerator
+        public struct Enumerator : IEnumerator<T>, IEnumerator
         {
             private ListArray<T> _list;
             private int _index;
@@ -394,7 +437,7 @@ namespace GeneralShare.Collections
             {
                 get
                 {
-                    if (_index == 0 || _index == _list._count + 1)
+                    if (_index == 0 || _index == _list._size + 1)
                     {
                         throw new InvalidOperationException(
                             "Either MoveNext has not been called or index is beyond item count.");
@@ -413,7 +456,7 @@ namespace GeneralShare.Collections
 
             public bool MoveNext()
             {
-                if (_version == _list.__version && _index < _list._count)
+                if (_version == _list.__version && _index < _list._size)
                 {
                     Current = _list._innerArray[_index];
                     _index++;
@@ -429,7 +472,7 @@ namespace GeneralShare.Collections
                     throw GetVersionException();
                 }
 
-                _index = _list._count + 1;
+                _index = _list._size + 1;
                 Current = default;
                 return false;
             }

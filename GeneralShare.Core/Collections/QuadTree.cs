@@ -1,5 +1,4 @@
 ﻿using Microsoft.Xna.Framework;
-using MonoGame.Extended;
 using System;
 using System.Collections.Generic;
 
@@ -15,7 +14,7 @@ namespace GeneralShare.Collections
         public ListArray<Item> Items { get; }
         public bool AllowOverflow { get;  }
 
-        public bool Divided { get; private set; }
+        public bool IsDivided { get; private set; }
         public QuadTree<T> TopLeft { get; private set; }
         public QuadTree<T> TopRight { get; private set; }
         public QuadTree<T> BottomLeft { get; private set; }
@@ -90,7 +89,7 @@ namespace GeneralShare.Collections
 
         public IEnumerable<Item> Query(RectangleF range)
         {
-            if (Boundary.Intersects(range) == false)
+            if (!Boundary.Intersects(range))
                 yield break;
 
             foreach (var item in EnumerateItems())
@@ -115,7 +114,7 @@ namespace GeneralShare.Collections
 
         public bool Insert(Item item)
         {
-            if (Boundary.Contains(item.Bounds) == false)
+            if (!Boundary.Contains(item.Bounds))
                 return false;
 
             if (Items.Count < Threshold)
@@ -125,16 +124,16 @@ namespace GeneralShare.Collections
             }
             else
             {
-                if (Divided == false)
+                if (!IsDivided)
                     Subdivide();
 
-                if (TopLeft.Insert(item) == true)
+                if (TopLeft.Insert(item))
                     return true;
-                if (TopRight.Insert(item) == true)
+                if (TopRight.Insert(item))
                     return true;
-                if (BottomLeft.Insert(item) == true)
+                if (BottomLeft.Insert(item))
                     return true;
-                if (BottomRight.Insert(item) == true)
+                if (BottomRight.Insert(item))
                     return true;
             }
 
@@ -157,7 +156,7 @@ namespace GeneralShare.Collections
             foreach (var rect in Items)
                 yield return rect;
 
-            if (Divided)
+            if (IsDivided)
             {
                 foreach (var rect in TopLeft.EnumerateItems())
                     yield return rect;
@@ -182,7 +181,7 @@ namespace GeneralShare.Collections
         {
             yield return Items;
 
-            if (Divided)
+            if (IsDivided)
             {
                 foreach (var list in TopLeft.EnumerateLists())
                     yield return list;
@@ -231,7 +230,7 @@ namespace GeneralShare.Collections
             BottomLeft = new QuadTree<T>(x, y + h, w, h, t, AllowOverflow, _getListFunc());
             BottomRight = new QuadTree<T>(x + w, y + h, w, h, t, AllowOverflow, _getListFunc());
 
-            Divided = true;
+            IsDivided = true;
         }
 
         public class Item

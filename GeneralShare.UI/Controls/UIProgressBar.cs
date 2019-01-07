@@ -55,20 +55,14 @@ namespace GeneralShare.UI
         {
         }
 
-        private void AssertPure()
-        {
-            if (IsDirty)
-                NeedsCleanup();
-        }
-
         private void SetMainColor(ref Color value)
         {
-            _mainSprite.SetColor(ref value);
+            _mainSprite.SetColor(value);
         }
 
         private void SetBackColor(ref Color value)
         {
-            _backSprite.SetColor(ref value);
+            _backSprite.SetColor(value);
         }
 
         private void SetThickness(int value)
