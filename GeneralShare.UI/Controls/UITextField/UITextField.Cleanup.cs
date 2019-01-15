@@ -2,7 +2,7 @@
 
 namespace GeneralShare.UI
 {
-    public partial class UITextArea : UITextElement
+    public partial class UITextField : UITextElement
     {
         protected override void NeedsCleanup()
         {

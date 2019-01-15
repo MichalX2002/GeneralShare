@@ -1,6 +1,4 @@
-﻿using System;
-using GeneralShare.Collections;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended;
 using MonoGame.Extended.BitmapFonts;
@@ -24,7 +22,7 @@ namespace GeneralShare.UI
         public override RectangleF Boundaries => GetBounds();
         public BitmapFont Font { get => _font; set => SetFont(value); }
         public Color Color { get => _segment.Color; set => SetColor(value); }
-        public TextAlignment Alignment { get => _alignment; set => SetAlignment(value); }
+        public TextAlignment HorizontalAlignment { get => _alignment; set => SetAlignment(value); }
         public RectangleF? ClipRect { get => _segment.ClipRect; set => SetClipRect(value); }
 
         public SizeF Measure => GetMeasure();
@@ -43,7 +41,7 @@ namespace GeneralShare.UI
             _segment.GlyphCallback = GlyphCallback;
 
             Color = Color.White;
-            Alignment = TextAlignment.Left;
+            HorizontalAlignment = TextAlignment.Left;
 
             IsMouseEventTrigger = true;
 
@@ -67,28 +65,25 @@ namespace GeneralShare.UI
                 batch.DrawFilledRectangle(_boundaries, ShadowColor);
             batch.DrawString(_segment, StartPosition);
 
-            if (IsSelected)
+            if (IsSelected && _last >= 0 && _segment.SpriteCount > 0)
             {
-                if (_last >= 0)
+                RectangleF rect;
+                if (_last >= _segment.SpriteCount)
                 {
-                    RectangleF rect;
-                    if (_last >= _segment.SpriteCount)
-                    {
-                        var g = _segment.GetSprite(_segment.SpriteCount - 1);
-                        rect = new RectangleF(
-                               StartPosition + new Vector2((g.Position - g.Origin).X + 5, 0) * GlobalScale,
-                               new SizeF(5, Font.LineHeight) * GlobalScale);
-                    }
-                    else
-                    {
-                        var g = _segment.GetSprite(_last);
-                        rect = new RectangleF(
-                            StartPosition + g.Position - g.Origin * GlobalScale,
-                            g.SourceRect.Size * GlobalScale);
-                    }
-
-                    batch.DrawRectangle(rect, Color.LightGreen, 2);
+                    var g = _segment.GetSprite(_segment.SpriteCount - 1);
+                    rect = new RectangleF(
+                           StartPosition + new Vector2((g.Position - g.Origin).X + 5, 0) * GlobalScale,
+                           new SizeF(5, Font.LineHeight) * GlobalScale);
                 }
+                else
+                {
+                    var g = _segment.GetSprite(_last);
+                    rect = new RectangleF(
+                        StartPosition + g.Position - g.Origin * GlobalScale,
+                        g.SourceRect.Size * GlobalScale);
+                }
+
+                batch.DrawRectangle(rect, Color.LightGreen, 2);
             }
 
             //batch.DrawRectangle(Boundaries, new Color(Color.Red, 0.666f), 1);

@@ -70,8 +70,8 @@
     <Compile Include="Controls\UIContainer.cs" />
     <Compile Include="Controls\UIDrawable.cs" />
     <Compile Include="PivotPosition.cs" />
-    <Compile Include="Controls\UITextArea\UITextArea.Cleanup.cs" />
-    <Compile Include="Controls\UITextArea\UITextArea.cs" />
+    <Compile Include="Controls\UITextField\UITextField.Cleanup.cs" />
+    <Compile Include="Controls\UITextField\UITextField.cs" />
     <Compile Include="Controls\UIProgressBar.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SamplingMode.cs" />
@@ -82,9 +82,9 @@
     <Compile Include="Controls\UIElement.cs" />
     <Compile Include="UIRenderer.cs" />
     <Compile Include="Controls\UISprite.cs" />
-    <Compile Include="Controls\UIText.cs" />
-    <Compile Include="Controls\UITextArea\UITextArea.Events.cs" />
-    <Compile Include="Controls\UITextArea\UITextArea.Properties.cs" />
+    <Compile Include="Controls\UILabel.cs" />
+    <Compile Include="Controls\UITextField\UITextField.Events.cs" />
+    <Compile Include="Controls\UITextField\UITextField.Properties.cs" />
     <Compile Include="Controls\UITextElement\UITextElement.Cleanup.cs" />
     <Compile Include="Controls\UITextElement\UITextElement.cs" />
     <Compile Include="Controls\TextSegment\TextSegment.StringRemove.cs" />

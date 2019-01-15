@@ -39,7 +39,7 @@ namespace GeneralShare.UI
 
         private Vector2 CalculateAlignmentOffset()
         {
-            switch (Alignment)
+            switch (HorizontalAlignment)
             {
                 default:
                     //case TextAlignment.Left:

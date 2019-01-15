@@ -4,7 +4,7 @@ using MonoGame.Extended.BitmapFonts;
 
 namespace GeneralShare.UI
 {
-    public partial class UITextArea : UITextElement
+    public partial class UITextField : UITextElement
     {
         #region Event Handlers
         private void UITextArea_OnKeyRepeat(Keys key, float timeDown)

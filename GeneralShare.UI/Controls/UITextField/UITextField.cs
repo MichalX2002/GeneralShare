@@ -6,7 +6,7 @@ using MonoGame.Extended.BitmapFonts;
 
 namespace GeneralShare.UI
 {
-    public partial class UITextArea : UITextElement
+    public partial class UITextField : UITextElement
     {
         public const char DefaultObscureChar = '*';
 
@@ -46,7 +46,7 @@ namespace GeneralShare.UI
         public float SelectionOutlineThickness { get; set; }
         #endregion
 
-        public UITextArea(UIManager manager, BitmapFont font) : base(manager, font)
+        public UITextField(UIManager manager, BitmapFont font) : base(manager, font)
         {
             Caret = new CaretData();
 

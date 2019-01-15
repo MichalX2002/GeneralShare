@@ -3,7 +3,7 @@ using MonoGame.Extended.BitmapFonts;
 
 namespace GeneralShare.UI
 {
-    public partial class UITextArea : UITextElement
+    public partial class UITextField : UITextElement
     {
         #region Property Setters
         private void SetPlaceholder(ICharIterator value)
