@@ -14,7 +14,7 @@ namespace GeneralShare.UI
         private bool _usedColorFormat;
         private GlyphCallbackDelegate _glyphCallback;
 
-        private ListArray<BitmapFont.Glyph> _glyphList;
+        internal ListArray<BitmapFont.Glyph> _glyphList;
         private ListArray<Color?> _formatColorList;
         internal ListArray<GlyphSprite> _spriteList;
 
@@ -162,30 +162,6 @@ namespace GeneralShare.UI
         public GlyphSprite GetSprite(int index)
         {
             return _spriteList[index];
-        }
-
-        public int FindNearestGlyphIndex(PointF position)
-        {
-            if (_glyphList.Count == 0)
-                return -1;
-
-            int index = 0;
-            
-            for (int g = 0; g < _glyphList.Count; g++)
-            {
-                BitmapFont.Glyph glyph = _glyphList[g];
-                float fontRegionWidth = (glyph.FontRegion?.Width ?? 0) * Scale.X;
-                float glyphMiddle = glyph.Position.X * Scale.X + fontRegionWidth * 0.5f;
-
-                if (position.X >= glyphMiddle)
-                {
-                    index++;
-                    continue;
-                }
-                return index;
-            }
-
-            return index;
         }
 
         public void Dispose()

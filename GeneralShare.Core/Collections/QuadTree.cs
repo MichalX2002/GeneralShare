@@ -233,12 +233,12 @@ namespace GeneralShare.Collections
             IsDivided = true;
         }
 
-        public class Item
+        public readonly struct Item
         {
-            public RectangleF Bounds;
-            public T Value;
+            public readonly RectangleF Bounds;
+            public readonly T Value;
 
-            internal Item(RectangleF bounds, T value)
+            public Item(RectangleF bounds, T value)
             {
                 Bounds = bounds;
                 Value = value;

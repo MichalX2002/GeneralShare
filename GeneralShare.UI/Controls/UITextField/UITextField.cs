@@ -54,7 +54,7 @@ namespace GeneralShare.UI
             UsePlaceholderColorFormatting = true;
             PlaceholderColor = Color.Gray * 0.825f;
             PlaceholderSelectColor = Color.LightGoldenrodYellow * 0.9f;
-            PlaceholderColorTransitionSpeed = 0.15f;
+            PlaceholderColorTransitionSpeed = 0.125f;
 
             _obscureChar = DefaultObscureChar;
             _charLimit = 4096;
@@ -120,11 +120,8 @@ namespace GeneralShare.UI
         {
             if (disposing)
             {
-                if (_placeholderSegment != null)
-                {
-                    _placeholderSegment.Dispose();
-                    _placeholderSegment = null;
-                }
+                _placeholderSegment?.Dispose();
+                _placeholderSegment = null;
             }
 
             base.Dispose(disposing);

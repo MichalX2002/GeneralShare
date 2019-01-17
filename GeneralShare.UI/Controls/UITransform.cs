@@ -10,8 +10,8 @@ namespace GeneralShare.UI
         public delegate void MarkedDirtyDelegate(UITransform sender, DirtMarkType marks);
         public delegate void MarkedCleanDelegate(UITransform sender);
 
-        public event MarkedDirtyDelegate MarkedDirty;
-        public event MarkedCleanDelegate MarkedClean;
+        public event MarkedDirtyDelegate OnMarkedDirty;
+        public event MarkedCleanDelegate OnMarkedClean;
 
         private bool _updateViewportOnEnable;
         private bool _enabled;
@@ -215,7 +215,7 @@ namespace GeneralShare.UI
 
         internal void InvokeMarkedDirty(DirtMarkType marks)
         {
-            MarkedDirty?.Invoke(this, marks);
+            OnMarkedDirty?.Invoke(this, marks);
         }
 
         /// <summary>
@@ -231,7 +231,7 @@ namespace GeneralShare.UI
                 DirtMarks &= ~marks;
                 if (DirtMarks == DirtMarkType.None)
                 {
-                    MarkedClean?.Invoke(this);
+                    OnMarkedClean?.Invoke(this);
                     return true;
                 }
             }
@@ -248,7 +248,7 @@ namespace GeneralShare.UI
             if (DirtMarks != DirtMarkType.None)
             {
                 DirtMarks = DirtMarkType.None;
-                MarkedClean?.Invoke(this);
+                OnMarkedClean?.Invoke(this);
                 return true;
             }
             return false;

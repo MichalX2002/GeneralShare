@@ -1,4 +1,6 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using GeneralShare.Collections;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.Extended;
 using MonoGame.Extended.BitmapFonts;
@@ -54,10 +56,38 @@ namespace GeneralShare.UI
 
         private void UITextElement_OnMousePress(Microsoft.Xna.Framework.Input.MouseState mouseState, MouseButton buttons)
         {
-            _last = _segment.FindNearestGlyphIndex(mouseState.Position - StartPosition.ToPoint());
+            if (_segment._glyphList.Count == 0)
+            {
+                _last = new QuadTree<int>.Item(default, -1);
+                return;
+            }
+
+            _tree.ClearTree();
+            
+            for (int i = 0; i < _segment._glyphList.Count; i++)
+            {
+                BitmapFont.Glyph glyph = _segment._glyphList[i];
+                if (glyph.FontRegion == null)
+                    continue;
+                
+                var size = new SizeF(glyph.FontRegion.Width, _font.LineHeight / 2f);
+                
+                int line = (int)Math.Floor(glyph.Position.Y / _font.LineHeight);
+                var pos = new PointF(glyph.Position.X, line * _font.LineHeight + size.Height / 2f);
+
+                var rect = new RectangleF(pos, size);
+                _tree.CurrentTree.Insert(rect, i);
+            }
+
+            var posInTree = (mouseState.Position.ToVector2() - GlobalPosition.ToVector2()) / GlobalScale;
+            _range = new RectangleF(posInTree - new Vector2(_font.LineHeight), new Vector2(_font.LineHeight * 2));
+
+            _last = _tree.CurrentTree.QueryNearest(_range, posInTree);
         }
 
-        int _last = -1;
+        public PooledQuadTree<int> _tree = new PooledQuadTree<int>(2, true);
+        RectangleF _range;
+        QuadTree<int>.Item _last = new QuadTree<int>.Item(default, -1);
 
         public override void Draw(GameTime time, SpriteBatch batch)
         {
@@ -65,28 +95,37 @@ namespace GeneralShare.UI
                 batch.DrawFilledRectangle(_boundaries, ShadowColor);
             batch.DrawString(_segment, StartPosition);
 
-            if (IsSelected && _last >= 0 && _segment.SpriteCount > 0)
-            {
-                RectangleF rect;
-                if (_last >= _segment.SpriteCount)
-                {
-                    var g = _segment.GetSprite(_segment.SpriteCount - 1);
-                    rect = new RectangleF(
-                           StartPosition + new Vector2((g.Position - g.Origin).X + 5, 0) * GlobalScale,
-                           new SizeF(5, Font.LineHeight) * GlobalScale);
-                }
-                else
-                {
-                    var g = _segment.GetSprite(_last);
-                    rect = new RectangleF(
-                        StartPosition + g.Position - g.Origin * GlobalScale,
-                        g.SourceRect.Size * GlobalScale);
-                }
+            var offset = new RectangleF(GlobalPosition.ToVector2(), SizeF.Empty);
 
-                batch.DrawRectangle(rect, Color.LightGreen, 2);
+            if (IsSelected && _last.Value >= 0 && _segment.SpriteCount > 0)
+            {
+                RectangleF rect = _last.Bounds + offset;
+                batch.DrawRectangle(rect, Color.OrangeRed, 3);
             }
 
             //batch.DrawRectangle(Boundaries, new Color(Color.Red, 0.666f), 1);
+
+            void DrawTree(QuadTree<int> ree)
+            {
+                batch.DrawRectangle(ree.Boundary + offset, Color.Blue);
+                foreach (var rect in ree.Items)
+                {
+                    if (rect.Bounds.Width != 0 && rect.Bounds.Height != 0)
+                        batch.DrawRectangle(rect.Bounds + offset, Color.Green);
+                    else
+                        batch.DrawPoint(rect.Bounds.Position.ToVector2() + offset.Position, Color.Green, 2);
+                }
+                if (ree.IsDivided)
+                {
+                    DrawTree(ree.TopLeft);
+                    DrawTree(ree.TopRight);
+                    DrawTree(ree.BottomLeft);
+                    DrawTree(ree.BottomRight);
+                }
+            }
+
+            DrawTree(_tree.CurrentTree);
+            batch.DrawRectangle(_range + offset, Color.Orange, 2);
         }
 
         protected override void Dispose(bool disposing)

@@ -14,7 +14,7 @@ namespace GeneralShare.UI
 
         public event TransformListSortedDelegate TransformListSorted;
 
-        private static TextureRegion2D _grayscaleRegion;
+        //private static TextureRegion2D _grayscaleRegion;
 
         public bool IsDisposed { get; private set; }
         public GraphicsDevice GraphicsDevice { get; }
@@ -101,7 +101,7 @@ namespace GeneralShare.UI
         {
             transform.Manager = this;
             Transforms.Add(transform);
-            transform.MarkedDirty += Transform_MarkedDirty;
+            transform.OnMarkedDirty += Transform_MarkedDirty;
             FlagForSort();
         }
 
@@ -144,7 +144,7 @@ namespace GeneralShare.UI
             int index = Transforms.FindIndex((x) => x == transform);
             if (index != -1)
             { 
-                Transforms.GetAndRemoveAt(index).MarkedDirty -= Transform_MarkedDirty;
+                Transforms.GetAndRemoveAt(index).OnMarkedDirty -= Transform_MarkedDirty;
                 return true;
             }
             return false;

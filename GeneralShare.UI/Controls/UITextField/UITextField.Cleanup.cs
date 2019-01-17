@@ -16,16 +16,13 @@ namespace GeneralShare.UI
             }
         }
 
-        protected override void BuildTextSprites(bool glyphUpdate)
+        protected override void BuildTextSprites()
         {
-            base.BuildTextSprites(glyphUpdate);
+            base.BuildTextSprites();
 
-            if (!glyphUpdate)
-            {
-                _placeholderSegment.Scale = Scale;
-                _placeholderSegment.ClipRect = ClipRect;
-                _placeholderSegment.BuildSprites(measure: true);
-            }
+            _placeholderSegment.Scale = Scale;
+            _placeholderSegment.ClipRect = ClipRect;
+            _placeholderSegment.BuildSprites(measure: true);
         }
 
         //protected override RectangleF OnBoundaryUpdate(RectangleF newRect)

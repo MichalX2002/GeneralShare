@@ -33,7 +33,7 @@ namespace GeneralShare.UI
             // mark clean first to prevent stack overflow
             MarkClean();
 
-            BuildTextSprites(glyphUpdate);
+            BuildTextSprites();
             UpdateBoundaries();
         }
 
@@ -56,18 +56,22 @@ namespace GeneralShare.UI
         private void UpdateBoundaries()
         {
             StartPosition = GlobalPosition.ToVector2() + CalculateAlignmentOffset();
-            _boundaries = new RectangleF(StartPosition, GetMeasure());
+            var textBounds = new RectangleF(StartPosition, GetMeasure());
 
+            _boundaries = textBounds;
             if (IsShadowVisisble)
                 _boundaries += ShadowSpacing.ToOffsetRectangle(GlobalScale);
 
             _boundaries = OnBoundaryUpdate(_boundaries);
         }
 
-        protected virtual void BuildTextSprites(bool glyphUpdate)
+        protected virtual void BuildTextSprites()
         {
             _segment.Scale = GlobalScale;
             _segment.BuildSprites(measure: true);
+
+            // TODO: fix quad tree, the float arithmetic is incorrect and we need some offset here
+            _tree.Resize(new RectangleF(new PointF(-1, -1), (_segment.Measure / _segment.Scale) + new Vector2(2, 2)));
         }
 
         protected virtual RectangleF OnBoundaryUpdate(RectangleF newRect)

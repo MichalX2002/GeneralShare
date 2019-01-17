@@ -32,7 +32,7 @@ namespace GeneralShare.UI
         {
             _transforms.Add(transform);
             transform.Container = null;
-            transform.MarkedDirty += Transform_MarkedDirty;
+            transform.OnMarkedDirty += Transform_MarkedDirty;
             _boundsNeedUpdate = true;
         }
 
@@ -46,7 +46,7 @@ namespace GeneralShare.UI
         {
             if (transform.Container == this)
                 transform.Container = null;
-            transform.MarkedDirty -= Transform_MarkedDirty;
+            transform.OnMarkedDirty -= Transform_MarkedDirty;
 
             _transforms.Remove(transform);
             _boundsNeedUpdate = true;
@@ -109,7 +109,7 @@ namespace GeneralShare.UI
             if (!IsDisposed)
             {
                 for (int i = 0; i < _transforms.Count; i++)
-                    _transforms[i].MarkedDirty -= Transform_MarkedDirty;
+                    _transforms[i].OnMarkedDirty -= Transform_MarkedDirty;
                 _transforms = null;
 
                 base.Dispose(disposing);
