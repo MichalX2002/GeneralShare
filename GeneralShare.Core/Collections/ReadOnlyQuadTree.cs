@@ -34,7 +34,7 @@ namespace GeneralShare.Collections
             return _tree.Query(range);
         }
 
-        public IEnumerable<QuadTree<T>.Item> EnumerateRectangles()
+        public IEnumerable<QuadTree<T>.Item> EnumerateItems()
         {
             return _tree.EnumerateItems();
         }

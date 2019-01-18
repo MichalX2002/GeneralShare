@@ -17,6 +17,7 @@ namespace GeneralShare.Collections
         
         private const int _defaultCapacity = 4;
 
+        private ReadOnlyCollection<T> _readonly;
         private T[] _innerArray;
         private int _size;
         private int __version;
@@ -395,7 +396,9 @@ namespace GeneralShare.Collections
 
         public ReadOnlyCollection<T> AsReadOnly()
         {
-            return new ReadOnlyCollection<T>(this);
+            if (_readonly == null)
+                _readonly = new ReadOnlyCollection<T>(this);
+            return _readonly;
         }
 
         public Enumerator GetEnumerator()

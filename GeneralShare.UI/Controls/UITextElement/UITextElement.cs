@@ -95,25 +95,22 @@ namespace GeneralShare.UI
                 batch.DrawFilledRectangle(_boundaries, ShadowColor);
             batch.DrawString(_segment, StartPosition);
 
+            var scale = GlobalScale;
             var offset = new RectangleF(GlobalPosition.ToVector2(), SizeF.Empty);
 
-            if (IsSelected && _last.Value >= 0 && _segment.SpriteCount > 0)
-            {
-                RectangleF rect = _last.Bounds + offset;
-                batch.DrawRectangle(rect, Color.OrangeRed, 3);
-            }
 
             //batch.DrawRectangle(Boundaries, new Color(Color.Red, 0.666f), 1);
 
             void DrawTree(QuadTree<int> ree)
             {
-                batch.DrawRectangle(ree.Boundary + offset, Color.Blue);
+                batch.DrawRectangle(new RectangleF(ree.Boundary.Position * scale, ree.Boundary.Size * scale) + offset, Color.Blue);
                 foreach (var rect in ree.Items)
                 {
-                    if (rect.Bounds.Width != 0 && rect.Bounds.Height != 0)
-                        batch.DrawRectangle(rect.Bounds + offset, Color.Green);
+                    var r = new RectangleF(rect.Bounds.Position * scale, rect.Bounds.Size * scale);
+                    if (r.Width != 0 && r.Height != 0)
+                        batch.DrawRectangle(r + offset, Color.Green);
                     else
-                        batch.DrawPoint(rect.Bounds.Position.ToVector2() + offset.Position, Color.Green, 2);
+                        batch.DrawPoint(r.Position.ToVector2() + offset.Position, Color.Green, 2);
                 }
                 if (ree.IsDivided)
                 {
@@ -125,7 +122,13 @@ namespace GeneralShare.UI
             }
 
             DrawTree(_tree.CurrentTree);
-            batch.DrawRectangle(_range + offset, Color.Orange, 2);
+            batch.DrawRectangle(new RectangleF(_range.Position * scale, _range.Size * scale) + offset, Color.Orange, 2);
+            
+            if (IsSelected && _last.Value >= 0 && _segment.SpriteCount > 0)
+            {
+                RectangleF rect = new RectangleF(_last.Bounds.Position * scale, _last.Bounds.Size * scale) + offset + new RectangleF(-2, -2, 4, 4);
+                batch.DrawRectangle(rect, Color.OrangeRed, 3);
+            }
         }
 
         protected override void Dispose(bool disposing)

@@ -21,37 +21,23 @@ namespace GeneralShare.Collections
         public QuadTree<T> BottomRight { get; private set; }
 
         public QuadTree(
-            RectangleF boundary, int threshold, bool allowOverflow,
-            ListArray<Item> items, Func<ListArray<Item>> getListFunc)
+            RectangleF boundary, int threshold, bool allowOverflow, Func<ListArray<Item>> getListFunc)
         {
             Boundary = boundary;
             Threshold = threshold;
             AllowOverflow = allowOverflow;
             _getListFunc = getListFunc ?? throw new ArgumentNullException(nameof(getListFunc));
-            Items = items;
-        }
-
-        public QuadTree(
-            RectangleF boundary, int threshold, bool allowOverflow, Func<ListArray<Item>> getListFunc) :
-            this(boundary, threshold, allowOverflow, getListFunc(), getListFunc)
-        {
+            Items = getListFunc.Invoke();
         }
 
         public QuadTree(RectangleF boundary, int threshold, bool allowOverflow) :
-            this(boundary, threshold, allowOverflow, DefaultGetList(threshold), () => DefaultGetList(threshold))
+            this(boundary, threshold, allowOverflow, () => DefaultGetList(threshold))
         {
         }
-
+        
         public QuadTree(
-            RectangleF boundary, int threshold, bool allowOverflow, ListArray<Item> existingList) :
-            this(boundary, threshold, allowOverflow, existingList, () => DefaultGetList(threshold))
-        {
-        }
-
-        public QuadTree(
-            float x, float y, float width, float height,
-            int threshold, bool allowOverflow, ListArray<Item> existingList) :
-            this(new RectangleF(x, y, width, height), threshold, allowOverflow, existingList)
+            float x, float y, float width, float height, int threshold, bool allowOverflow) :
+            this(new RectangleF(x, y, width, height), threshold, allowOverflow)
         {
         }
         
@@ -93,7 +79,7 @@ namespace GeneralShare.Collections
                 yield break;
 
             foreach (var item in EnumerateItems())
-                if (range.Contains(item.Bounds))
+                if (range.Intersects(item.Bounds))
                     yield return item;
         }
 
@@ -117,12 +103,7 @@ namespace GeneralShare.Collections
             if (!Boundary.Contains(item.Bounds))
                 return false;
 
-            if (Items.Count < Threshold)
-            {
-                Items.Add(new Item(item.Bounds, item.Value));
-                return true;
-            }
-            else
+            if (Items.Count > Threshold)
             {
                 if (!IsDivided)
                     Subdivide();
@@ -135,6 +116,11 @@ namespace GeneralShare.Collections
                     return true;
                 if (BottomRight.Insert(item))
                     return true;
+            }
+            else
+            {
+                Items.Add(item);
+                return true;
             }
 
             if(AllowOverflow)
@@ -197,24 +183,16 @@ namespace GeneralShare.Collections
             }
         }
 
-        /// <summary>
-        /// Iterates over <see cref="EnumerateLists"/>;
-        /// clearing every list before yielding it.
-        /// </summary>
-        /// <returns></returns>
-        public IEnumerable<ListArray<Item>> EnumerateClearedLists()
-        {
-            foreach (var list in EnumerateLists())
-            {
-                list.Clear();
-                yield return list;
-            }
-        }
-
         public void Clear()
         {
-            foreach (var list in EnumerateLists())
-                list.Clear();
+            Items.Clear();
+            if (IsDivided)
+            {
+                TopLeft.Clear();
+                TopRight.Clear();
+                BottomLeft.Clear();
+                BottomRight.Clear();
+            }
         }
 
         private void Subdivide()
