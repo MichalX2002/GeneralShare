@@ -43,7 +43,7 @@ namespace GeneralShare
 
         public static void CollectGarbage()
         {
-            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true, true);
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: true);
         }
 
         public static void CollectLargeObjectHeap()

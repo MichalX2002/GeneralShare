@@ -28,8 +28,8 @@ namespace GeneralShare.UI
                         using (var iter = Input.ClipboardText.ToIterator())
                         {
                             for (int i = 0; i < iter.Length; i++)
-                                if (InsertChar(Value.Length, iter.GetCharacter16(i)))
-                                    break; // InsertChar() hit the char limit
+                                if (InsertChar(Caret.StartIndex + i, iter.GetCharacter16(i)))
+                                    break; // we hit the char limit
                         }
                     }
                     break;
@@ -103,6 +103,8 @@ namespace GeneralShare.UI
 
             using (var iter = value.ToIterator())
                 Insert(index, iter);
+
+            Caret.SelectionCount = 0;
 
             return false;
         }

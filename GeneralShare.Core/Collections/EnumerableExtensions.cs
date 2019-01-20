@@ -1,6 +1,4 @@
-﻿using MonoGame.Extended;
-using MonoGame.Extended.Collections;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace GeneralShare
@@ -14,324 +12,152 @@ namespace GeneralShare
             if (source is IList<TSource> list)
             {
                 for (int i = 0; i < list.Count; i++)
-                    result += selector.Invoke(list[i]);
+                    result += selector(list[i]);
             }
             else if (source is IReadOnlyList<TSource> readList)
             {
                 for (int i = 0; i < readList.Count; i++)
-                    result += selector.Invoke(readList[i]);
+                    result += selector(readList[i]);
             }
             else
             {
                 foreach (var item in source)
-                    result += selector.Invoke(item);
+                    result += selector(item);
             }
             return result;
         }
 
         public static TSource FirstMin<TSource, TKey>(
-               this IEnumerable<TSource> source, Func<TSource, TKey> keySelector) where TKey : IComparable<TKey>
+            this IEnumerable<TSource> source, Func<TSource, TKey> keySelector) where TKey : IComparable<TKey>
         {
-            TSource lastItem = default;
             bool hasValue = false;
-            
-            if (source is IReferenceList<TSource> refList)
+            TKey lastKey = default;
+            TSource lastItem = default;
+
+            void Compare(TSource item)
             {
-                for (int i = 0, count = refList.Count; i < count; i++)
-                {
-                    ref TSource item = ref refList.GetReferenceAt(i);
-                    if (hasValue)
-                    {
-                        if (keySelector(item).CompareTo(keySelector(lastItem)) < 0)
-                            lastItem = item;
-                    }
-                    else
-                    {
-                        lastItem = item;
-                        hasValue = true;
-                    }
-                }
+                if (hasValue && keySelector(item).CompareTo(lastKey) >= 0)
+                    return;
+
+                hasValue = true;
+                lastItem = item;
+                lastKey = keySelector(item);
             }
-            else if (source is IList<TSource> list)
+
+            if (source is IList<TSource> list)
             {
                 for (int i = 0, count = list.Count; i < count; i++)
-                {
-                    TSource item = list[i];
-                    if (hasValue)
-                    {
-                        if (keySelector(item).CompareTo(keySelector(lastItem)) < 0)
-                            lastItem = item;
-                    }
-                    else
-                    {
-                        lastItem = item;
-                        hasValue = true;
-                    }
-                }
+                    Compare(list[i]);
             }
             else if (source is IReadOnlyList<TSource> readList)
             {
                 for (int i = 0, count = readList.Count; i < count; i++)
-                {
-                    TSource item = readList[i];
-                    if (hasValue)
-                    {
-                        if (keySelector(item).CompareTo(keySelector(lastItem)) < 0)
-                            lastItem = item;
-                    }
-                    else
-                    {
-                        lastItem = item;
-                        hasValue = true;
-                    }
-                }
+                    Compare(readList[i]);
             }
             else
             {
                 foreach (var item in source)
-                {
-                    if (hasValue)
-                    {
-                        if (keySelector(item).CompareTo(keySelector(lastItem)) < 0)
-                            lastItem = item;
-                    }
-                    else
-                    {
-                        lastItem = item;
-                        hasValue = true;
-                    }
-                }
+                    Compare(item);
             }
-
             return lastItem;
         }
 
         public static TSource FirstMin<TSource, TKey>(
             this IEnumerable<TSource> source, Func<TSource, TKey> keySelector, IComparer<TKey> comparer)
         {
-            TSource lastItem = default;
             bool hasValue = false;
+            TKey lastKey = default;
+            TSource lastItem = default;
 
-            if (source is IReferenceList<TSource> refList)
+            void Compare(TSource item)
             {
-                for (int i = 0, count = refList.Count; i < count; i++)
-                {
-                    ref TSource item = ref refList.GetReferenceAt(i);
-                    if (hasValue)
-                    {
-                        if (comparer.Compare(keySelector(item), keySelector(lastItem)) < 0)
-                            lastItem = item;
-                    }
-                    else
-                    {
-                        lastItem = item;
-                        hasValue = true;
-                    }
-                }
+                if (hasValue && comparer.Compare(keySelector(item), lastKey) >= 0)
+                    return;
+
+                hasValue = true;
+                lastItem = item;
+                lastKey = keySelector(item);
             }
+
             if (source is IList<TSource> list)
             {
                 for (int i = 0, count = list.Count; i < count; i++)
-                {
-                    TSource item = list[i];
-                    if (hasValue)
-                    {
-                        if (comparer.Compare(keySelector(item), keySelector(lastItem)) < 0)
-                            lastItem = item;
-                    }
-                    else
-                    {
-                        lastItem = item;
-                        hasValue = true;
-                    }
-                }
+                    Compare(list[i]);
             }
             else if (source is IReadOnlyList<TSource> readList)
             {
                 for (int i = 0, count = readList.Count; i < count; i++)
-                {
-                    TSource item = readList[i];
-                    if (hasValue)
-                    {
-                        if (comparer.Compare(keySelector(item), keySelector(lastItem)) < 0)
-                            lastItem = item;
-                    }
-                    else
-                    {
-                        lastItem = item;
-                        hasValue = true;
-                    }
-                }
+                    Compare(readList[i]);
             }
             else
             {
                 foreach (var item in source)
-                {
-                    if (hasValue)
-                    {
-                        if (comparer.Compare(keySelector(item), keySelector(lastItem)) < 0)
-                            lastItem = item;
-                    }
-                    else
-                    {
-                        lastItem = item;
-                        hasValue = true;
-                    }
-                }
+                    Compare(item);
             }
-
             return lastItem;
         }
 
         public static T FirstMin<T>(this IEnumerable<T> source) where T : IComparable<T>
         {
-            T lastItem = default;
             bool hasValue = false;
+            T lastItem = default;
 
-            if (source is IReferenceList<T> refList)
+            void Compare(T item)
             {
-                for (int i = 0, count = refList.Count; i < count; i++)
-                {
-                    ref T item = ref refList.GetReferenceAt(i);
-                    if (hasValue)
-                    {
-                        if (item.CompareTo(lastItem) < 0)
-                            lastItem = item;
-                    }
-                    else
-                    {
-                        lastItem = item;
-                        hasValue = true;
-                    }
-                }
+                if (hasValue && item.CompareTo(lastItem) >= 0)
+                    return;
+
+                lastItem = item;
+                hasValue = true;
             }
+            
             if (source is IList<T> list)
             {
                 for (int i = 0, count = list.Count; i < count; i++)
-                {
-                    T item = list[i];
-                    if (hasValue)
-                    {
-                        if (item.CompareTo(lastItem) < 0)
-                            lastItem = item;
-                    }
-                    else
-                    {
-                        lastItem = item;
-                        hasValue = true;
-                    }
-                }
+                    Compare(list[i]);
             }
             else if (source is IReadOnlyList<T> readList)
             {
                 for (int i = 0, count = readList.Count; i < count; i++)
-                {
-                    T item = readList[i];
-                    if (hasValue)
-                    {
-                        if (item.CompareTo(lastItem) < 0)
-                            lastItem = item;
-                    }
-                    else
-                    {
-                        lastItem = item;
-                        hasValue = true;
-                    }
-                }
+                    Compare(readList[i]);
             }
             else
             {
                 foreach (var item in source)
-                {
-                    if (hasValue)
-                    {
-                        if (item.CompareTo(lastItem) < 0)
-                            lastItem = item;
-                    }
-                    else
-                    {
-                        lastItem = item;
-                        hasValue = true;
-                    }
-                }
+                    Compare(item);
             }
-
             return lastItem;
         }
 
         public static T FirstMin<T>(this IEnumerable<T> source, IComparer<T> comparer)
         {
-            T lastItem = default;
             bool hasValue = false;
+            T lastItem = default;
 
-            if (source is IReferenceList<T> refList)
+            void Compare(T item)
             {
-                for (int i = 0, count = refList.Count; i < count; i++)
-                {
-                    ref T item = ref refList.GetReferenceAt(i);
-                    if (hasValue)
-                    {
-                        if (comparer.Compare(item, lastItem) < 0)
-                            lastItem = item;
-                    }
-                    else
-                    {
-                        lastItem = item;
-                        hasValue = true;
-                    }
-                }
+                if (hasValue && comparer.Compare(item, lastItem) >= 0)
+                    return;
+
+                lastItem = item;
+                hasValue = true;
             }
+
             if (source is IList<T> list)
             {
                 for (int i = 0, count = list.Count; i < count; i++)
-                {
-                    T item = list[i];
-                    if (hasValue)
-                    {
-                        if (comparer.Compare(item, lastItem) < 0)
-                            lastItem = item;
-                    }
-                    else
-                    {
-                        lastItem = item;
-                        hasValue = true;
-                    }
-                }
+                    Compare(list[i]);
             }
             else if (source is IReadOnlyList<T> readList)
             {
                 for (int i = 0, count = readList.Count; i < count; i++)
-                {
-                    T item = readList[i];
-                    if (hasValue)
-                    {
-                        if (comparer.Compare(item, lastItem) < 0)
-                            lastItem = item;
-                    }
-                    else
-                    {
-                        lastItem = item;
-                        hasValue = true;
-                    }
-                }
+                    Compare(readList[i]);
             }
             else
             {
                 foreach (var item in source)
-                {
-                    if (hasValue)
-                    {
-                        if (comparer.Compare(item, lastItem) < 0)
-                            lastItem = item;
-                    }
-                    else
-                    {
-                        lastItem = item;
-                        hasValue = true;
-                    }
-                }
+                    Compare(item);
             }
-
             return lastItem;
         }
     }

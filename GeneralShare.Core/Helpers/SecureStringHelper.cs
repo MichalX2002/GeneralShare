@@ -22,7 +22,7 @@ namespace GeneralShare.Helpers
             IntPtr bstr2 = IntPtr.Zero;
 
             RuntimeHelpers.PrepareConstrainedRegions();
-
+            
             try
             {
                 bstr1 = Marshal.SecureStringToBSTR(value);

@@ -56,9 +56,8 @@ namespace GeneralShare.UI
         private void UpdateBoundaries()
         {
             StartPosition = GlobalPosition.ToVector2() + CalculateAlignmentOffset();
-            var textBounds = new RectangleF(StartPosition, GetMeasure());
-
-            _boundaries = textBounds;
+            
+            _boundaries = new RectangleF(StartPosition, GetMeasure());
             if (IsShadowVisisble)
                 _boundaries += ShadowSpacing.ToOffsetRectangle(GlobalScale);
 
@@ -71,7 +70,8 @@ namespace GeneralShare.UI
             _segment.BuildSprites(measure: true);
 
             // TODO: fix quad tree, the float arithmetic is incorrect and we need some offset here
-            _tree.Resize(new RectangleF(new PointF(-1, -1), (_segment.Measure / _segment.Scale) + new Vector2(2, 2)));
+            //       or the items will be "out of bounds" (we use fuzzy boundaries as a remedy though)
+            _quadTree.Resize(new RectangleF(PointF.Zero, (_segment.Measure / _segment.Scale)));
         }
 
         protected virtual RectangleF OnBoundaryUpdate(RectangleF newRect)

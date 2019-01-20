@@ -57,7 +57,7 @@ namespace GeneralShare.UI
             PlaceholderColorTransitionSpeed = 0.125f;
 
             _obscureChar = DefaultObscureChar;
-            _charLimit = 4096;
+            _charLimit = 1024;
             
             CharBlacklist = new ObservableHashSet<char>();
             CharBlacklist.OnAdd += (s, value) => Remove(value);
@@ -129,7 +129,6 @@ namespace GeneralShare.UI
 
         public class CaretData
         {
-            public int Offset;
             public int StartIndex;
             public int SelectionCount;
         }

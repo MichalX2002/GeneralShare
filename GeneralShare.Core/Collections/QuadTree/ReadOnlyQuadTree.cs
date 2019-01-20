@@ -7,8 +7,8 @@ namespace GeneralShare.Collections
     {
         private readonly QuadTree<T> _tree;
 
-        public bool Divided => _tree.IsDivided;
-        public IReadOnlyList<QuadTree<T>.Item> Items => _tree.Items.AsReadOnly();
+        public bool IsDivided => _tree.IsDivided;
+        public IReadOnlyList<QuadTreeItem<T>> Items => _tree.Items.AsReadOnly();
         public ReadOnlyQuadTree<T> TopLeft => _tree.TopLeft.AsReadOnly();
         public ReadOnlyQuadTree<T> TopRight => _tree.TopRight.AsReadOnly();
         public ReadOnlyQuadTree<T> BottomLeft => _tree.BottomLeft.AsReadOnly();
@@ -19,30 +19,28 @@ namespace GeneralShare.Collections
             _tree = tree;
         }
 
-        public QuadTree<T>.Item QueryNearest(RectangleF range, PointF start)
+        public QuadTreeItem<T>? QueryNearest(RectangleF range, PointF start)
         {
             return _tree.QueryNearest(range, start);
         }
 
-        public IEnumerable<QuadTree<T>.Item> Query(PointF point)
+        public IEnumerable<QuadTreeItem<T>> Query(PointF point)
         {
             return _tree.Query(point);
         }
         
-        public IEnumerable<QuadTree<T>.Item> Query(RectangleF range)
+        public IEnumerable<QuadTreeItem<T>> Query(RectangleF range)
         {
             return _tree.Query(range);
         }
 
-        public IEnumerable<QuadTree<T>.Item> EnumerateItems()
+        /// <summary>
+        /// Returns a list containing every item from this <see cref="QuadTree{T}"/>.
+        /// </summary>
+        /// <returns><see cref="ListArray{QuadTreeItem{T}}"/> containing every item.</returns>
+        public ListArray<QuadTreeItem<T>> GetItems()
         {
-            return _tree.EnumerateItems();
-        }
-
-        public IEnumerable<IReadOnlyList<QuadTree<T>.Item>> EnumerateLists()
-        {
-            foreach (var list in _tree.EnumerateLists())
-                yield return list.AsReadOnly();
+            return _tree.GetItems();
         }
     }
 }
