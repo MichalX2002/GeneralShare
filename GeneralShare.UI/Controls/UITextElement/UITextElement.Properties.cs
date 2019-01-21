@@ -29,6 +29,11 @@ namespace GeneralShare.UI
             MarkDirty(ref _alignment, value, DirtMarkType.TextAlignment);
         }
 
+        private void SetIsShadowed(bool value)
+        {
+            MarkDirty(ref _shadowed, value, DirtMarkType.Shadowed);
+        }
+
         private void SetClipRect(RectangleF? value)
         {
             if (MarkDirty(_segment.ClipRect, value, DirtMarkType.ClipRect))
@@ -37,24 +42,16 @@ namespace GeneralShare.UI
         #endregion
 
         #region Property Getters
-        private RectangleF GetBounds()
+        private RectangleF GetBoundaries()
         {
             AssertPure();
             return _boundaries;
         }
 
-        protected virtual SizeF GetMeasure()
+        protected virtual RectangleF GetStringRect()
         {
             AssertPure();
-            return _segment.Measure;
-        }
-
-        protected virtual int GetSpriteCount()
-        {
-            int count = _segment.SpriteCount;
-            if (IsShadowed && _segment.SpriteCount > 0)
-                count++;
-            return count;
+            return _stringRect;
         }
         #endregion
     }

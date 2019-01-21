@@ -25,11 +25,6 @@ namespace GeneralShare.UI
             _placeholderSegment.BuildSprites(measure: true);
         }
 
-        //protected override RectangleF OnBoundaryUpdate(RectangleF newRect)
-        //{
-        //    return newRect;
-        //}
-
         protected override TextSegment.GlyphCallbackResult GlyphCallback(ICharIterator source)
         {
             if (_isObscured)

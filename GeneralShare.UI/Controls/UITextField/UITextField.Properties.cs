@@ -5,6 +5,15 @@ namespace GeneralShare.UI
 {
     public partial class UITextField : UITextElement
     {
+        protected override SizeF GetMeasure()
+        {
+            SizeF measure = base.GetMeasure();
+            if (measure == SizeF.Empty)
+                measure = _placeholderSegment.Measure;
+
+            return measure;
+        }
+
         #region Property Setters
         private void SetPlaceholder(ICharIterator value)
         {
@@ -55,30 +64,6 @@ namespace GeneralShare.UI
                 if (_isObscured)
                     UpdateGlyphs();
             }
-        }
-        #endregion
-
-        #region Property Getters
-        protected override SizeF GetMeasure()
-        {
-            SizeF measure = base.GetMeasure();
-            if (measure == SizeF.Empty)
-                measure = _placeholderSegment.Measure;
-            else
-                measure.Width += NewLineCharSize.Width * 1.5f * GlobalScale.X;
-            return measure;
-        }
-
-        protected override int GetSpriteCount()
-        {
-            if (IsPlaceholderVisible)
-            {
-                int count = _placeholderSegment.SpriteCount;
-                if (IsShadowed && _placeholderSegment.SpriteCount > 0)
-                    count++;
-                return count;
-            }
-            return base.GetSpriteCount();
         }
         #endregion
     }

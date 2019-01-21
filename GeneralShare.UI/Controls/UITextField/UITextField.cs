@@ -25,7 +25,7 @@ namespace GeneralShare.UI
 
         #region Properties
         protected override bool AllowTextColorFormatting => false;
-        protected bool IsPlaceholderVisible => base.GetSpriteCount() == 0;
+        protected bool IsPlaceholderVisible => Length == 0;
 
         public CaretData Caret { get; }
 
@@ -61,6 +61,7 @@ namespace GeneralShare.UI
             
             CharBlacklist = new ObservableHashSet<char>();
             CharBlacklist.OnAdd += (s, value) => Remove(value);
+
             IsKeyboardEventTrigger = true;
             IsMouseEventTrigger = true;
             IsSelectable = true;
@@ -91,9 +92,9 @@ namespace GeneralShare.UI
             base.Draw(time, batch);
 
             if (IsPlaceholderVisible)
-                batch.DrawString(_placeholderSegment, StartPosition);
+                batch.DrawString(_placeholderSegment, StringRect.Position);
 
-            if (IsSelected && GetSpriteCount() > 0)
+            if (IsSelected)
             {
                 var outlineOffset = new RectangleF(
                     -SelectionOutlineThickness,

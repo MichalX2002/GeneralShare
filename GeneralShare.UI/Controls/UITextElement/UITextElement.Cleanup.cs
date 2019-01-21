@@ -7,6 +7,13 @@ namespace GeneralShare.UI
     {
         protected override void NeedsCleanup()
         {
+            if (HasDirtMarks(DirtMarkType.Color))
+            {
+                _segment.ApplyColors();
+                if (MarkClean(DirtMarkType.Color))
+                    return;
+            }
+
             if (MarkClean(
                 DirtMarkType.Position |
                 DirtMarkType.Shadowed | 
@@ -14,12 +21,6 @@ namespace GeneralShare.UI
                 DirtMarkType.TextAlignment))
             {
                 UpdateBoundaries();
-                return;
-            }
-
-            if (MarkClean(DirtMarkType.Color))
-            {
-                _segment.ApplyColors();
                 return;
             }
 
@@ -35,6 +36,14 @@ namespace GeneralShare.UI
 
             BuildTextSprites();
             UpdateBoundaries();
+        }
+
+        protected void UpdateGlyphs()
+        {
+            _segment.UpdateGlyphs();
+            FullCleanup();
+
+            InvokeMarkedDirty(DirtMarkType.Boundaries);
         }
 
         private Vector2 CalculateAlignmentOffset()
@@ -55,15 +64,12 @@ namespace GeneralShare.UI
 
         private void UpdateBoundaries()
         {
-            StartPosition = GlobalPosition.ToVector2() + CalculateAlignmentOffset();
+            _stringRect = OnStringRectUpdate(
+                new RectangleF(GlobalPosition.ToVector2() + CalculateAlignmentOffset(), GetMeasure()));
             
-            _boundaries = new RectangleF(StartPosition, GetMeasure());
-            if (IsShadowVisisble)
-                _boundaries += ShadowSpacing.ToOffsetRectangle(GlobalScale);
+            _boundaries = OnBoundaryUpdate(_stringRect);
 
-            _boundaries = OnBoundaryUpdate(_boundaries);
-
-            if (BuildQuadTree)
+            if (BuildQuadTree && Length > 0)
             {
                 // TODO: fix quad tree, the float arithmetic is incorrect and we need some offset here
                 //       or the items will be "out of bounds" (we use fuzzy boundaries as a remedy though)
@@ -77,21 +83,33 @@ namespace GeneralShare.UI
             _segment.BuildSprites(measure: true);
         }
 
+        protected virtual SizeF GetMeasure()
+        {
+            return _segment.Measure;
+        }
+
+        protected virtual RectangleF OnStringRectUpdate(RectangleF newRect)
+        {
+            if (IsShadowed)
+                // TODO: fix ambiguity error in framework resulting in a unnecessary cast
+                newRect.Position += (Vector2)ShadowSpacing.ToOffsetPosition(GlobalScale);
+
+            return newRect;
+        }
+
         protected virtual RectangleF OnBoundaryUpdate(RectangleF newRect)
         {
+            //TODO: fix offsets
+
+            //if (IsShadowed)
+            //    newRect.Size += ShadowSpacing.ToOffsetSize(GlobalScale);
+           
             return newRect;
         }
 
         protected virtual TextSegment.GlyphCallbackResult GlyphCallback(ICharIterator source)
         {
             return new TextSegment.GlyphCallbackResult(source, leaveOpen: true);
-        }
-
-        protected void UpdateGlyphs()
-        {
-            _segment.UpdateGlyphs();
-            FullCleanup();
-            InvokeMarkedDirty(DirtMarkType.Boundaries);
         }
     }
 }

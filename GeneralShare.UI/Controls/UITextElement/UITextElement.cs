@@ -12,30 +12,28 @@ namespace GeneralShare.UI
     {
         private BitmapFont _font;
         private TextSegment _segment;
+        private RectangleF _stringRect;
         private RectangleF _boundaries;
         private TextAlignment _alignment;
-        private QuadTree<int> _quadTree;
+        private bool _shadowed;
+        private QuadTree<CharSpriteInfo> _quadTree;
 
         #region Properties
-        protected Vector2 StartPosition { get; private set; }
-        protected bool IsShadowVisisble => IsShadowed && GetSpriteCount() > 0;
         protected SizeF NewLineCharSize => new SizeF(_font.LineHeight / 8f, _font.LineHeight / 2f);
 
         protected ICharIterator TextValue { get => _segment.CurrentText; set => SetTextValue(value); }
         protected abstract bool AllowTextColorFormatting { get; }
-
-        public SizeF Measure => GetMeasure();
         public int Length => TextValue.Length;
-        public int SpriteCount => GetSpriteCount();
 
-        public override RectangleF Boundaries => GetBounds();
+        public override RectangleF Boundaries => GetBoundaries();
+        public RectangleF StringRect => GetStringRect();
         public BitmapFont Font { get => _font; set => SetFont(value); }
         public Color Color { get => _segment.Color; set => SetColor(value); }
         public TextAlignment HorizontalAlignment { get => _alignment; set => SetAlignment(value); }
         public RectangleF? ClipRect { get => _segment.ClipRect; set => SetClipRect(value); }
         public bool BuildQuadTree { get; set; }
 
-        public bool IsShadowed { get; set; }
+        public bool IsShadowed { get => _shadowed; set => SetIsShadowed(value); }
         public Color ShadowColor { get; set; }
         public ThicknessF ShadowSpacing { get; set; }
         #endregion
@@ -45,7 +43,7 @@ namespace GeneralShare.UI
             _font = font;
             _segment = new TextSegment(font);
             _segment.GlyphCallback = GlyphCallback;
-            _quadTree = QuadTreePool<int>.Rent(RectangleF.Empty, 2, allowOverflow: true, fuzzyBoundaries: true);
+            _quadTree = QuadTreePool<CharSpriteInfo>.Rent(RectangleF.Empty, threshold: 2, allowOverflow: true, fuzzyBoundaries: true);
 
             Color = Color.White;
             HorizontalAlignment = TextAlignment.Left;
@@ -61,66 +59,86 @@ namespace GeneralShare.UI
 
         private void UITextElement_OnMousePress(MouseState mouseState, MouseButton buttons)
         {
-            var list = _segment._glyphList;
-            int glyphCount = list.Count;
+            int glyphCount = _segment._glyphList.Count;
             if (glyphCount == 0)
                 return;
-
-            BitmapFont.Glyph lastGlyph = default;
-            RectangleF lastRect = default;
+            
+            int line = default;
+            RectangleF rect = default;
 
             _quadTree.Clear();
             for (int i = 0; i < glyphCount; i++)
             {
-                lastGlyph = list[i];
-                if (lastGlyph.FontRegion == null && lastGlyph.Character != '\n')
+                BitmapFont.Glyph glyph = _segment._glyphList[i];
+                if (glyph.FontRegion == null && glyph.Character != '\n')
                     continue;
 
-                var size = lastGlyph.Character == '\n' ?
-                    NewLineCharSize : new SizeF(lastGlyph.FontRegion.Width / 2f, _font.LineHeight / 2f);
+                // the new line char may actually have a region
+                SizeF size = (glyph.FontRegion == null && glyph.Character == '\n') ?
+                    NewLineCharSize : new SizeF(glyph.FontRegion.Width / 2f, _font.LineHeight / 2f);
 
-                int line = (int)Math.Floor(lastGlyph.Position.Y / _font.LineHeight);
-                var pos = new PointF(lastGlyph.Position.X + size.Width / 2f, line * _font.LineHeight + size.Height / 2f);
+                line = (int)Math.Floor(glyph.Position.Y / _font.LineHeight);
+                var pos = new PointF(glyph.Position.X + size.Width / 2f, line * _font.LineHeight + size.Height / 2f);
 
-                lastRect = new RectangleF(pos, size);
-                _quadTree.Insert(lastRect, i);
+                rect = new RectangleF(pos, size);
+                _quadTree.Insert(rect, new CharSpriteInfo(i, line));
             }
 
             if (glyphCount > 0)
             {
-                RectangleF tailRect = lastRect;
-                tailRect.X += lastRect.Width * 2f + _font.LetterSpacing;
+                RectangleF tailRect = rect;
+                tailRect.X += rect.Width * 2f + _font.LetterSpacing;
                 tailRect.Size = NewLineCharSize;
 
-                _quadTree.Insert(tailRect, glyphCount);
+                _quadTree.Insert(tailRect, new CharSpriteInfo(glyphCount, line));
             }
         }
 
         public override void Draw(GameTime time, SpriteBatch batch)
         {
-            if (IsShadowVisisble)
+            if (IsShadowed)
                 batch.DrawFilledRectangle(_boundaries, ShadowColor);
-            batch.DrawString(_segment, StartPosition);
+            batch.DrawString(_segment, _stringRect.Position);
 
+            var pos = GlobalPosition;
             var scale = GlobalScale;
-            var offset = new RectangleF(GlobalPosition.ToVector2(), SizeF.Empty);
+            var offset = new RectangleF(pos.ToVector2(), SizeF.Empty);
             
             //DrawTree(batch, _quadTree, offset, scale);
         
-            var posInTree = (Input.MousePosition.ToVector2() - GlobalPosition.ToVector2()) / GlobalScale;
-            RectangleF _range = new RectangleF(posInTree - new Vector2(_font.LineHeight), new Vector2(_font.LineHeight * 2));
-            batch.DrawRectangle(new RectangleF(_range.Position * scale, _range.Size * scale) + offset, Color.Orange, 2);
+            var posInTree = (Input.MousePosition.ToVector2() - pos.ToVector2()) / scale;
+            var range = new RectangleF(posInTree - new Vector2(_font.LineHeight), new Vector2(_font.LineHeight * 2));
+            batch.DrawRectangle(new RectangleF(range.Position * scale, range.Size * scale) + offset, Color.Orange, 2);
 
-            var _last = _quadTree.QueryNearest(_range, posInTree);
+            var _last = _quadTree.QueryNearest(range, posInTree);
             if (_last.HasValue)
             {
-                var item = _last.Value;
-                if (IsSelected && item.Value >= 0 && _segment.SpriteCount > 0)
+                var quadItem = _last.Value;
+                if (IsSelected && quadItem.Value.Index >= 0 && _segment.SpriteCount > 0)
                 {
-                    RectangleF rect = new RectangleF(item.Bounds.Position * scale, item.Bounds.Size * scale) + offset + new RectangleF(-2, -2, 4, 4);
-                    batch.DrawRectangle(rect, Color.OrangeRed, 3);
+                    PointF glyphPos;
+                    if (quadItem.Value.Index < _segment._glyphList.Count)
+                        glyphPos = _segment._glyphList[quadItem.Value.Index].Position;
+                    else
+                        glyphPos = quadItem.Bounds.Position;
+                    glyphPos *= scale;
+
+                    var rect = new RectangleF(
+                        glyphPos.X,
+                        quadItem.Value.Line * _font.LineHeight * scale.Y,
+                        width: 4f,
+                        height: _font.LineHeight * scale.Y * 0.75f);
+
+                    rect.X -= rect.Width;
+                    rect.Y += _font.LineHeight * scale.Y * 0.25f / 2f;
+
+                    batch.DrawFilledRectangle(rect + offset, Color.OrangeRed);
                 }
             }
+
+            batch.DrawRectangle(offset + new RectangleF(0, 0, _boundaries.Width, _font.LineHeight * scale.Y), Color.White, 2);
+            
+            batch.DrawRectangle(_stringRect, Color.LimeGreen, 2);
         }
 
         protected override void Dispose(bool disposing)
@@ -154,6 +172,18 @@ namespace GeneralShare.UI
                 DrawTree(batch, ree.TopRight, offset, scale);
                 DrawTree(batch, ree.BottomLeft, offset, scale);
                 DrawTree(batch, ree.BottomRight, offset, scale);
+            }
+        }
+
+        public readonly struct CharSpriteInfo
+        {
+            public int Index { get; }
+            public int Line { get; }
+
+            public CharSpriteInfo(int index, int line)
+            {
+                Index = index;
+                Line = line;
             }
         }
     }
