@@ -19,19 +19,21 @@ namespace GeneralShare.UI
         #region Properties
         protected Vector2 StartPosition { get; private set; }
         protected bool IsShadowVisisble => IsShadowed && GetSpriteCount() > 0;
+        protected SizeF NewLineCharSize => new SizeF(_font.LineHeight / 8f, _font.LineHeight / 2f);
 
-        protected abstract bool AllowTextColorFormatting { get; }
         protected ICharIterator TextValue { get => _segment.CurrentText; set => SetTextValue(value); }
+        protected abstract bool AllowTextColorFormatting { get; }
+
+        public SizeF Measure => GetMeasure();
+        public int Length => TextValue.Length;
+        public int SpriteCount => GetSpriteCount();
 
         public override RectangleF Boundaries => GetBounds();
         public BitmapFont Font { get => _font; set => SetFont(value); }
         public Color Color { get => _segment.Color; set => SetColor(value); }
         public TextAlignment HorizontalAlignment { get => _alignment; set => SetAlignment(value); }
         public RectangleF? ClipRect { get => _segment.ClipRect; set => SetClipRect(value); }
-
-        public SizeF Measure => GetMeasure();
-        public int Length => TextValue.Length;
-        public int SpriteCount => GetSpriteCount();
+        public bool BuildQuadTree { get; set; }
 
         public bool IsShadowed { get; set; }
         public Color ShadowColor { get; set; }
@@ -48,6 +50,7 @@ namespace GeneralShare.UI
             Color = Color.White;
             HorizontalAlignment = TextAlignment.Left;
             IsMouseEventTrigger = true;
+            BuildQuadTree = true;
 
             IsShadowed = false;
             ShadowColor = new Color(Color.Black, 0.75f);
@@ -58,25 +61,38 @@ namespace GeneralShare.UI
 
         private void UITextElement_OnMousePress(MouseState mouseState, MouseButton buttons)
         {
-            if (_segment._glyphList.Count == 0)
+            var list = _segment._glyphList;
+            int glyphCount = list.Count;
+            if (glyphCount == 0)
                 return;
 
+            BitmapFont.Glyph lastGlyph = default;
+            RectangleF lastRect = default;
+
             _quadTree.Clear();
-            for (int i = 0; i < _segment._glyphList.Count; i++)
+            for (int i = 0; i < glyphCount; i++)
             {
-                BitmapFont.Glyph glyph = _segment._glyphList[i];
-                if (glyph.FontRegion == null && glyph.Character != '\n')
+                lastGlyph = list[i];
+                if (lastGlyph.FontRegion == null && lastGlyph.Character != '\n')
                     continue;
-                
-                var size = glyph.Character == '\n' 
-                    ? new SizeF(_font.LineHeight / 4, _font.LineHeight / 2f)
-                    : new SizeF(glyph.FontRegion.Width, _font.LineHeight / 2f);
 
-                int line = (int)Math.Floor(glyph.Position.Y / _font.LineHeight);
-                var pos = new PointF(glyph.Position.X, line * _font.LineHeight + size.Height / 2f);
+                var size = lastGlyph.Character == '\n' ?
+                    NewLineCharSize : new SizeF(lastGlyph.FontRegion.Width / 2f, _font.LineHeight / 2f);
 
-                var rect = new RectangleF(pos, size);
-                _quadTree.Insert(rect, i);
+                int line = (int)Math.Floor(lastGlyph.Position.Y / _font.LineHeight);
+                var pos = new PointF(lastGlyph.Position.X + size.Width / 2f, line * _font.LineHeight + size.Height / 2f);
+
+                lastRect = new RectangleF(pos, size);
+                _quadTree.Insert(lastRect, i);
+            }
+
+            if (glyphCount > 0)
+            {
+                RectangleF tailRect = lastRect;
+                tailRect.X += lastRect.Width * 2f + _font.LetterSpacing;
+                tailRect.Size = NewLineCharSize;
+
+                _quadTree.Insert(tailRect, glyphCount);
             }
         }
 
@@ -89,7 +105,7 @@ namespace GeneralShare.UI
             var scale = GlobalScale;
             var offset = new RectangleF(GlobalPosition.ToVector2(), SizeF.Empty);
             
-            DrawTree(batch, _quadTree, offset, scale);
+            //DrawTree(batch, _quadTree, offset, scale);
         
             var posInTree = (Input.MousePosition.ToVector2() - GlobalPosition.ToVector2()) / GlobalScale;
             RectangleF _range = new RectangleF(posInTree - new Vector2(_font.LineHeight), new Vector2(_font.LineHeight * 2));

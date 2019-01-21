@@ -64,6 +64,8 @@ namespace GeneralShare.UI
             SizeF measure = base.GetMeasure();
             if (measure == SizeF.Empty)
                 measure = _placeholderSegment.Measure;
+            else
+                measure.Width += NewLineCharSize.Width * 1.5f * GlobalScale.X;
             return measure;
         }
 

@@ -25,10 +25,10 @@ namespace GeneralShare.UI
 
             //System.Console.WriteLine("Full Cleanup: " + DirtMarks);
 
-            FullCleanup(glyphUpdate: false);
+            FullCleanup();
         }
 
-        private void FullCleanup(bool glyphUpdate)
+        private void FullCleanup()
         {
             // mark clean first to prevent stack overflow
             MarkClean();
@@ -62,16 +62,19 @@ namespace GeneralShare.UI
                 _boundaries += ShadowSpacing.ToOffsetRectangle(GlobalScale);
 
             _boundaries = OnBoundaryUpdate(_boundaries);
+
+            if (BuildQuadTree)
+            {
+                // TODO: fix quad tree, the float arithmetic is incorrect and we need some offset here
+                //       or the items will be "out of bounds" (we use fuzzy boundaries as a remedy though)
+                _quadTree.Resize(new RectangleF(PointF.Zero, GetMeasure() / _segment.Scale));
+            }
         }
 
         protected virtual void BuildTextSprites()
         {
             _segment.Scale = GlobalScale;
             _segment.BuildSprites(measure: true);
-
-            // TODO: fix quad tree, the float arithmetic is incorrect and we need some offset here
-            //       or the items will be "out of bounds" (we use fuzzy boundaries as a remedy though)
-            _quadTree.Resize(new RectangleF(PointF.Zero, (_segment.Measure / _segment.Scale)));
         }
 
         protected virtual RectangleF OnBoundaryUpdate(RectangleF newRect)
@@ -87,7 +90,7 @@ namespace GeneralShare.UI
         protected void UpdateGlyphs()
         {
             _segment.UpdateGlyphs();
-            FullCleanup(glyphUpdate: true);
+            FullCleanup();
             InvokeMarkedDirty(DirtMarkType.Boundaries);
         }
     }
