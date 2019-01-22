@@ -73,7 +73,8 @@ namespace GeneralShare.UI
             {
                 // TODO: fix quad tree, the float arithmetic is incorrect and we need some offset here
                 //       or the items will be "out of bounds" (we use fuzzy boundaries as a remedy though)
-                _quadTree.Resize(new RectangleF(PointF.Zero, GetMeasure() / _segment.Scale));
+                var offset = new RectangleF(0, 0, NewLineCharSize.Width, 0);
+                _quadTree.Resize(new RectangleF(PointF.Zero, GetMeasure() / _segment.Scale) + offset);
             }
         }
 
@@ -91,8 +92,10 @@ namespace GeneralShare.UI
         protected virtual RectangleF OnStringRectUpdate(RectangleF newRect)
         {
             if (IsShadowed)
+            {
                 // TODO: fix ambiguity error in framework resulting in a unnecessary cast
-                newRect.Position += (Vector2)ShadowSpacing.ToOffsetPosition(GlobalScale);
+                newRect.Position -= (Vector2)ShadowSpacing.ToOffsetPosition(GlobalScale);
+            }
 
             return newRect;
         }
@@ -101,8 +104,8 @@ namespace GeneralShare.UI
         {
             //TODO: fix offsets
 
-            //if (IsShadowed)
-            //    newRect.Size += ShadowSpacing.ToOffsetSize(GlobalScale);
+            if (IsShadowed)
+                newRect += ShadowSpacing.ToOffsetRectangle(GlobalScale);
            
             return newRect;
         }

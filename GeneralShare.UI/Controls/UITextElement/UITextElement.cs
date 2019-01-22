@@ -130,15 +130,11 @@ namespace GeneralShare.UI
                         height: _font.LineHeight * scale.Y * 0.75f);
 
                     rect.X -= rect.Width;
-                    rect.Y += _font.LineHeight * scale.Y * 0.25f / 2f;
+                    rect.Y -= _font.LineHeight * scale.Y * 0.25f / 2f;
 
                     batch.DrawFilledRectangle(rect + offset, Color.OrangeRed);
                 }
             }
-
-            batch.DrawRectangle(offset + new RectangleF(0, 0, _boundaries.Width, _font.LineHeight * scale.Y), Color.White, 2);
-            
-            batch.DrawRectangle(_stringRect, Color.LimeGreen, 2);
         }
 
         protected override void Dispose(bool disposing)
