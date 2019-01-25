@@ -75,10 +75,10 @@ namespace GeneralShare.UI
 
                 // the new line char may actually have a region
                 SizeF size = (glyph.FontRegion == null && glyph.Character == '\n') ?
-                    NewLineCharSize : new SizeF(glyph.FontRegion.Width / 2f, _font.LineHeight / 2f);
+                    NewLineCharSize : new SizeF(glyph.FontRegion.Width, _font.LineHeight / 2f);
 
                 line = (int)Math.Floor(glyph.Position.Y / _font.LineHeight);
-                var pos = new PointF(glyph.Position.X + size.Width / 2f, line * _font.LineHeight + size.Height / 2f);
+                var pos = new PointF(glyph.Position.X, line * _font.LineHeight + size.Height / 2f);
 
                 rect = new RectangleF(pos, size);
                 _quadTree.Insert(rect, new CharSpriteInfo(i, line));
@@ -87,7 +87,7 @@ namespace GeneralShare.UI
             if (glyphCount > 0)
             {
                 RectangleF tailRect = rect;
-                tailRect.X += rect.Width * 2f + _font.LetterSpacing;
+                tailRect.X += rect.Width + _font.LetterSpacing;
                 tailRect.Size = NewLineCharSize;
 
                 _quadTree.Insert(tailRect, new CharSpriteInfo(glyphCount, line));
@@ -99,14 +99,13 @@ namespace GeneralShare.UI
             if (IsShadowed)
                 batch.DrawFilledRectangle(_boundaries, ShadowColor);
             batch.DrawString(_segment, _stringRect.Position);
-
-            var pos = GlobalPosition;
-            var scale = GlobalScale;
-            var offset = new RectangleF(pos.ToVector2(), SizeF.Empty);
             
-            //DrawTree(batch, _quadTree, offset, scale);
+            var scale = GlobalScale;
+            var offset = new RectangleF(_stringRect.Position, SizeF.Empty);
+            
+            DrawTree(batch, _quadTree, offset, scale);
         
-            var posInTree = (Input.MousePosition.ToVector2() - pos.ToVector2()) / scale;
+            var posInTree = (Input.MousePosition.ToVector2() - _stringRect.Position.ToVector2()) / scale;
             var range = new RectangleF(posInTree - new Vector2(_font.LineHeight), new Vector2(_font.LineHeight * 2));
             batch.DrawRectangle(new RectangleF(range.Position * scale, range.Size * scale) + offset, Color.Orange, 2);
 
@@ -116,23 +115,22 @@ namespace GeneralShare.UI
                 var quadItem = _last.Value;
                 if (IsSelected && quadItem.Value.Index >= 0 && _segment.SpriteCount > 0)
                 {
-                    PointF glyphPos;
+                    float glyphX;
                     if (quadItem.Value.Index < _segment._glyphList.Count)
-                        glyphPos = _segment._glyphList[quadItem.Value.Index].Position;
+                        glyphX = _segment._glyphList[quadItem.Value.Index].Position.X;
                     else
-                        glyphPos = quadItem.Bounds.Position;
-                    glyphPos *= scale;
+                        glyphX = quadItem.Bounds.X;
 
                     var rect = new RectangleF(
-                        glyphPos.X,
-                        quadItem.Value.Line * _font.LineHeight * scale.Y,
+                        glyphX * scale.X + _stringRect.X,
+                        quadItem.Value.Line * _font.LineHeight * scale.Y + _stringRect.Y,
                         width: 4f,
                         height: _font.LineHeight * scale.Y * 0.75f);
 
                     rect.X -= rect.Width;
-                    rect.Y -= _font.LineHeight * scale.Y * 0.25f / 2f;
+                    //  rect.Y -= _font.LineHeight * scale.Y * 0.25f / 2f;
 
-                    batch.DrawFilledRectangle(rect + offset, Color.OrangeRed);
+                    batch.DrawFilledRectangle(rect, Color.OrangeRed);
                 }
             }
         }
