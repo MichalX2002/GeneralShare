@@ -243,9 +243,9 @@ namespace GeneralShare
         private static void UpdateModifiers()
         {
             ModifiersDown = Keyboard.Modifiers;
-            CtrlDown = ModifiersDown.HasFlags(KeyModifier.Ctrl, KeyModifier.LeftCtrl, KeyModifier.RightCtrl);
-            AltDown = ModifiersDown.HasFlags(KeyModifier.Alt, KeyModifier.LeftAlt, KeyModifier.RightAlt);
-            ShiftDown = ModifiersDown.HasFlags(KeyModifier.Shift, KeyModifier.LeftShift, KeyModifier.RightShift);
+            CtrlDown = ModifiersDown.HasFlags(KeyModifier.LeftCtrl, KeyModifier.RightCtrl);
+            AltDown = ModifiersDown.HasFlags(KeyModifier.LeftAlt, KeyModifier.RightAlt);
+            ShiftDown = ModifiersDown.HasFlags(KeyModifier.LeftShift, KeyModifier.RightShift);
             NumLock = ModifiersDown.HasFlags(KeyModifier.NumLock);
             CapsLock = ModifiersDown.HasFlags(KeyModifier.CapsLock);
         }

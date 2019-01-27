@@ -68,11 +68,12 @@
     <Compile Include="DrawExtensions.cs" />
     <Compile Include="IteratorPool.cs" />
     <Compile Include="Controls\TextSegment\TextSegment.StringInsert.cs" />
+    <Compile Include="TextVerticalAlignment.cs" />
     <Compile Include="ThicknessHelper.cs" />
     <Compile Include="TransformCharIterator.cs" />
     <Compile Include="SpriteBatchExtensions.cs" />
     <Compile Include="FontGlyphIterator.cs" />
-    <Compile Include="TextAlignment.cs" />
+    <Compile Include="TextHorizontalAlignment.cs" />
     <Compile Include="Controls\TextSegment\TextSegment.cs" />
     <Compile Include="TextFormat.cs" />
     <Compile Include="TextRenderer.cs" />

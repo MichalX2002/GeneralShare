@@ -46,26 +46,10 @@ namespace GeneralShare.UI
             InvokeMarkedDirty(DirtMarkType.Boundaries);
         }
 
-        private Vector2 CalculateAlignmentOffset()
-        {
-            switch (HorizontalAlignment)
-            {
-                default:
-                    //case TextAlignment.Left:
-                    return Vector2.Zero;
-
-                case TextAlignment.Center:
-                    return -new Vector2(GetMeasure().Width, 0) / 2f;
-
-                case TextAlignment.Right:
-                    return -new Vector2(GetMeasure().Width, 0);
-            }
-        }
-
         private void UpdateBoundaries()
         {
             _stringRect = OnStringRectUpdate(
-                new RectangleF(GlobalPosition.ToVector2() + CalculateAlignmentOffset(), GetMeasure()));
+                new RectangleF(GlobalPosition.ToVector2() + GetAlignmentOffset(), GetMeasure()));
             
             _boundaries = OnBoundaryUpdate(_stringRect);
 
@@ -73,8 +57,9 @@ namespace GeneralShare.UI
             {
                 // TODO: fix quad tree, the float arithmetic is incorrect and we need some offset here
                 //       or the items will be "out of bounds" (we use fuzzy boundaries as a remedy though)
-                var offset = new RectangleF(0, 0, NewLineCharSize.Width, 0);
-                _quadTree.Resize(new RectangleF(PointF.Zero, GetMeasure() / _segment.Scale) + offset);
+                var bounds = new RectangleF(PointF.Zero, _stringRect.Size / GlobalScale);
+                bounds.Width += GetNewLineCharSize().Width; // just to add some extra space
+                _quadTree.Resize(bounds);
             }
         }
 
@@ -84,26 +69,17 @@ namespace GeneralShare.UI
             _segment.BuildSprites(measure: true);
         }
 
-        protected virtual SizeF GetMeasure()
-        {
-            return _segment.Measure;
-        }
-
         protected virtual RectangleF OnStringRectUpdate(RectangleF newRect)
         {
             if (IsShadowed)
-            {
-                // TODO: fix ambiguity error in framework resulting in a unnecessary cast
+                // TODO: fix ambiguity error in monogameframework resulting in a unnecessary cast
                 newRect.Position -= (Vector2)ShadowSpacing.ToOffsetPosition(GlobalScale);
-            }
 
             return newRect;
         }
 
         protected virtual RectangleF OnBoundaryUpdate(RectangleF newRect)
         {
-            //TODO: fix offsets
-
             if (IsShadowed)
                 newRect += ShadowSpacing.ToOffsetRectangle(GlobalScale);
            

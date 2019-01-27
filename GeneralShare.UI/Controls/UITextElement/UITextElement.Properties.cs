@@ -24,9 +24,14 @@ namespace GeneralShare.UI
                 _segment.Color = value;
         }
 
-        private void SetAlignment(TextAlignment value)
+        private void SetHorizontalAlignment(TextHorizontalAlignment value)
         {
-            MarkDirty(ref _alignment, value, DirtMarkType.TextAlignment);
+            MarkDirty(ref _horizontalAlignment, value, DirtMarkType.TextAlignment);
+        }
+
+        private void SetVerticalAlignment(TextVerticalAlignment value)
+        {
+            MarkDirty(ref _verticalAlignment, value, DirtMarkType.TextAlignment);
         }
 
         private void SetIsShadowed(bool value)
@@ -52,6 +57,56 @@ namespace GeneralShare.UI
         {
             AssertPure();
             return _stringRect;
+        }
+        
+        protected virtual SizeF GetMeasure()
+        {
+            var size = _segment.Measure;
+            if(BuildQuadTree)
+                size.Width += GetNewLineCharSize().Width * GlobalScale.X;
+            return size;
+        }
+
+        protected SizeF GetNewLineCharSize()
+        {
+            float width = _font.GetCharacterRegion('\n', out var region) ? region.Width : 1;
+            float height = GetQuadTreeCharHeight();
+            return new SizeF(width, height);
+        }
+
+        protected float GetQuadTreeCharHeight()
+        {
+            return _font.LineHeight / 2f;
+        }
+        
+        protected Vector2 GetAlignmentOffset()
+        {
+            var offset = Vector2.Zero;
+            var measure = GetMeasure() + ShadowSpacing.ToOffsetSize(GlobalScale);
+
+            switch (HorizontalAlignment)
+            {
+                case TextHorizontalAlignment.Center:
+                    offset.X = -measure.Width / 2f;
+                    break;
+
+                case TextHorizontalAlignment.Right:
+                    offset.X = -measure.Width;
+                    break;
+            }
+
+            switch (VerticalAlignment)
+            {
+                case TextVerticalAlignment.Center:
+                    offset.Y = -measure.Height / 2f;
+                    break;
+
+                case TextVerticalAlignment.Bottom:
+                    offset.Y = -measure.Height;
+                    break;
+            }
+
+            return offset;
         }
         #endregion
     }

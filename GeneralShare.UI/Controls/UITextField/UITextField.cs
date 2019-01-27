@@ -64,6 +64,7 @@ namespace GeneralShare.UI
 
             IsKeyboardEventTrigger = true;
             IsMouseEventTrigger = true;
+            BuildQuadTree = true;
             IsSelectable = true;
             SelectionColor = Color.OrangeRed;
             SelectionOutlineThickness = 2f;

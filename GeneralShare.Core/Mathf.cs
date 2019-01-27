@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using MonoGame.Extended;
 
 namespace GeneralShare
@@ -47,6 +48,21 @@ namespace GeneralShare
             value.Width = Clamp(value.Width, min.Width, max.Width);
             value.Height = Clamp(value.Height, min.Height, max.Height);
             return value;
+        }
+
+        public static float Round(float value)
+        {
+            return (float)Math.Round(value);
+        }
+
+        public static float Round(float value, int decimals)
+        {
+            return (float)Math.Round(value, decimals);
+        }
+
+        public static float Round(float value, int decimals, MidpointRounding mode)
+        {
+            return (float)Math.Round(value, decimals, mode);
         }
     }
 }

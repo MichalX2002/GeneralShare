@@ -8,9 +8,8 @@ namespace GeneralShare.UI
         protected override SizeF GetMeasure()
         {
             SizeF measure = base.GetMeasure();
-            if (measure == SizeF.Empty)
-                measure = _placeholderSegment.Measure;
-
+            if (Length == 0)
+                measure += _placeholderSegment.Measure;
             return measure;
         }
 

@@ -14,22 +14,24 @@ namespace GeneralShare.UI
         private TextSegment _segment;
         private RectangleF _stringRect;
         private RectangleF _boundaries;
-        private TextAlignment _alignment;
         private bool _shadowed;
+        private TextHorizontalAlignment _horizontalAlignment;
+        private TextVerticalAlignment _verticalAlignment;
         private QuadTree<CharSpriteInfo> _quadTree;
 
         #region Properties
-        protected SizeF NewLineCharSize => new SizeF(_font.LineHeight / 8f, _font.LineHeight / 2f);
-
         protected ICharIterator TextValue { get => _segment.CurrentText; set => SetTextValue(value); }
         protected abstract bool AllowTextColorFormatting { get; }
         public int Length => TextValue.Length;
 
         public override RectangleF Boundaries => GetBoundaries();
         public RectangleF StringRect => GetStringRect();
+        public SizeF Measure => StringRect.Size;
+
         public BitmapFont Font { get => _font; set => SetFont(value); }
         public Color Color { get => _segment.Color; set => SetColor(value); }
-        public TextAlignment HorizontalAlignment { get => _alignment; set => SetAlignment(value); }
+        public TextHorizontalAlignment HorizontalAlignment { get => _horizontalAlignment; set => SetHorizontalAlignment(value); }
+        public TextVerticalAlignment VerticalAlignment { get => _verticalAlignment; set => SetVerticalAlignment(value); }
         public RectangleF? ClipRect { get => _segment.ClipRect; set => SetClipRect(value); }
         public bool BuildQuadTree { get; set; }
 
@@ -46,17 +48,18 @@ namespace GeneralShare.UI
             _quadTree = QuadTreePool<CharSpriteInfo>.Rent(RectangleF.Empty, threshold: 2, allowOverflow: true, fuzzyBoundaries: true);
 
             Color = Color.White;
-            HorizontalAlignment = TextAlignment.Left;
-            IsMouseEventTrigger = true;
-            BuildQuadTree = true;
+            HorizontalAlignment = TextHorizontalAlignment.Left;
+            VerticalAlignment = TextVerticalAlignment.Top;
 
             IsShadowed = false;
             ShadowColor = new Color(Color.Black, 0.75f);
             ShadowSpacing = new ThicknessF(2, -1, 2, -1);
-            
+
+            IsMouseEventTrigger = true;
             OnMouseDown += UITextElement_OnMousePress;
         }
 
+        // TODO: move into some other file
         private void UITextElement_OnMousePress(MouseState mouseState, MouseButton buttons)
         {
             int glyphCount = _segment._glyphList.Count;
@@ -74,22 +77,25 @@ namespace GeneralShare.UI
                     continue;
 
                 // the new line char may actually have a region
-                SizeF size = (glyph.FontRegion == null && glyph.Character == '\n') ?
-                    NewLineCharSize : new SizeF(glyph.FontRegion.Width, _font.LineHeight / 2f);
+                SizeF size = glyph.Character == '\n' ?
+                    GetNewLineCharSize() : new SizeF(glyph.FontRegion.Width * 0.5f, GetQuadTreeCharHeight());
 
                 line = (int)Math.Floor(glyph.Position.Y / _font.LineHeight);
                 var pos = new PointF(glyph.Position.X, line * _font.LineHeight + size.Height / 2f);
 
                 rect = new RectangleF(pos, size);
                 _quadTree.Insert(rect, new CharSpriteInfo(i, line));
+
+                if(glyph.FontRegion != null)
+                    rect.X += glyph.FontRegion.XAdvance;
             }
 
+            // insert tail that's used to check if we're at the end
             if (glyphCount > 0)
             {
                 RectangleF tailRect = rect;
-                tailRect.X += rect.Width + _font.LetterSpacing;
-                tailRect.Size = NewLineCharSize;
-
+                tailRect.Size = GetNewLineCharSize();
+                
                 _quadTree.Insert(tailRect, new CharSpriteInfo(glyphCount, line));
             }
         }
@@ -99,7 +105,11 @@ namespace GeneralShare.UI
             if (IsShadowed)
                 batch.DrawFilledRectangle(_boundaries, ShadowColor);
             batch.DrawString(_segment, _stringRect.Position);
-            
+
+            // TODO: move everything underneath into some other file
+            if (!BuildQuadTree)
+                return;
+
             var scale = GlobalScale;
             var offset = new RectangleF(_stringRect.Position, SizeF.Empty);
             
@@ -107,12 +117,12 @@ namespace GeneralShare.UI
         
             var posInTree = (Input.MousePosition.ToVector2() - _stringRect.Position.ToVector2()) / scale;
             var range = new RectangleF(posInTree - new Vector2(_font.LineHeight), new Vector2(_font.LineHeight * 2));
-            batch.DrawRectangle(new RectangleF(range.Position * scale, range.Size * scale) + offset, Color.Orange, 2);
+            //batch.DrawRectangle(new RectangleF(range.Position * scale, range.Size * scale) + offset, Color.Orange, 2);
 
-            var _last = _quadTree.QueryNearest(range, posInTree);
-            if (_last.HasValue)
+            var last = _quadTree.QueryNearest(range, posInTree);
+            if (last.HasValue)
             {
-                var quadItem = _last.Value;
+                var quadItem = last.Value;
                 if (IsSelected && quadItem.Value.Index >= 0 && _segment.SpriteCount > 0)
                 {
                     float glyphX;
@@ -121,16 +131,18 @@ namespace GeneralShare.UI
                     else
                         glyphX = quadItem.Bounds.X;
 
+                    float lineHeight = _font.LineHeight * scale.Y;
                     var rect = new RectangleF(
                         glyphX * scale.X + _stringRect.X,
-                        quadItem.Value.Line * _font.LineHeight * scale.Y + _stringRect.Y,
+                        quadItem.Value.Line * lineHeight + _stringRect.Y,
                         width: 4f,
-                        height: _font.LineHeight * scale.Y * 0.75f);
+                        height: lineHeight * 0.75f);
 
                     rect.X -= rect.Width;
-                    //  rect.Y -= _font.LineHeight * scale.Y * 0.25f / 2f;
+                    rect.Y += lineHeight / 2f;
+                    rect.Y -= rect.Height / 2f;
 
-                    batch.DrawFilledRectangle(rect, Color.OrangeRed);
+                    batch.DrawFilledRectangle(rect, Color.Orange);
                 }
             }
         }
