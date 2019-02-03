@@ -53,14 +53,28 @@ namespace GeneralShare.UI
             
             _boundaries = OnBoundaryUpdate(_stringRect);
 
-            if (BuildQuadTree && Length > 0)
+            UpdateQuadTreeBoundaries();
+        }
+
+        private void UpdateQuadTreeBoundaries()
+        {
+            if (BuildQuadTree)
             {
-                // TODO: fix quad tree, the float arithmetic is incorrect and we need some offset here
-                //       or the items will be "out of bounds" (we use fuzzy boundaries as a remedy though)
-                var bounds = new RectangleF(PointF.Zero, _stringRect.Size / GlobalScale);
-                bounds.Width += GetNewLineCharSize().Width; // just to add some extra space
-                _quadTree.Resize(bounds);
+                if (Length > 0)
+                {
+                    // TODO: fix quad tree, the float arithmetic is incorrect and we often need some offset or
+                    //       the items will be "out of bounds" (we can use fuzzy boundaries as a remedy though)
+
+                    var bounds = new RectangleF(PointF.Zero, _stringRect.Size / GlobalScale);
+                    bounds.Width += GetNewLineCharSize().Width * 2; // to ensure that the last quad will fit
+                    _quadTree.Resize(bounds);
+
+                    return;
+                }
             }
+
+            // clear if don't build the quad tree or if length was zero
+            _quadTree.Clear();
         }
 
         protected virtual void BuildTextSprites()
@@ -73,7 +87,9 @@ namespace GeneralShare.UI
         {
             if (IsShadowed)
                 // TODO: fix ambiguity error in monogameframework resulting in a unnecessary cast
-                newRect.Position -= (Vector2)ShadowSpacing.ToOffsetPosition(GlobalScale);
+                newRect.Position -= ShadowSpacing.ToOffsetPosition(GlobalScale);
+
+            newRect.X += GetTextOffsetX();
 
             return newRect;
         }
@@ -82,7 +98,11 @@ namespace GeneralShare.UI
         {
             if (IsShadowed)
                 newRect += ShadowSpacing.ToOffsetRectangle(GlobalScale);
-           
+
+            float textOffset = GetTextOffsetX();
+            newRect.X -= textOffset;
+            newRect.Width += textOffset * 2;
+
             return newRect;
         }
 

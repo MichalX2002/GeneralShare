@@ -78,7 +78,7 @@ namespace GeneralShare.UI
 
                 // the new line char may actually have a region
                 SizeF size = glyph.Character == '\n' ?
-                    GetNewLineCharSize() : new SizeF(glyph.FontRegion.Width * 0.5f, GetQuadTreeCharHeight());
+                    GetNewLineCharSize() : new SizeF(glyph.FontRegion.Width * 0.4f, GetQuadTreeCharHeight());
 
                 line = (int)Math.Floor(glyph.Position.Y / _font.LineHeight);
                 var pos = new PointF(glyph.Position.X, line * _font.LineHeight + size.Height / 2f);
@@ -93,9 +93,7 @@ namespace GeneralShare.UI
             // insert tail that's used to check if we're at the end
             if (glyphCount > 0)
             {
-                RectangleF tailRect = rect;
-                tailRect.Size = GetNewLineCharSize();
-                
+                var tailRect = new RectangleF(rect.Position, GetNewLineCharSize());
                 _quadTree.Insert(tailRect, new CharSpriteInfo(glyphCount, line));
             }
         }
@@ -113,12 +111,11 @@ namespace GeneralShare.UI
             var scale = GlobalScale;
             var offset = new RectangleF(_stringRect.Position, SizeF.Empty);
             
-            DrawTree(batch, _quadTree, offset, scale);
+            //DrawTree(batch, _quadTree, offset, scale);
         
             var posInTree = (Input.MousePosition.ToVector2() - _stringRect.Position.ToVector2()) / scale;
             var range = new RectangleF(posInTree - new Vector2(_font.LineHeight), new Vector2(_font.LineHeight * 2));
-            //batch.DrawRectangle(new RectangleF(range.Position * scale, range.Size * scale) + offset, Color.Orange, 2);
-
+            
             var last = _quadTree.QueryNearest(range, posInTree);
             if (last.HasValue)
             {
@@ -141,10 +138,12 @@ namespace GeneralShare.UI
                     rect.X -= rect.Width;
                     rect.Y += lineHeight / 2f;
                     rect.Y -= rect.Height / 2f;
-
+                    
                     batch.DrawFilledRectangle(rect, Color.Orange);
                 }
             }
+            
+            batch.DrawRectangle(GetStringRect(), Color.Purple);
         }
 
         protected override void Dispose(bool disposing)

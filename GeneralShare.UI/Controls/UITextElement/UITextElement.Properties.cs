@@ -58,13 +58,10 @@ namespace GeneralShare.UI
             AssertPure();
             return _stringRect;
         }
-        
-        protected virtual SizeF GetMeasure()
+
+        protected float GetQuadTreeCharHeight()
         {
-            var size = _segment.Measure;
-            if(BuildQuadTree)
-                size.Width += GetNewLineCharSize().Width * GlobalScale.X;
-            return size;
+            return _font.LineHeight / 2f;
         }
 
         protected SizeF GetNewLineCharSize()
@@ -74,15 +71,21 @@ namespace GeneralShare.UI
             return new SizeF(width, height);
         }
 
-        protected float GetQuadTreeCharHeight()
+        private float GetTextOffsetX()
         {
-            return _font.LineHeight / 2f;
+            return GetNewLineCharSize().Width * GlobalScale.X;
+        }
+
+        protected virtual SizeF GetMeasure()
+        {
+            return _segment.Measure;
         }
         
         protected Vector2 GetAlignmentOffset()
         {
             var offset = Vector2.Zero;
             var measure = GetMeasure() + ShadowSpacing.ToOffsetSize(GlobalScale);
+            measure.Width += GetTextOffsetX() * 2;
 
             switch (HorizontalAlignment)
             {
