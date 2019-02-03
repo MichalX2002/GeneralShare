@@ -96,15 +96,19 @@ namespace GeneralShare.UI
                 batch.DrawString(_placeholderSegment, StringRect.Position);
 
             if (IsSelected)
-            {
-                var outlineOffset = new RectangleF(
-                    -SelectionOutlineThickness,
-                    -SelectionOutlineThickness,
-                    SelectionOutlineThickness * 2,
-                    SelectionOutlineThickness * 2);
+                batch.DrawRectangle(Boundaries, SelectionColor, SelectionOutlineThickness);
+        }
 
-                batch.DrawRectangle(Boundaries + outlineOffset, SelectionColor, SelectionOutlineThickness);
-            }
+        protected override RectangleF OnBoundaryUpdate(RectangleF newRect)
+        {
+            RectangleF baseRect = base.OnBoundaryUpdate(newRect);
+
+            baseRect.X -= SelectionOutlineThickness;
+            baseRect.Y -= SelectionOutlineThickness;
+            baseRect.Width += SelectionOutlineThickness * 2;
+            baseRect.Height += SelectionOutlineThickness * 2;
+
+            return baseRect;
         }
 
         private void LerpPlaceholderColor(GameTime time, float dst)

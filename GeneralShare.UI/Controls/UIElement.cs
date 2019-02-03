@@ -24,6 +24,9 @@ namespace GeneralShare.UI
         public event GenericKeyboardDelegate OnKeyRelease;
         public event Input.TextInputDelegate OnTextInput;
 
+        private bool _wasSelected;
+        private bool _isSelectable;
+
         public abstract RectangleF Boundaries { get; }
         public string Name { get; set; }
         public bool IsMouseEventTrigger { get; set; }
@@ -32,7 +35,13 @@ namespace GeneralShare.UI
         public bool IsSelected
         {
             get => Manager.SelectedElement == this;
-            set => Manager.SelectedElement = this;
+            set
+            {
+                if (value && IsSelectable)
+                    Manager.SelectedElement = this;
+                else if (!value && IsSelected)
+                    Manager.SelectedElement = null;
+            }
         }
 
         /// <summary>
@@ -50,7 +59,24 @@ namespace GeneralShare.UI
         /// Dictates if this <see cref="UIElement"/> can be selected
         /// as <see cref="UIManager.SelectedElement"/>.
         /// </summary>
-        public bool IsSelectable { get; set; }
+        public bool IsSelectable
+        {
+            get => _isSelectable;
+            set
+            {
+                if (_isSelectable != value)
+                {
+                    _isSelectable = value;
+                    if (!_isSelectable)
+                    {
+                        _wasSelected = IsSelected;
+                        IsSelected = false;
+                    }
+                    else if(_wasSelected && Manager.SelectedElement == null)
+                        IsSelected = true;
+                }
+            }
+        }
 
         public UIElement(UIManager manager) : base(manager)
         {

@@ -122,28 +122,21 @@ namespace GeneralShare.UI
                 var quadItem = last.Value;
                 if (IsSelected && quadItem.Value.Index >= 0 && _segment.SpriteCount > 0)
                 {
-                    float glyphX;
-                    if (quadItem.Value.Index < _segment._glyphList.Count)
-                        glyphX = _segment._glyphList[quadItem.Value.Index].Position.X;
-                    else
-                        glyphX = quadItem.Bounds.X;
-
                     float lineHeight = _font.LineHeight * scale.Y;
-                    var rect = new RectangleF(
-                        glyphX * scale.X + _stringRect.X,
-                        quadItem.Value.Line * lineHeight + _stringRect.Y,
-                        width: 4f,
-                        height: lineHeight * 0.75f);
+                    float lineY = quadItem.Value.Line * lineHeight + _stringRect.Y;
 
-                    rect.X -= rect.Width;
-                    rect.Y += lineHeight / 2f;
-                    rect.Y -= rect.Height / 2f;
+                    float caretWidth = 4f;
+                    float caretHeight = lineHeight * 0.75f;
+                    
+                    var rect = new RectangleF(
+                        quadItem.Bounds.X * scale.X + _stringRect.X - caretWidth,
+                        lineY + lineHeight / 2f - caretHeight / 2f,
+                        width: caretWidth,
+                        height: caretHeight);
                     
                     batch.DrawFilledRectangle(rect, Color.Orange);
                 }
             }
-            
-            batch.DrawRectangle(GetStringRect(), Color.Purple);
         }
 
         protected override void Dispose(bool disposing)
