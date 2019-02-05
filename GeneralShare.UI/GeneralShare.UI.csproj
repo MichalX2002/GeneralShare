@@ -64,28 +64,29 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Controls\UITextElement\UITextElement.Properties.cs" />
-    <Compile Include="DirtMarkType.cs" />
+    <Compile Include="Enums\DirtMarkType.cs" />
     <Compile Include="DrawExtensions.cs" />
+    <Compile Include="Enums\InputSource.cs" />
     <Compile Include="IteratorPool.cs" />
     <Compile Include="Controls\TextSegment\TextSegment.StringInsert.cs" />
-    <Compile Include="TextVerticalAlignment.cs" />
+    <Compile Include="Enums\TextVerticalAlignment.cs" />
     <Compile Include="ThicknessHelper.cs" />
     <Compile Include="TransformCharIterator.cs" />
     <Compile Include="SpriteBatchExtensions.cs" />
     <Compile Include="FontGlyphIterator.cs" />
-    <Compile Include="TextHorizontalAlignment.cs" />
+    <Compile Include="Enums\TextHorizontalAlignment.cs" />
     <Compile Include="Controls\TextSegment\TextSegment.cs" />
     <Compile Include="TextFormat.cs" />
     <Compile Include="TextRenderer.cs" />
     <Compile Include="TransformCharIterator.Transform.cs" />
     <Compile Include="Controls\UIContainer.cs" />
     <Compile Include="Controls\UIDrawable.cs" />
-    <Compile Include="PivotPosition.cs" />
+    <Compile Include="Enums\PivotPosition.cs" />
     <Compile Include="Controls\UITextField\UITextField.Cleanup.cs" />
     <Compile Include="Controls\UITextField\UITextField.cs" />
     <Compile Include="Controls\UIProgressBar.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SamplingMode.cs" />
+    <Compile Include="Enums\SamplingMode.cs" />
     <Compile Include="Controls\UIAnchor.cs" />
     <Compile Include="Controls\UICollisionLayer.cs" />
     <Compile Include="UIManager.cs" />

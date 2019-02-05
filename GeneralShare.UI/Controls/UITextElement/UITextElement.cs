@@ -19,27 +19,6 @@ namespace GeneralShare.UI
         private TextVerticalAlignment _verticalAlignment;
         private QuadTree<CharSpriteInfo> _quadTree;
 
-        #region Properties
-        protected ICharIterator TextValue { get => _segment.CurrentText; set => SetTextValue(value); }
-        protected abstract bool AllowTextColorFormatting { get; }
-        public int Length => TextValue.Length;
-
-        public override RectangleF Boundaries => GetBoundaries();
-        public RectangleF StringRect => GetStringRect();
-        public SizeF Measure => StringRect.Size;
-
-        public BitmapFont Font { get => _font; set => SetFont(value); }
-        public Color Color { get => _segment.Color; set => SetColor(value); }
-        public TextHorizontalAlignment HorizontalAlignment { get => _horizontalAlignment; set => SetHorizontalAlignment(value); }
-        public TextVerticalAlignment VerticalAlignment { get => _verticalAlignment; set => SetVerticalAlignment(value); }
-        public RectangleF? ClipRect { get => _segment.ClipRect; set => SetClipRect(value); }
-        public bool BuildQuadTree { get; set; }
-
-        public bool IsShadowed { get => _shadowed; set => SetIsShadowed(value); }
-        public Color ShadowColor { get; set; }
-        public ThicknessF ShadowSpacing { get; set; }
-        #endregion
-
         public UITextElement(UIManager manager, BitmapFont font) : base(manager)
         {
             _font = font;
@@ -48,9 +27,10 @@ namespace GeneralShare.UI
             _quadTree = QuadTreePool<CharSpriteInfo>.Rent(RectangleF.Empty, threshold: 2, allowOverflow: true, fuzzyBoundaries: true);
 
             Color = Color.White;
+            CaretColor = Color.Orange;
             HorizontalAlignment = TextHorizontalAlignment.Left;
             VerticalAlignment = TextVerticalAlignment.Top;
-
+            
             IsShadowed = false;
             ShadowColor = new Color(Color.Black, 0.75f);
             ShadowSpacing = new ThicknessF(2, -1, 2, -1);
@@ -125,7 +105,7 @@ namespace GeneralShare.UI
                     float lineHeight = _font.LineHeight * scale.Y;
                     float lineY = quadItem.Value.Line * lineHeight + _stringRect.Y;
 
-                    float caretWidth = 4f;
+                    float caretWidth = 3f;
                     float caretHeight = lineHeight * 0.75f;
                     
                     var rect = new RectangleF(
@@ -134,7 +114,7 @@ namespace GeneralShare.UI
                         width: caretWidth,
                         height: caretHeight);
                     
-                    batch.DrawFilledRectangle(rect, Color.Orange);
+                    batch.DrawFilledRectangle(rect, CaretColor);
                 }
             }
         }

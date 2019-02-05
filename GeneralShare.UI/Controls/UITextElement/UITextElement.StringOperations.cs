@@ -33,5 +33,10 @@ namespace GeneralShare.UI
             _segment.Remove(value);
             MarkDirty(DirtMarkType.Value);
         }
+
+        public void Clear()
+        {
+            TextValue = EmptyCharIterator.Instance;
+        }
     }
 }

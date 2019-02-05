@@ -87,7 +87,19 @@ namespace GeneralShare.UI
 
         private void SetAnchor(UIAnchor value)
         {
+            if(_anchor != null)
+                _anchor.OnMarkedDirty -= Anchor_OnMarkedDirty;
+
+            if (value != null)
+                value.OnMarkedDirty += Anchor_OnMarkedDirty;
+
             MarkDirty(ref _anchor, value, DirtMarkType.Position);
+        }
+
+        private void Anchor_OnMarkedDirty(UITransform sender, DirtMarkType marks)
+        {
+            if (marks.HasFlags(DirtMarkType.Position))
+                MarkDirty(DirtMarkType.Position);
         }
 
         private void SetEnabled(bool value)

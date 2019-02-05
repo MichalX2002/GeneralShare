@@ -182,7 +182,7 @@ namespace GeneralShare.UI
             return Transforms;
         }
 
-        public bool IsElementInputSensitive(UIElement element)
+        public bool IsElementMouseSensitive(UIElement element)
         {
             return element.IsIntercepting || element.IsMouseEventTrigger;
         }
@@ -194,7 +194,7 @@ namespace GeneralShare.UI
             {
                 UITransform transform = transforms[i];
                 if (transform.IsActive && transform is UIElement element)
-                    if (IsElementInputSensitive(element))
+                    if (IsElementMouseSensitive(element))
                         yield return element;
             }
         }
@@ -241,7 +241,7 @@ namespace GeneralShare.UI
 
                 if (transform is UIElement element)
                 {
-                    if (!IsElementInputSensitive(element))
+                    if (!IsElementMouseSensitive(element))
                         continue;
 
                     bool lastHoveredOver = element.IsHovered;

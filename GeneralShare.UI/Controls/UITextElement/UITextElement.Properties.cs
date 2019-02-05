@@ -1,10 +1,34 @@
 ﻿using Microsoft.Xna.Framework;
+using MonoGame.Extended;
 using MonoGame.Extended.BitmapFonts;
 
 namespace GeneralShare.UI
 {
     public abstract partial class UITextElement : UIElement
     {
+        #region Properties
+        protected ICharIterator TextValue { get => _segment.CurrentText; set => SetTextValue(value); }
+        protected abstract bool AllowTextColorFormatting { get; }
+        public int Length => TextValue.Length;
+
+        public override RectangleF Boundaries => GetBoundaries();
+        public RectangleF StringRect => GetStringRect();
+        public SizeF Measure => StringRect.Size;
+
+        public BitmapFont Font { get => _font; set => SetFont(value); }
+        public Color Color { get => _segment.Color; set => SetColor(value); }
+        public TextHorizontalAlignment HorizontalAlignment { get => _horizontalAlignment; set => SetHorizontalAlignment(value); }
+        public TextVerticalAlignment VerticalAlignment { get => _verticalAlignment; set => SetVerticalAlignment(value); }
+        public RectangleF? ClipRect { get => _segment.ClipRect; set => SetClipRect(value); }
+
+        public bool BuildQuadTree { get; set; }
+        public Color CaretColor { get; }
+
+        public bool IsShadowed { get => _shadowed; set => SetIsShadowed(value); }
+        public Color ShadowColor { get; set; }
+        public ThicknessF ShadowSpacing { get; set; }
+        #endregion
+
         #region Property Setters
         private void SetFont(BitmapFont value)
         {

@@ -1,10 +1,45 @@
-﻿using Microsoft.Xna.Framework;
+﻿using GeneralShare.Collections;
+using Microsoft.Xna.Framework;
 using MonoGame.Extended.BitmapFonts;
 
 namespace GeneralShare.UI
 {
     public partial class UITextField : UITextElement
     {
+        #region Properties
+        protected override bool AllowTextColorFormatting => false;
+
+        public CaretData Caret { get; }
+        public ValidateKeyDelegate ValidateInput
+        {
+            get => _validateInput;
+            set
+            {
+                if (value == null)
+                    _validateInput = DefaultValidateInput;
+                else
+                    _validateInput = value;
+            }
+        }
+
+        public ObservableHashSet<char> CharBlacklist { get; }
+        public bool IsObscured { get => _isObscured; set => SetIsObscured(value); }
+        public char ObscureChar { get => _obscureChar; set => SetObscureChar(value); }
+
+        public ICharIterator Value { get => TextValue; set => TextValue = value; }
+        public bool IsMultiLined { get => _isMultiLined; set => SetIsMultiLined(value); }
+        public int CharacterLimit { get => _charLimit; set => SetCharLimit(value); }
+        public Color SelectionColor { get; set; }
+
+        public ICharIterator Placeholder { get => _placeholderSegment.CurrentText; set => SetPlaceholder(value); }
+        public bool UsePlaceholderColorFormatting { get; set; }
+        public Color PlaceholderColor { get => _placeholderColor; set => SetPlaceholderColor(value); }
+        public Color PlaceholderSelectColor { get; set; }
+        public float PlaceholderColorTransitionSpeed { get; set; }
+        public float SelectionOutlineThickness { get; set; }
+        #endregion
+
+        #region Property Getters
         protected override SizeF GetMeasure()
         {
             SizeF measure = base.GetMeasure();
@@ -12,6 +47,7 @@ namespace GeneralShare.UI
                 measure += _placeholderSegment.Measure;
             return measure;
         }
+        #endregion
 
         #region Property Setters
         private void SetPlaceholder(ICharIterator value)

@@ -9,6 +9,9 @@ namespace GeneralShare.UI
         #region Event Handlers
         private void UITextArea_OnKeyRepeat(Keys key, float timeDown)
         {
+            if (!ValidateInput(InputSource.KeyRepeat, key))
+                return;
+
             if (timeDown > 0.5f)
                 TryMoveCaret(key);
 
@@ -18,6 +21,9 @@ namespace GeneralShare.UI
 
         private void UITextArea_OnKeyPress(Keys key)
         {
+            if (!ValidateInput(InputSource.KeyPress, key))
+                return;
+
             TryMoveCaret(key);
 
             switch (key)
@@ -38,6 +44,9 @@ namespace GeneralShare.UI
 
         private void UITextArea_OnTextInput(TextInputEventArgs e)
         {
+            if (!ValidateInput(InputSource.TextInput, e.Key))
+                return;
+
             void AppendCharAfterCaret(char value)
             {
                 InsertChar(Value.Length, value);

@@ -1,6 +1,7 @@
 ﻿using GeneralShare.Collections;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended;
 using MonoGame.Extended.BitmapFonts;
 
@@ -8,6 +9,9 @@ namespace GeneralShare.UI
 {
     public partial class UITextField : UITextElement
     {
+        public delegate bool ValidateKeyDelegate(InputSource source, Keys key);
+        public static readonly ValidateKeyDelegate DefaultValidateInput;
+
         public const char DefaultObscureChar = '*';
 
         private char _obscureChar;
@@ -22,37 +26,21 @@ namespace GeneralShare.UI
         // TODO: implement key repeating
         private float _keyRepeatTime;
         private float _repeatKeyOccuring;
+        private ValidateKeyDelegate _validateInput;
 
-        #region Properties
-        protected override bool AllowTextColorFormatting => false;
-        protected bool IsPlaceholderVisible => Length == 0;
-
-        public CaretData Caret { get; }
-
-        public ObservableHashSet<char> CharBlacklist { get; }
-        public bool IsObscured { get => _isObscured; set => SetIsObscured(value); }
-        public char ObscureChar { get => _obscureChar; set => SetObscureChar(value); }
-
-        public ICharIterator Value { get => TextValue; set => TextValue = value; }
-        public bool IsMultiLined { get => _isMultiLined; set => SetIsMultiLined(value); }
-        public int CharacterLimit { get => _charLimit; set => SetCharLimit(value); }
-        public Color SelectionColor { get; set; }
-
-        public ICharIterator Placeholder { get => _placeholderSegment.CurrentText; set => SetPlaceholder(value); }
-        public bool UsePlaceholderColorFormatting { get; set; }
-        public Color PlaceholderColor { get => _placeholderColor; set => SetPlaceholderColor(value); }
-        public Color PlaceholderSelectColor { get; set; }
-        public float PlaceholderColorTransitionSpeed { get; set; }
-        public float SelectionOutlineThickness { get; set; }
-        #endregion
+        static UITextField()
+        {
+            DefaultValidateInput = (s, k) => true;
+        }
 
         public UITextField(UIManager manager, BitmapFont font) : base(manager, font)
         {
             Caret = new CaretData();
+            ValidateInput = DefaultValidateInput;
 
             _placeholderSegment = new TextSegment(font);
             UsePlaceholderColorFormatting = true;
-            PlaceholderColor = Color.Gray * 0.825f;
+            PlaceholderColor = Color.Gray * 0.8f;
             PlaceholderSelectColor = Color.LightGoldenrodYellow * 0.9f;
             PlaceholderColorTransitionSpeed = 0.125f;
 
@@ -92,7 +80,7 @@ namespace GeneralShare.UI
         {
             base.Draw(time, batch);
 
-            if (IsPlaceholderVisible)
+            if (Length == 0)
                 batch.DrawString(_placeholderSegment, StringRect.Position);
 
             if (IsSelected)
