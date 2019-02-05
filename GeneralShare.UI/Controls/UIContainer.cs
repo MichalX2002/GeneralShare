@@ -31,7 +31,7 @@ namespace GeneralShare.UI
         public void Add(UITransform transform)
         {
             _transforms.Add(transform);
-            transform.Container = null;
+            transform.Container = this;
             transform.OnMarkedDirty += Transform_MarkedDirty;
             _boundsNeedUpdate = true;
         }
