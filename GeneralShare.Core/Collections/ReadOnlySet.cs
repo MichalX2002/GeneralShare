@@ -24,19 +24,8 @@ namespace GeneralShare.Collections
             _set.CopyTo(array, arrayIndex);
         }
 
-        public HashSet<T>.Enumerator GetEnumerator()
-        {
-            return _set.GetEnumerator();
-        }
-        
-        IEnumerator<T> IEnumerable<T>.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        public HashSet<T>.Enumerator GetEnumerator() => _set.GetEnumerator();
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

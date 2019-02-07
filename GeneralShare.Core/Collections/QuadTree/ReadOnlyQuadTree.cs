@@ -24,12 +24,12 @@ namespace GeneralShare.Collections
             return _tree.QueryNearest(range, start);
         }
 
-        public IEnumerable<QuadTreeItem<T>> Query(PointF point)
+        public ListArray<QuadTreeItem<T>> Query(PointF point)
         {
             return _tree.Query(point);
         }
         
-        public IEnumerable<QuadTreeItem<T>> Query(RectangleF range)
+        public ListArray<QuadTreeItem<T>> Query(RectangleF range)
         {
             return _tree.Query(range);
         }

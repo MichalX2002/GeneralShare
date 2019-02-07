@@ -187,17 +187,17 @@ namespace GeneralShare.UI
             return element.IsIntercepting || element.IsMouseEventTrigger;
         }
 
-        public IEnumerable<UIElement> GetInputSensitiveElements()
-        {
-            ListArray<UITransform> transforms = GetSortedTransformList();
-            for (int i = 0, length = transforms.Count; i < length; i++)
-            {
-                UITransform transform = transforms[i];
-                if (transform.IsActive && transform is UIElement element)
-                    if (IsElementMouseSensitive(element))
-                        yield return element;
-            }
-        }
+        //public IEnumerable<UIElement> GetInputSensitiveElements()
+        //{
+        //    ListArray<UITransform> transforms = GetSortedTransformList();
+        //    for (int i = 0, length = transforms.Count; i < length; i++)
+        //    {
+        //        UITransform transform = transforms[i];
+        //        if (transform.IsActive && transform is UIElement element)
+        //            if (IsElementMouseSensitive(element))
+        //                yield return element;
+        //    }
+        //}
 
         public void Update(GameTime time)
         {

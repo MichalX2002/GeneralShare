@@ -401,21 +401,6 @@ namespace GeneralShare.Collections
             return _readonly;
         }
 
-        public Enumerator GetEnumerator()
-        {
-            return new Enumerator(this);
-        }
-
-        IEnumerator<T> IEnumerable<T>.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
         private void EnsureCapacity(int min)
         {
             if (_innerArray.Length < min)
@@ -427,6 +412,10 @@ namespace GeneralShare.Collections
                 Capacity = newCapacity;
             }
         }
+
+        public Enumerator GetEnumerator() => new Enumerator(this);
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         public struct Enumerator : IEnumerator<T>, IEnumerator
         {
