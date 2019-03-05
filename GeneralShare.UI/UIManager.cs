@@ -1,6 +1,7 @@
 ﻿using GeneralShare.Collections;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended;
 using MonoGame.Extended.TextureAtlases;
 using System;
@@ -88,12 +89,12 @@ namespace GeneralShare.UI
             FlagForSort();
         }
 
-        private void Input_TextInput(TextInputEventArgs e)
+        private void Input_TextInput(int character, Keys key)
         {
             if (!IsDisposed)
             {
                 if (SelectedElement != null && SelectedElement.IsKeyboardEventTrigger)
-                    SelectedElement.TriggerOnTextInput(e);
+                    SelectedElement.TriggerOnTextInput(character, key);
             }
         }
 

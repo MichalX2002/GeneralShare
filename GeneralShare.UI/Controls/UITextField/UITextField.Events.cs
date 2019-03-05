@@ -9,7 +9,7 @@ namespace GeneralShare.UI
         #region Event Handlers
         private void UITextArea_OnKeyRepeat(Keys key, float timeDown)
         {
-            if (!ValidateInput(InputSource.KeyRepeat, key))
+            if (!ValidateInput(InputSource.KeyRepeat, (int)key))
                 return;
 
             if (timeDown > 0.5f)
@@ -21,7 +21,7 @@ namespace GeneralShare.UI
 
         private void UITextArea_OnKeyPress(Keys key)
         {
-            if (!ValidateInput(InputSource.KeyPress, key))
+            if (!ValidateInput(InputSource.KeyPress, (int)key))
                 return;
 
             TryMoveCaret(key);
@@ -42,9 +42,9 @@ namespace GeneralShare.UI
             }
         }
 
-        private void UITextArea_OnTextInput(TextInputEventArgs e)
+        private void UITextArea_OnTextInput(int character, Keys key)
         {
-            if (!ValidateInput(InputSource.TextInput, e.Key))
+            if (!ValidateInput(InputSource.TextInput, character))
                 return;
 
             void AppendCharAfterCaret(char value)
@@ -52,7 +52,7 @@ namespace GeneralShare.UI
                 InsertChar(Value.Length, value);
             }
 
-            switch (e.Key)
+            switch (key)
             {
                 case Keys.Tab:
                     for (int i = 0; i < 4; i++)
@@ -70,7 +70,7 @@ namespace GeneralShare.UI
                     break;
 
                 default:
-                    char c = e.Character;
+                    char c = (char)character;
                     if (char.IsLetter(c) ||
                         char.IsNumber(c) ||
                         char.IsSymbol(c) ||

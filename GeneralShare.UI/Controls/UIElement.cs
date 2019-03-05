@@ -85,9 +85,9 @@ namespace GeneralShare.UI
             IsIntercepting = true;
         }
 
-        internal void TriggerOnTextInput(TextInputEventArgs e)
+        internal void TriggerOnTextInput(int character, Keys key)
         {
-            OnTextInput?.Invoke(e);
+            OnTextInput?.Invoke(character, key);
         }
 
         internal void TriggerOnMouseDown(MouseState state, MouseButton buttons)

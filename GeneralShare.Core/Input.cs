@@ -10,7 +10,7 @@ namespace GeneralShare
 {
     public static class Input
     {
-        public delegate void TextInputDelegate(TextInputEventArgs e);
+        public delegate void TextInputDelegate(int character, Keys key);
         public static event TextInputDelegate TextInput;
 
         private static readonly ListArray<HeldKey> _lastKeysHeld;
@@ -79,9 +79,9 @@ namespace GeneralShare
             }
         }
         
-        private static void Window_TextInput(object s, TextInputEventArgs e)
+        private static void Window_TextInput(object s, int character, Keys key)
         {
-            TextInput?.Invoke(e);
+            TextInput?.Invoke(character, key);
         }
 
         public static bool IsKeyHeld(Keys key, float timeThreshold)

@@ -9,7 +9,7 @@ namespace GeneralShare.UI
 {
     public partial class UITextField : UITextElement
     {
-        public delegate bool ValidateKeyDelegate(InputSource source, Keys key);
+        public delegate bool ValidateKeyDelegate(InputSource source, int character);
         public static readonly ValidateKeyDelegate DefaultValidateInput;
 
         public const char DefaultObscureChar = '*';
