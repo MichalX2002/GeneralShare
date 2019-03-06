@@ -96,6 +96,7 @@
     <Compile Include="Helpers\StringHelper.cs" />
     <Compile Include="Helpers\TimeSpanExtensions.cs" />
     <Compile Include="Helpers\JsonExtensions.cs" />
+    <Compile Include="ICloneable{T}.cs" />
     <Compile Include="Input.cs" />
     <Compile Include="Mathf.cs" />
     <Compile Include="MouseButton.cs" />
