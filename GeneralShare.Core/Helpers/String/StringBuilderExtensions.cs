@@ -5,7 +5,7 @@ using System.Text;
 
 namespace GeneralShare
 {
-    public static class CharIteratorExtensions
+    public static class StringBuilderExtensions
     {
         public static void AppendIterator(this StringBuilder builder, ICharIterator iterator, int offset, int count)
         {

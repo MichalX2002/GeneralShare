@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security;
 
-namespace GeneralShare.Helpers
+namespace GeneralShare
 {
     public static class SecureStringHelper
     {

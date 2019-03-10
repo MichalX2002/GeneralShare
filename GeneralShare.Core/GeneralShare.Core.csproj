@@ -81,19 +81,20 @@
     <Compile Include="DebugUtils.cs" />
     <Compile Include="GlobalDelegates.cs" />
     <Compile Include="Helpers\BinaryReaderHelper.cs" />
-    <Compile Include="Helpers\CharIteratorExtensions.cs" />
-    <Compile Include="Helpers\EnumConverter.cs" />
+    <Compile Include="Helpers\String\StringBuilderExtensions.cs" />
+    <Compile Include="Helpers\Enum\EnumConverter.cs" />
     <Compile Include="Helpers\DirectoryInfoExtensions.cs" />
     <Compile Include="EventBasedReporter.cs" />
+    <Compile Include="Helpers\Enum\EnumHelper.cs" />
     <Compile Include="Helpers\FileInfoExtensions.cs" />
     <Compile Include="Helpers\ArrayHelper.cs" />
-    <Compile Include="Helpers\EnumExtensions.cs" />
+    <Compile Include="Helpers\Enum\EnumExtensions.cs" />
     <Compile Include="Helpers\IPEndPointParser.cs" />
     <Compile Include="Helpers\JsonUtils.cs" />
     <Compile Include="Helpers\PathHelper.cs" />
-    <Compile Include="Helpers\SecureStringHelper.cs" />
-    <Compile Include="Helpers\StringBuilderComparer.cs" />
-    <Compile Include="Helpers\StringHelper.cs" />
+    <Compile Include="Helpers\String\SecureStringHelper.cs" />
+    <Compile Include="Helpers\String\StringBuilderComparer.cs" />
+    <Compile Include="Helpers\String\StringHelper.cs" />
     <Compile Include="Helpers\TimeSpanExtensions.cs" />
     <Compile Include="Helpers\JsonExtensions.cs" />
     <Compile Include="ICloneable{T}.cs" />
@@ -105,7 +106,7 @@
     <Compile Include="VersionTag.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Helpers\StringHelper.Format.cs" />
+    <Compile Include="Helpers\String\StringHelper.Format.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
