@@ -30,6 +30,9 @@ namespace GeneralShare.UI
         public Vector2 BarHeadPosition { get { AssertPure(); return _headPos; } }
         public BarDirection Direction { get => _direction; set => SetDirection(value); }
 
+        public TextureRegion2D MainBarRegion { get => _mainBarRegion; set => SetMainRegion(value); }
+        public TextureRegion2D BackBarRegion { get => _backBarRegion; set => SetBackRegion(value); }
+
         public Range<float> Range { get => _range; set => SetRange(value); }
         public float Value { get => _value; set => SetValue(value); }
         public float FillPercentage => Mathf.Map(_value, _range.Min, _range.Max, 0, 1);
@@ -53,6 +56,16 @@ namespace GeneralShare.UI
         public UIProgressBar(UIManager manager) :
             this(manager, manager.WhitePixelRegion, manager.WhitePixelRegion)
         {
+        }
+
+        private void SetMainRegion(TextureRegion2D value)
+        {
+            MarkDirty(ref _mainBarRegion, value, DirtMarkType.Texture);
+        }
+
+        private void SetBackRegion(TextureRegion2D value)
+        {
+            MarkDirty(ref _backBarRegion, value, DirtMarkType.Texture);
         }
 
         private void SetMainColor(ref Color value)
@@ -107,13 +120,16 @@ namespace GeneralShare.UI
         {
             mainDst.X += _barThickness;
             mainDst.Y += _barThickness;
-            mainDst.Width -= _barThickness * 2;
-            mainDst.Height -= _barThickness * 2;
 
             Vector2 scale = GlobalScale;
-            var size = new Vector2(scale.X * mainDst.Width, scale.Y * mainDst.Height);
-            var matrix = Matrix2.CreateFrom(mainDst.Position, Rotation, size, Origin);
-            
+            mainDst.Width *= scale.X;
+            mainDst.Height *= scale.Y;
+
+            mainDst.Width -= _barThickness * 2 / _mainBarRegion.Width;
+            mainDst.Height -= _barThickness * 2 / _mainBarRegion.Height;
+
+            var matrix = Matrix2.CreateFrom(mainDst.Position, Rotation, mainDst.Size, Origin);
+
             _mainSprite.SetTransform(matrix, _mainBarRegion.Bounds.Size);
             _mainSprite.SetDepth(Z);
             _mainSprite.SetTexCoords(_mainBarRegion);

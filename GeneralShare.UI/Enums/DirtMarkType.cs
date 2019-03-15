@@ -13,7 +13,6 @@ namespace GeneralShare.UI
         // 1<< 19 is free
         // 1<< 22 is free
         // 1<< 24 is free
-        // 1<< 25 is free
 
         None = 0,
 
@@ -47,6 +46,7 @@ namespace GeneralShare.UI
         ClipRect = 1 << 26,
         DrawOrder = 1 << 28,
         Boundaries = 1 << 29,
-        Enabled = 1 << 30
+        Enabled = 1 << 30,
+        Texture = 1 << 25
     }
 }
