@@ -237,7 +237,6 @@ namespace GeneralShare.UI
                 if (!transform.IsActive)
                     continue;
 
-                transform.AssertPure();
                 transform.Update(time);
 
                 if (transform is UIElement element)

@@ -40,6 +40,7 @@ namespace GeneralShare.UI
                     isBatching = true;
                 }
 
+                transform.AssertPure();
                 transform.Draw(time, spriteBatch);
             }
             spriteBatch.End();
