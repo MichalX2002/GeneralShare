@@ -232,7 +232,7 @@ namespace GeneralShare.UI
             {
                 var transform = transforms[i];
                 if (viewportChanged)
-                    transform.OnViewportChange(freshViewport);
+                    transform.OnViewportChanged(freshViewport);
 
                 if (!transform.IsActive)
                     continue;

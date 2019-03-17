@@ -134,7 +134,7 @@ namespace GeneralShare.UI
                 NeedsCleanup();
         }
 
-        internal void OnViewportChange(Viewport viewport)
+        internal void OnViewportChanged(Viewport viewport)
         {
             if (_enabled == false)
                 _updateViewportOnEnable = true;
