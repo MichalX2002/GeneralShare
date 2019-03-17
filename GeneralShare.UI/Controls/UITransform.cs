@@ -136,7 +136,7 @@ namespace GeneralShare.UI
 
         internal void OnViewportChanged(Viewport viewport)
         {
-            if (_enabled == false)
+            if (!_enabled)
                 _updateViewportOnEnable = true;
             else
                 ViewportChanged(viewport);

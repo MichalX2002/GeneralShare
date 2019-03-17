@@ -159,7 +159,7 @@ namespace GeneralShare.UI
 
         private void FlagForSort()
         {
-            if (IsDisposed == false)
+            if (!IsDisposed)
                 TransformsNeedSorting = true;
         }
 

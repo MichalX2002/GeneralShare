@@ -173,7 +173,7 @@ namespace GeneralShare
             bool anyDown = GetMState(pressed, MB.All, BS.Pressed, out MB down);
             bool anyUp = GetMState(released, MB.All, BS.Released, out MB up);
 
-            if (anyDown == true || anyUp == true)
+            if (anyDown || anyUp)
             {
                 buttons = down & up;
                 return buttons != 0;

@@ -308,7 +308,7 @@ namespace GeneralShare.Collections
         {
             for (int i = 0; i < _size; i++)
             {
-                if (predicate.Invoke(_innerArray[i]) == true)
+                if (predicate.Invoke(_innerArray[i]))
                     return i;
             }
             return -1;

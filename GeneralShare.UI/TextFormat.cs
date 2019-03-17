@@ -119,7 +119,7 @@ namespace GeneralShare.UI
                                         : GetRgba(colorBuffer, sequenceBuffer, sequence.Length);
                                 }
 
-                                if (keepSequences == false)
+                                if (!keepSequences)
                                     i = sequence.Tail + 1;
                                 else
                                 {
