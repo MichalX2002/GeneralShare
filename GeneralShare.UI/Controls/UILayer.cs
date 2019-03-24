@@ -1,9 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
-using MonoGame.Extended;
 
 namespace GeneralShare.UI
 {
-    public class UICollisionLayer : UIElement
+    public class UILayer : UIElement
     {
         private RectangleF _boundaries;
         private RectangleF _destination;
@@ -11,7 +10,7 @@ namespace GeneralShare.UI
         public override RectangleF Boundaries => _boundaries;
         public RectangleF Destination { get => _destination; set => SetDestination(value); }
 
-        public UICollisionLayer(UIManager manager) : base(manager)
+        public UILayer(UIManager manager) : base(manager)
         {
             IsDrawable = false;
         }
@@ -21,7 +20,7 @@ namespace GeneralShare.UI
             MarkDirty(ref _destination, value, DirtMarkType.Destination);
         }
 
-        protected override void NeedsCleanup()
+        protected override void Cleanup()
         {
             if (HasDirtMarks(DirtMarkType.Transform | DirtMarkType.Destination))
             {

@@ -40,7 +40,7 @@ namespace GeneralShare.UI
         }
 
         // TODO: move into some other file
-        private void UITextElement_OnMousePress(MouseState mouseState, MouseButton buttons)
+        private void UITextElement_OnMousePress(UIElement sender, MouseState mouseState, MouseButton buttons)
         {
             int glyphCount = _segment._glyphList.Count;
             if (glyphCount == 0)

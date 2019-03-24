@@ -17,7 +17,7 @@ namespace GeneralShare.UI
             bool isBatching = false;
             SamplingMode lastSampling = SamplingMode.LinearClamp;
 
-            var transforms = Manager.GetSortedTransformList();
+            var transforms = Manager.SortAndGetTransforms();
             for (int i = 0; i < transforms.Count; i++)
             {
                 var transform = transforms[i];
@@ -40,7 +40,7 @@ namespace GeneralShare.UI
                     isBatching = true;
                 }
 
-                transform.AssertPure();
+                transform.Purify();
                 transform.Draw(time, spriteBatch);
             }
             spriteBatch.End();

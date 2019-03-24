@@ -5,12 +5,13 @@ namespace GeneralShare.UI
 {
     public abstract class UIElement : UITransform
     {
-        public delegate void MouseHoverDelegate(MouseState mouseState);
-        public delegate void GenericMouseDelegate(MouseState mouseState, MouseButton buttons);
-        public delegate void GenericKeyboardDelegate(Keys key);
-        public delegate void RepeatedKeyboardDelegate(Keys key, float timeDown);
-        public delegate void ScrollDelegate(float amount);
-
+        public delegate void MouseHoverDelegate(UIElement sender, MouseState mouseState);
+        public delegate void GenericMouseDelegate(UIElement sender, MouseState mouseState, MouseButton buttons);
+        public delegate void GenericKeyboardDelegate(UIElement sender, Keys key);
+        public delegate void RepeatedKeyboardDelegate(UIElement sender, Keys key, float timeDown);
+        public delegate void ScrollDelegate(UIElement sender, float amount);
+        public delegate void TextInputDelegate(UIElement sender, TextInputEvent data);
+        
         public event GenericMouseDelegate OnMouseDown;
         public event GenericMouseDelegate OnMousePress;
         public event GenericMouseDelegate OnMouseRelease;
@@ -22,7 +23,7 @@ namespace GeneralShare.UI
         public event GenericKeyboardDelegate OnKeyDown;
         public event GenericKeyboardDelegate OnKeyPress;
         public event GenericKeyboardDelegate OnKeyRelease;
-        public event Input.TextInputDelegate OnTextInput;
+        public event TextInputDelegate OnTextInput;
 
         private bool _wasSelected;
         private bool _isSelectable;
@@ -85,64 +86,64 @@ namespace GeneralShare.UI
             IsIntercepting = true;
         }
 
-        internal void TriggerOnTextInput(int character, Keys key)
+        internal void TriggerOnTextInput(TextInputEvent data)
         {
-            OnTextInput?.Invoke(character, key);
+            OnTextInput?.Invoke(this, data);
         }
 
         internal void TriggerOnMouseDown(MouseState state, MouseButton buttons)
         {
-            OnMouseDown?.Invoke(state, buttons);
+            OnMouseDown?.Invoke(this, state, buttons);
         }
 
         internal void TriggerOnMousePress(MouseState state, MouseButton buttons)
         {
-            OnMousePress?.Invoke(state, buttons);
+            OnMousePress?.Invoke(this, state, buttons);
         }
 
         internal void TriggerOnMouseRelease(MouseState state, MouseButton buttons)
         {
-            OnMouseRelease?.Invoke(state, buttons);
+            OnMouseRelease?.Invoke(this, state, buttons);
         }
 
         internal void TriggerOnMouseEnter(MouseState state)
         {
-            OnMouseEnter?.Invoke(state);
+            OnMouseEnter?.Invoke(this, state);
         }
 
         internal void TriggerOnMouseHover(MouseState state)
         {
-            OnMouseHover?.Invoke(state);
+            OnMouseHover?.Invoke(this, state);
         }
 
         internal void TriggerOnMouseLeave(MouseState state)
         {
-            OnMouseLeave?.Invoke(state);
+            OnMouseLeave?.Invoke(this, state);
         }
 
         internal void TriggerOnScroll(float amount)
         {
-            OnScroll?.Invoke(amount);
+            OnScroll?.Invoke(this, amount);
         }
 
         internal void TriggerOnKeyRepeat(Keys key, float timeDown)
         {
-            OnKeyRepeat?.Invoke(key, timeDown);
+            OnKeyRepeat?.Invoke(this, key, timeDown);
         }
 
         internal void TriggerOnKeyDown(Keys key)
         {
-            OnKeyDown?.Invoke(key);
+            OnKeyDown?.Invoke(this, key);
         }
 
         internal void TriggerOnKeyPress(Keys key)
         {
-            OnKeyPress?.Invoke(key);
+            OnKeyPress?.Invoke(this, key);
         }
 
         internal void TriggerOnKeyRelease(Keys key)
         {
-            OnKeyRelease?.Invoke(key);
+            OnKeyRelease?.Invoke(this, key);
         }
     }
 }

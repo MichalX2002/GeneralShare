@@ -5,7 +5,7 @@ namespace GeneralShare.UI
 {
     public abstract partial class UITextElement
     {
-        protected override void NeedsCleanup()
+        protected override void Cleanup()
         {
             if (HasDirtMarks(DirtMarkType.Color))
             {

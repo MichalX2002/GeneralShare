@@ -9,9 +9,13 @@ namespace GeneralShare.UI
     {
         public delegate void MarkedDirtyDelegate(UITransform sender, DirtMarkType marks);
         public delegate void MarkedCleanDelegate(UITransform sender);
+        public delegate void ActivationDelegate(UITransform sender);
 
         public event MarkedDirtyDelegate OnMarkedDirty;
         public event MarkedCleanDelegate OnMarkedClean;
+
+        public event ActivationDelegate OnActivated;
+        public event ActivationDelegate OnDeactivated;
 
         private bool _updateViewportOnEnable;
         private bool _enabled;
@@ -31,7 +35,7 @@ namespace GeneralShare.UI
 
         public bool IsDisposed { get; private set; }
         public bool IsDrawable { get; protected set; }
-        public bool IsEnabled { get => _enabled; set { SetEnabled(value); } }
+        public bool IsEnabled { get => _enabled; set => SetEnabled(value); }
         public bool IsActive => _enabled && (_container != null ? _container.IsEnabled : true);
         public bool IsDirty => DirtMarks != DirtMarkType.None;
 
@@ -75,9 +79,33 @@ namespace GeneralShare.UI
             MarkDirty(DirtMarkType.Transform);
         }
 
+        private void InvokeActivation(UITransform sender)
+        {
+            OnActivated?.Invoke(this);
+        }
+
+        private void InvokeDeactivation(UITransform sender)
+        {
+            OnDeactivated?.Invoke(this);
+        }
+
         private void SetContainer(UIContainer value)
         {
-            MarkDirty(ref _container, value, DirtMarkType.Transform);
+            var oldContainer = _container;
+            if(MarkDirty(ref _container, value, DirtMarkType.Transform))
+            {
+                if (oldContainer != null)
+                {
+                    oldContainer.OnActivated -= InvokeActivation;
+                    oldContainer.OnDeactivated -= InvokeDeactivation;
+                }
+
+                if (value != null)
+                {
+                    value.OnActivated += InvokeActivation;
+                    value.OnDeactivated += InvokeDeactivation;
+                }
+            }
         }
 
         private void SetDrawOrder(int value)
@@ -87,13 +115,15 @@ namespace GeneralShare.UI
 
         private void SetAnchor(UIAnchor value)
         {
-            if(_anchor != null)
-                _anchor.OnMarkedDirty -= Anchor_OnMarkedDirty;
+            var oldAnchor = _anchor;
+            if(MarkDirty(ref _anchor, value, DirtMarkType.Position))
+            {
+                if (oldAnchor != null)
+                    oldAnchor.OnMarkedDirty -= Anchor_OnMarkedDirty;
 
-            if (value != null)
-                value.OnMarkedDirty += Anchor_OnMarkedDirty;
-
-            MarkDirty(ref _anchor, value, DirtMarkType.Position);
+                if (value != null)
+                    value.OnMarkedDirty += Anchor_OnMarkedDirty;
+            }
         }
 
         private void Anchor_OnMarkedDirty(UITransform sender, DirtMarkType marks)
@@ -104,12 +134,24 @@ namespace GeneralShare.UI
 
         private void SetEnabled(bool value)
         {
-            if (!_enabled && value && _updateViewportOnEnable)
+            bool wasActive = IsActive;
+            if (MarkDirty(ref _enabled, value, DirtMarkType.Enabled))
             {
-                ViewportChanged(Manager.Viewport);
-                _updateViewportOnEnable = false;
+                if (value && !wasActive)
+                {
+                    InvokeActivation(null);
+                }
+                else if (!value && wasActive)
+                {
+                    InvokeDeactivation(null);
+                }
+
+                if (value && _updateViewportOnEnable)
+                {
+                    ViewportChanged(Manager.Viewport);
+                    _updateViewportOnEnable = false;
+                }
             }
-            MarkDirty(ref _enabled, value, DirtMarkType.Enabled);
         }
 
         public virtual void Update(GameTime time)
@@ -124,17 +166,17 @@ namespace GeneralShare.UI
         {
         }
 
-        protected virtual void NeedsCleanup()
+        protected virtual void Cleanup()
         {
         }
 
-        public void AssertPure()
+        public void Purify()
         {
             if (IsDirty)
-                NeedsCleanup();
+                Cleanup();
         }
 
-        internal void OnViewportChanged(Viewport viewport)
+        internal virtual void OnViewportChanged(Viewport viewport)
         {
             if (!_enabled)
                 _updateViewportOnEnable = true;
@@ -272,18 +314,12 @@ namespace GeneralShare.UI
             {
                 if (disposing)
                 {
-                    if (!Manager.IsDisposed)
+                    if (!Manager.IsDisposed && !Manager.IsDisposing)
                         Manager.Remove(this);
                 }
 
                 IsDisposed = true;
             }
-        }
-
-        internal void FastDispose()
-        {
-            Dispose(false);
-            GC.SuppressFinalize(this);
         }
 
         public void Dispose()

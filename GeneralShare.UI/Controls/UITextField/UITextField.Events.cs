@@ -7,7 +7,7 @@ namespace GeneralShare.UI
     public partial class UITextField : UITextElement
     {
         #region Event Handlers
-        private void UITextArea_OnKeyRepeat(Keys key, float timeDown)
+        private void UITextArea_OnKeyRepeat(UIElement sender, Keys key, float timeDown)
         {
             if (!ValidateInput(InputSource.KeyRepeat, (int)key))
                 return;
@@ -19,7 +19,7 @@ namespace GeneralShare.UI
             // we have an update function so that's relatively simple
         }
 
-        private void UITextArea_OnKeyPress(Keys key)
+        private void UITextArea_OnKeyPress(UIElement sender, Keys key)
         {
             if (!ValidateInput(InputSource.KeyPress, (int)key))
                 return;
@@ -42,9 +42,9 @@ namespace GeneralShare.UI
             }
         }
 
-        private void UITextArea_OnTextInput(int character, Keys key)
+        private void UITextArea_OnTextInput(UIElement sender, TextInputEvent data)
         {
-            if (!ValidateInput(InputSource.TextInput, character))
+            if (!ValidateInput(InputSource.TextInput, data.Character))
                 return;
 
             void AppendCharAfterCaret(char value)
@@ -52,7 +52,7 @@ namespace GeneralShare.UI
                 InsertChar(Value.Length, value);
             }
 
-            switch (key)
+            switch (data.Key)
             {
                 case Keys.Tab:
                     for (int i = 0; i < 4; i++)
@@ -70,7 +70,7 @@ namespace GeneralShare.UI
                     break;
 
                 default:
-                    char c = (char)character;
+                    char c = (char)data.Character;
                     if (char.IsLetter(c) ||
                         char.IsNumber(c) ||
                         char.IsSymbol(c) ||

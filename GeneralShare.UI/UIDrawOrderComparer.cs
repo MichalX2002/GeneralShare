@@ -12,7 +12,15 @@ namespace GeneralShare.UI
 
         public int Compare(UITransform x, UITransform y)
         {
-            return x.DrawOrder.CompareTo(y.DrawOrder);
+            int dx = x.DrawOrder;
+            if (x.Container != null)
+                dx += x.Container.DrawOrder;
+
+            int dy = y.DrawOrder;
+            if (y.Container != null)
+                dy += y.Container.DrawOrder;
+
+            return dx.CompareTo(dy);
         }
     }
 }

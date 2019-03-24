@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using MonoGame.Utilities.IO;
+using MonoGame.Utilities.Memory;
 
 namespace GeneralShare
 {

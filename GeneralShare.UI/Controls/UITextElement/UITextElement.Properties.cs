@@ -73,13 +73,13 @@ namespace GeneralShare.UI
         #region Property Getters
         private RectangleF GetBoundaries()
         {
-            AssertPure();
+            Purify();
             return _boundaries;
         }
 
         protected virtual RectangleF GetStringRect()
         {
-            AssertPure();
+            Purify();
             return _stringRect;
         }
 

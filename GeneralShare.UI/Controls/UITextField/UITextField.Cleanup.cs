@@ -4,9 +4,9 @@ namespace GeneralShare.UI
 {
     public partial class UITextField : UITextElement
     {
-        protected override void NeedsCleanup()
+        protected override void Cleanup()
         {
-            base.NeedsCleanup();
+            base.Cleanup();
 
             if (MarkClean(DirtMarkType.PlaceholderColor))
             {

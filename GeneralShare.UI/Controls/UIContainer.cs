@@ -5,14 +5,14 @@ using System.Collections.ObjectModel;
 
 namespace GeneralShare.UI
 {
-    public class UIContainer : UIElement
+    public class UIContainer : UILayer
     {
         private ListArray<UITransform> _transforms;
         private RectangleF _bounds;
         private bool _boundsNeedUpdate;
 
         public override RectangleF Boundaries => GetBounds();
-        public IReadOnlyList<UITransform> Children { get; }
+        public ReadOnlyCollection<UITransform> Children { get; }
         
         public UIContainer(UIManager manager) : base(manager)
         {
@@ -92,7 +92,7 @@ namespace GeneralShare.UI
             InvokeMarkedDirty(DirtMarkType.Boundaries);
         }
 
-        protected override void NeedsCleanup()
+        protected override void Cleanup()
         {
             var marks = DirtMarkType.Transform;
             if (HasDirtMarks(DirtMarkType.Enabled))

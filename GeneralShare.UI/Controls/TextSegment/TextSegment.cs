@@ -78,8 +78,11 @@ namespace GeneralShare.UI
 
                 if (useColorFormat)
                 {
-                    using (var result = TextRenderer.GetColorFormat(_font, chars, keepSequences: false, _formatColorList))
+                    using (var result = TextRenderer.GetColorFormat(
+                        _font, chars, keepSequences: false, baseAlpha: Color.A, _formatColorList))
+                    {
                         GetGlyphs(result);
+                    }
                 }
                 else
                     GetGlyphs(chars);
@@ -90,7 +93,8 @@ namespace GeneralShare.UI
                 CurrentText?.Dispose();
                 CurrentText = builder.ToIterator();
 
-                // we can return as ToIterator() copies the value into it's own buffer
+                // we can return as ToIterator() on StringBuilders
+                // copies the value into it's own buffer
                 StringBuilderPool.Return(builder);
             }
 

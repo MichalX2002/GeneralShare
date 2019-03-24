@@ -23,11 +23,11 @@ namespace GeneralShare.UI
         private Vector2 _headPos;
         private RectangleF _mainRect;
 
-        public override RectangleF Boundaries { get { AssertPure(); return _boundaries; } }
+        public override RectangleF Boundaries { get { Purify(); return _boundaries; } }
         public int BackBarThickness { get => _barThickness; set => SetThickness(value); }
         public Vector2 Destination { get => _destination; set => SetDestination(value); }
-        public RectangleF MainBarRect { get { AssertPure(); return _mainRect; } }
-        public Vector2 BarHeadPosition { get { AssertPure(); return _headPos; } }
+        public RectangleF MainBarRect { get { Purify(); return _mainRect; } }
+        public Vector2 BarHeadPosition { get { Purify(); return _headPos; } }
         public BarDirection Direction { get => _direction; set => SetDirection(value); }
 
         public TextureRegion2D MainBarRegion { get => _mainBarRegion; set => SetMainRegion(value); }
@@ -161,7 +161,7 @@ namespace GeneralShare.UI
             }
         }
 
-        protected override void NeedsCleanup()
+        protected override void Cleanup()
         {
             UpdateMainRect();
 

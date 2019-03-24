@@ -12,7 +12,7 @@ namespace GeneralShare.UI
         private RectangleF _boundaries;
         private RectangleF _destination;
 
-        public override RectangleF Boundaries => _boundaries;
+        public override RectangleF Boundaries { get { Purify(); return _boundaries; } }
         public TextureRegion2D Region { get => _region; set => SetTexture(value); }
         public Color Color { get => _sprite.TL.Color; set => _sprite.SetColor(value); }
         public RectangleF Destination { get => _destination; set => SetDestination(value); }
@@ -34,15 +34,24 @@ namespace GeneralShare.UI
             MarkDirty(ref _destination, value, DirtMarkType.Destination);
         }
 
-        protected override void NeedsCleanup()
+        protected override void Cleanup()
         {
             if (HasDirtMarks(DirtMarkType.Transform | DirtMarkType.Value | DirtMarkType.Destination))
             {
                 SizeF srcSize = _region.Size;
                 if (IsUsingDestination)
                 {
-                    var matrix = BatchedSpriteExtensions.GetMatrixFromRect(_destination, Origin, -Rotation, srcSize);
+                    var dst = _destination;
+                    if (Anchor != null)
+                    {
+                        Anchor.Purify();
+                        dst.Position += Anchor.Position.ToVector2();
+                        dst = ApplyAnchorOffset(dst);
+                    }
+
+                    var matrix = BatchedSpriteExtensions.GetMatrixFromRect(dst, Origin, -Rotation, srcSize);
                     _sprite.SetTransform(matrix, srcSize);
+                    _boundaries = dst;
                 }
                 else
                 {
@@ -57,6 +66,32 @@ namespace GeneralShare.UI
                 InvokeMarkedDirty(DirtMarkType.Boundaries);
             }
             MarkClean();
+        }
+
+        private RectangleF ApplyAnchorOffset(RectangleF rect)
+        {
+            switch (Anchor.Pivot)
+            {
+                case PivotPosition.Top:
+                    rect.X -= rect.Width / 2f;
+                    break;
+
+                case PivotPosition.TopRight:
+                    rect.X -= rect.Width;
+                    break;
+
+                case PivotPosition.Bottom:
+                    rect.X -= rect.Width / 2f;
+                    rect.Y += rect.Height;
+                    break;
+
+                case PivotPosition.BottomRight:
+                    rect.X -= rect.Width;
+                    rect.Y += rect.Height;
+                    break;
+            }
+
+            return rect;
         }
 
         public override void Draw(GameTime time, SpriteBatch batch)

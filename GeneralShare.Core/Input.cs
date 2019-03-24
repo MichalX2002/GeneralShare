@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using BS = Microsoft.Xna.Framework.Input.ButtonState;
 using KS = Microsoft.Xna.Framework.Input.KeyboardState;
 using MB = GeneralShare.MouseButton;
@@ -10,8 +11,7 @@ namespace GeneralShare
 {
     public static class Input
     {
-        public delegate void TextInputDelegate(int character, Keys key);
-        public static event TextInputDelegate TextInput;
+        public static event GameWindow.TextInputEventDelegate TextInput;
 
         private static readonly ListArray<HeldKey> _lastKeysHeld;
         private static readonly ListArray<HeldKey> _keysHeld;
@@ -29,10 +29,10 @@ namespace GeneralShare
         public static MouseState OldMouseState => _oldMS;
         public static MouseState NewMouseState => _newMS;
 
-        public static IReadOnlyList<Keys> KeysDown { get; private set; }
-        public static IReadOnlyList<HeldKey> KeysHeld { get; private set; }
-        public static IReadOnlyList<Keys> KeysPressed { get; private set; }
-        public static IReadOnlyList<Keys> KeysReleased { get; private set; }
+        public static ReadOnlyCollection<Keys> KeysDown { get; private set; }
+        public static ReadOnlyCollection<HeldKey> KeysHeld { get; private set; }
+        public static ReadOnlyCollection<Keys> KeysPressed { get; private set; }
+        public static ReadOnlyCollection<Keys> KeysReleased { get; private set; }
 
         public static Point MousePosition => _newMS.Position;
         public static Point MouseVelocity => new Point(_newMS.X - _oldMS.X, _newMS.Y - _oldMS.Y);
@@ -68,20 +68,20 @@ namespace GeneralShare
             if (_window == window)
                 return;
 
-            _window = window;
             if (window != null)
             {
                 window.TextInput += Window_TextInput;
             }
-            else
+            else if (_window != null)
             {
-                window.TextInput -= Window_TextInput;
+                _window.TextInput -= Window_TextInput;
             }
+            _window = window;
         }
         
-        private static void Window_TextInput(object s, int character, Keys key)
+        private static void Window_TextInput(TextInputEvent data)
         {
-            TextInput?.Invoke(character, key);
+            TextInput?.Invoke(data);
         }
 
         public static bool IsKeyHeld(Keys key, float timeThreshold)

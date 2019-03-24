@@ -10,7 +10,7 @@ namespace GeneralShare.UI
     public static partial class TextFormat
     {
         public static ICharIterator ColorFormat(
-            ICharIterator input, BitmapFont font, bool keepSequences, IReferenceList<Color?> output)
+            ICharIterator input, BitmapFont font, bool keepSequences, byte baseAlpha, IReferenceList<Color?> output)
         {
             if (input == null) throw new ArgumentNullException(nameof(input));
             if (font == null) throw new ArgumentNullException(nameof(font));
@@ -19,42 +19,15 @@ namespace GeneralShare.UI
                 return input;
 
             var builder = StringBuilderPool.Rent(input.Length);
-            ColorFormat(input, builder, font, keepSequences, output);
+            ColorFormat(input, builder, font, keepSequences, baseAlpha, output);
             var iterator = CharIteratorPool.Rent(builder, 0, builder.Length);
             StringBuilderPool.Return(builder);
             return iterator;
         }
 
-        /// <summary>
-        /// Non-allocating version of <see cref="char.ConvertFromUtf32(int)"/> as
-        /// this one uses buffer (that can be stack allocated) instead of returning a <see cref="string"/>.
-        /// </summary>
-        /// <param name="utf32">The Unicode character to decompose into <see cref="char"/>'s.</param>
-        /// <param name="buffer">A <see cref="char"/> buffer with at least 2 capacity.</param>
-        /// <returns>The amount of resulting <see cref="char"/>'s in the buffer. </returns>
-        public static int ConvertFromUtf32(int utf32, Span<char> buffer)
-        {
-            if (buffer.Length < 2)
-                throw new ArgumentException(nameof(buffer), "Insufficient capacity.");
-
-            if (utf32 < 0 || utf32 > 0x10ffff || (utf32 >= 0x00d800 && utf32 <= 0x00dfff))
-                return 0;
-
-            if (utf32 < 0x10000)
-            {
-                buffer[0] = (char)utf32;
-                return 1;
-            }
-
-            utf32 -= 0x10000;
-            buffer[0] = (char)((utf32 / 0x400) + '\ud800');
-            buffer[1] = (char)((utf32 % 0x400) + '\udc00');
-            return 2;
-        }
-
         public static void ColorFormat(
             ICharIterator input, StringBuilder textOutput,
-            BitmapFont font, bool keepSequences, ICollection<Color?> colorOutput)
+            BitmapFont font, bool keepSequences, byte baseAlpha, ICollection<Color?> colorOutput)
         {
             if (input == null) throw new ArgumentNullException(nameof(input));
             if (textOutput == null) throw new ArgumentNullException(nameof(textOutput));
@@ -115,8 +88,8 @@ namespace GeneralShare.UI
                                 if (colorOutput != null)
                                 {
                                     currentColor = sequenceBuffer[0] == '#' 
-                                        ? GetHexColor(colorBuffer, sequenceBuffer, sequence.Length) 
-                                        : GetRgba(colorBuffer, sequenceBuffer, sequence.Length);
+                                        ? GetHexColor(colorBuffer, sequenceBuffer, sequence.Length, baseAlpha) 
+                                        : GetRgba(colorBuffer, sequenceBuffer, sequence.Length, baseAlpha);
                                 }
 
                                 if (!keepSequences)
@@ -134,6 +107,33 @@ namespace GeneralShare.UI
                     AddAtLoopIndex(charBuffer, ref i);
                 }
             }
+        }
+
+        /// <summary>
+        /// Non-allocating version of <see cref="char.ConvertFromUtf32(int)"/> as
+        /// this one uses a <see cref="Span{T}"/> instead of returning a <see cref="string"/>.
+        /// </summary>
+        /// <param name="utf32">The Unicode character to decompose into <see cref="char"/>'s.</param>
+        /// <param name="buffer">A <see cref="char"/> buffer with at least 2 capacity.</param>
+        /// <returns>The amount of resulting <see cref="char"/>'s in the buffer. </returns>
+        public static int ConvertFromUtf32(int utf32, Span<char> buffer)
+        {
+            if (buffer.Length < 2)
+                throw new ArgumentException(nameof(buffer), "Insufficient capacity.");
+
+            if (utf32 < 0 || utf32 > 0x10ffff || (utf32 >= 0x00d800 && utf32 <= 0x00dfff))
+                return 0;
+
+            if (utf32 < 0x10000)
+            {
+                buffer[0] = (char)utf32;
+                return 1;
+            }
+
+            utf32 -= 0x10000;
+            buffer[0] = (char)((utf32 / 0x400) + '\ud800');
+            buffer[1] = (char)((utf32 % 0x400) + '\udc00');
+            return 2;
         }
 
         // TODO: Think of adding a font selecting char as first char in a sequence
@@ -169,10 +169,10 @@ namespace GeneralShare.UI
             return CharSequence.Invalid;
         }
 
-        public static Color GetHexColor(Span<byte> buffer, Span<char> sequence, int count)
+        public static Color GetHexColor(Span<byte> buffer, Span<char> sequence, int count, byte baseAlpha)
         {
             buffer.Fill(0);
-            buffer[3] = 255;
+            buffer[3] = baseAlpha;
 
             int offset = sequence[0] == '#' ? 1 : 0;
             StringHelper.HexToByteSpan(sequence, offset, count - offset, buffer);
@@ -190,10 +190,10 @@ namespace GeneralShare.UI
             return (byte)tmp;
         }
 
-        public static Color GetRgba(Span<byte> buffer, Span<char> sequence, int count)
+        public static Color GetRgba(Span<byte> buffer, Span<char> sequence, int count, byte baseAlpha)
         {
             buffer.Fill(0);
-            buffer[3] = 255;
+            buffer[3] = baseAlpha;
 
             int delimeterCount = 0;
             int lastOffset = 0;

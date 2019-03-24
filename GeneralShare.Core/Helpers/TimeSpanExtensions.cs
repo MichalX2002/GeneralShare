@@ -28,10 +28,10 @@ namespace GeneralShare
         /// </summary>
         public static string ToHMS(this TimeSpan timeSpan)
         {
-            string h = timeSpan.Hours.ToString("0");
+            string h = ((int)timeSpan.TotalHours).ToString("00");
             string m = timeSpan.Minutes.ToString("00");
             string s = timeSpan.Seconds.ToString("00");
-            return $"{h}:{m}:{s}";
+            return string.Join(":", h, m, s);
         }
 
         /// <summary>
@@ -39,7 +39,7 @@ namespace GeneralShare
         /// </summary>
         public static string ToHMSF(this TimeSpan timeSpan)
         {
-            return $"{ToHMS(timeSpan)}.{(int)(timeSpan.Milliseconds * 0.01)}";
+            return string.Concat(ToHMS(timeSpan), ".", ((int)(timeSpan.Milliseconds * 0.01)).ToString());
         }
     }
 }

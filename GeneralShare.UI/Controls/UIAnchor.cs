@@ -35,9 +35,16 @@ namespace GeneralShare.UI
             }
         }
 
+        internal override void OnViewportChanged(Viewport viewport)
+        {
+            ViewportChanged(viewport);
+        }
+
         public override void ViewportChanged(Viewport viewport)
         {
-            if(Pivot != PivotPosition.None)
+            if (Pivot == PivotPosition.None)
+                Position = Vector3.Zero;
+            else
                 UpdatePivotPosition();
         }
 
