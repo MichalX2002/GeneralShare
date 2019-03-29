@@ -46,7 +46,7 @@
       <HintPath>..\..\Binaries\MonoGame\MonoGame.Utilities.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Newtonsoft.Json.12.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\..\..\Source\packages\Newtonsoft.Json.12.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="Microsoft.CSharp" />
@@ -58,10 +58,10 @@
     </Reference>
     <Reference Include="System.Numerics" />
     <Reference Include="System.Numerics.Vectors, Version=4.1.5.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\System.Numerics.Vectors.4.6.0-preview.19073.11\lib\net46\System.Numerics.Vectors.dll</HintPath>
+      <HintPath>..\..\..\Source\packages\System.Numerics.Vectors.4.6.0-preview3.19128.7\lib\net46\System.Numerics.Vectors.dll</HintPath>
     </Reference>
     <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.5.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\System.Runtime.CompilerServices.Unsafe.4.6.0-preview.19073.11\lib\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+      <HintPath>..\..\..\Source\packages\System.Runtime.CompilerServices.Unsafe.4.6.0-preview3.19128.7\lib\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -79,8 +79,10 @@
     <Compile Include="Collections\QuadTree\ReadOnlyQuadTree.cs" />
     <Compile Include="CounterStream.cs" />
     <Compile Include="DebugUtils.cs" />
+    <Compile Include="Exceptions\ResourceNotFoundException.cs" />
     <Compile Include="GlobalDelegates.cs" />
     <Compile Include="Helpers\BinaryReaderHelper.cs" />
+    <Compile Include="Helpers\CustomComparerDictionaryCreationConverter.cs" />
     <Compile Include="Helpers\FileSizeHelper.cs" />
     <Compile Include="Helpers\String\StringBuilderExtensions.cs" />
     <Compile Include="Helpers\Enum\EnumConverter.cs" />

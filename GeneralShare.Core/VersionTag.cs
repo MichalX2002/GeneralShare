@@ -8,8 +8,8 @@ namespace GeneralShare
     [JsonObject]
     public class VersionTag
     {
-        public const string RESOURCE_FILENAME = "versiontag.json";
-        public const string DEFAULT_SUBVALUE = "0";
+        public const string ResourceFileName = "versiontag.json";
+        public const string DefaultValue = "0";
 
         private static VersionTag _undefined;
         public static VersionTag Undefined
@@ -34,10 +34,10 @@ namespace GeneralShare
                 throw new ArgumentNullException(nameof(major));
 
             if (string.IsNullOrWhiteSpace(minor))
-                minor = DEFAULT_SUBVALUE;
+                minor = DefaultValue;
 
             if (string.IsNullOrWhiteSpace(patch))
-                patch = DEFAULT_SUBVALUE;
+                patch = DefaultValue;
 
             Major = major;
             Minor = minor;
@@ -73,14 +73,13 @@ namespace GeneralShare
             return Value;
         }
         
-        public static VersionTag LoadFrom(Assembly assembly)
+        public static VersionTag LoadFrom(Assembly assembly, string root)
         {
-            var assemblyName = assembly.GetName().Name.Replace(".", string.Empty);
-            var resourceName = $"{assemblyName}.{RESOURCE_FILENAME}";
-            
+            var resourceName = string.Join(".", root, ResourceFileName);
             var stream = assembly.GetManifestResourceStream(resourceName);
             if (stream == null)
-                throw new FileNotFoundException("Version resource \"" + resourceName + "\" cannot be found.");
+                throw new ResourceNotFoundException("Version info cannot be found.", resourceName);
+            
             return JsonUtils.Deserialize<VersionTag>(stream);
         }
     }
