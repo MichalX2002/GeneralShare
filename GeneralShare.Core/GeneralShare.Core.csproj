@@ -84,6 +84,7 @@
     <Compile Include="Helpers\BinaryReaderHelper.cs" />
     <Compile Include="Helpers\CustomComparerDictionaryCreationConverter.cs" />
     <Compile Include="Helpers\FileSizeHelper.cs" />
+    <Compile Include="Helpers\SpanExtensions.cs" />
     <Compile Include="Helpers\String\StringBuilderExtensions.cs" />
     <Compile Include="Helpers\Enum\EnumConverter.cs" />
     <Compile Include="Helpers\DirectoryInfoExtensions.cs" />
