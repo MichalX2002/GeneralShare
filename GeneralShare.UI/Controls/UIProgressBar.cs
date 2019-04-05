@@ -124,12 +124,10 @@ namespace GeneralShare.UI
             Vector2 scale = GlobalScale;
             mainDst.Width *= scale.X;
             mainDst.Height *= scale.Y;
-
             mainDst.Width -= _barThickness * 2 / _mainBarRegion.Width;
             mainDst.Height -= _barThickness * 2 / _mainBarRegion.Height;
 
             var matrix = Matrix2.CreateFrom(mainDst.Position, Rotation, mainDst.Size, Origin);
-
             _mainSprite.SetTransform(matrix, _mainBarRegion.Bounds.Size);
             _mainSprite.SetDepth(Z);
             _mainSprite.SetTexCoords(_mainBarRegion);
