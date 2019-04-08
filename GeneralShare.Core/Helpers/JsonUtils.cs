@@ -8,7 +8,7 @@ namespace GeneralShare
 {
     public static class JsonUtils
     {
-        public const Formatting DEFAULT_FORMATTING = Formatting.None;
+        public const Formatting DefaultFormatting = Formatting.None;
 
         [ThreadStatic]
         private static JsonSerializer __defaultUniqueSerializer;
@@ -20,7 +20,7 @@ namespace GeneralShare
                 {
                     __defaultUniqueSerializer = new JsonSerializer
                     {
-                        Formatting = DEFAULT_FORMATTING
+                        Formatting = DefaultFormatting
                     };
                 }
                 return __defaultUniqueSerializer;
@@ -43,7 +43,7 @@ namespace GeneralShare
             var serializer = DefaultSerializer;
             serializer.Formatting = formatting;
             Serialize(value, serializer, stream, leaveOpen);
-            serializer.Formatting = DEFAULT_FORMATTING;
+            serializer.Formatting = DefaultFormatting;
         }
 
         public static void Serialize<T>(T value, Stream stream, bool leaveOpen = false)

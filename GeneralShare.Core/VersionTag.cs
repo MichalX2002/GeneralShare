@@ -72,14 +72,14 @@ namespace GeneralShare
         {
             return Value;
         }
-        
-        public static VersionTag LoadFrom(Assembly assembly, string root)
+
+        public static VersionTag LoadFrom(Assembly assembly)
         {
-            var resourceName = string.Join(".", root, ResourceFileName);
+            var resourceName = assembly.GetName().Name + "." + ResourceFileName;
             var stream = assembly.GetManifestResourceStream(resourceName);
             if (stream == null)
                 throw new ResourceNotFoundException("Version info cannot be found.", resourceName);
-            
+
             return JsonUtils.Deserialize<VersionTag>(stream);
         }
     }
