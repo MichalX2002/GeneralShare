@@ -168,7 +168,7 @@ namespace GeneralShare.UI
 
         public void Update(GameTime time)
         {
-            if (Input.IsAnyMouseDown(out MouseButton tmp))
+            if (Input.IsAnyMouseDown(out _))
                 SelectedElement = null;
 
             UpdateTransformsAndTriggerEvents(time);
