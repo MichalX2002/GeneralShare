@@ -4,12 +4,11 @@ namespace GeneralShare
 {
     public class Random64
     {
-        private const long MBIG = long.MaxValue;
-        private const int MSEED = 161803398;
-        private const int MZ = 0;
+        private const long MBig = long.MaxValue;
+        private const int MSeed = 161803398;
 
-        private int inext;
-        private int inextp;
+        private int _inext;
+        private int _inextp;
         private readonly long[] _seedArray;
 
         public long Seed { get; }
@@ -24,7 +23,7 @@ namespace GeneralShare
 
             long sub = (seed == long.MinValue) ? long.MaxValue : Math.Abs(seed);
             long ii;
-            long mj = MSEED - sub;
+            long mj = MSeed - sub;
             long mk = 1;
 
             _seedArray = new long[56];
@@ -35,7 +34,7 @@ namespace GeneralShare
                 _seedArray[ii] = mk;
                 mk = mj - mk;
                 if (mk < 0)
-                    mk += MBIG;
+                    mk += MBig;
                 mj = _seedArray[ii];
             }
             for (int k = 1; k < 5; k++)
@@ -44,18 +43,18 @@ namespace GeneralShare
                 {
                     _seedArray[i] -= _seedArray[1 + (i + 30) % 55];
                     if (_seedArray[i] < 0)
-                        _seedArray[i] += MBIG;
+                        _seedArray[i] += MBig;
                 }
             }
-            inext = 0;
-            inextp = 21;
+            _inext = 0;
+            _inextp = 21;
         }
 
         private long LongSample()
         {
             long retVal;
-            int locINext = inext;
-            int locINextp = inextp;
+            int locINext = _inext;
+            int locINextp = _inextp;
 
             if (++locINext >= 56)
                 locINext = 1;
@@ -65,16 +64,16 @@ namespace GeneralShare
 
             retVal = _seedArray[locINext] - _seedArray[locINextp];
 
-            if (retVal == MBIG)
+            if (retVal == MBig)
                 retVal--;
 
             if (retVal < 0)
-                retVal += MBIG;
+                retVal += MBig;
 
             _seedArray[locINext] = retVal;
 
-            inext = locINext;
-            inextp = locINextp;
+            _inext = locINext;
+            _inextp = locINextp;
 
             return retVal;
         }

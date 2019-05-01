@@ -187,7 +187,7 @@ namespace GeneralShare
 
         private static bool GetMState(in MouseState state, MB buttons, BS press)
         {
-            return GetMState(state, buttons, press, out var outButtons);
+            return GetMState(state, buttons, press, out _);
         }
 
         private static bool GetMState(in MouseState state,
