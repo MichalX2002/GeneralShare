@@ -6,11 +6,11 @@ using System.Linq;
 
 namespace GeneralShare
 {
-    public class CustomComparerDictionaryCreationConverter<T> : CustomCreationConverter<IDictionary>
+    public class ComparerDictionaryCreationConverter<T> : CustomCreationConverter<IDictionary>
     {
         public IEqualityComparer<T> Comparer { get; set; }
 
-        public CustomComparerDictionaryCreationConverter(IEqualityComparer<T> comparer)
+        public ComparerDictionaryCreationConverter(IEqualityComparer<T> comparer)
         {
             Comparer = comparer ?? throw new ArgumentNullException(nameof(comparer));
         }

@@ -80,7 +80,7 @@
     <Compile Include="Exceptions\ResourceNotFoundException.cs" />
     <Compile Include="GlobalDelegates.cs" />
     <Compile Include="Helpers\BinaryReaderHelper.cs" />
-    <Compile Include="Helpers\CustomComparerDictionaryCreationConverter.cs" />
+    <Compile Include="Helpers\ComparerDictionaryCreationConverter.cs" />
     <Compile Include="Helpers\FileSizeHelper.cs" />
     <Compile Include="Helpers\SpanExtensions.cs" />
     <Compile Include="Helpers\String\StringBuilderExtensions.cs" />

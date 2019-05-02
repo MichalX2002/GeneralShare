@@ -183,7 +183,7 @@ namespace GeneralShare.UI
 
         private void UpdateTransformsAndTriggerEvents(GameTime time)
         {
-            bool anyDown = Input.IsAnyMouseDown(out var down);
+            bool anyDown = Input.IsAnyMouseDown(out _);
             bool anyPressed = Input.IsAnyMousePressed(out var pressed);
             bool anyReleased = Input.IsAnyMouseReleased(out var released);
 

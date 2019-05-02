@@ -89,10 +89,10 @@ namespace GeneralShare.UI
                 return;
 
             var scale = GlobalScale;
-            var offset = new RectangleF(_stringRect.Position, SizeF.Empty);
-            
+            _ = new RectangleF(_stringRect.Position, SizeF.Empty);
+
             //DrawTree(batch, _quadTree, offset, scale);
-        
+
             var posInTree = (Input.MousePosition.ToVector2() - _stringRect.Position.ToVector2()) / scale;
             var range = new RectangleF(posInTree - new Vector2(_font.LineHeight), new Vector2(_font.LineHeight * 2));
             

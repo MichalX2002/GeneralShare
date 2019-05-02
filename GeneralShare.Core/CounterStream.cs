@@ -4,7 +4,7 @@ using System.Runtime.Remoting;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace GeneralShare.Core
+namespace GeneralShare
 {
     public class CounterStream : Stream
     {
