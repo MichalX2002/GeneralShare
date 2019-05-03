@@ -26,12 +26,28 @@ namespace GeneralShare
         /// <summary>
         /// Hours : Minutes : Seconds
         /// </summary>
-        public static string ToHMS(this TimeSpan timeSpan)
+        public static string ToHMS(this TimeSpan timeSpan, bool useSuffix = false)
         {
             string h = ((int)timeSpan.TotalHours).ToString("00");
             string m = timeSpan.Minutes.ToString("00");
             string s = timeSpan.Seconds.ToString("00");
+
+            if (useSuffix)
+                return $"{h}h:{m}m:{s}s";
             return string.Join(":", h, m, s);
+        }
+
+        /// <summary>
+        /// Hours : Minutes
+        /// </summary>
+        public static string ToHM(this TimeSpan timeSpan, bool useSuffix = false)
+        {
+            string h = ((int)timeSpan.TotalHours).ToString("00");
+            string m = timeSpan.Minutes.ToString("00");
+
+            if (useSuffix)
+                return $"{h}h:{m}m";
+            return string.Join(":", h, m);
         }
 
         /// <summary>
