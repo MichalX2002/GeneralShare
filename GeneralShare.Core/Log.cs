@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -59,28 +60,6 @@ namespace GeneralShare
             BaseLog(message, showPrefix, true, Thread.CurrentThread, "WARN");
         }
 
-        public static void Verbal(object obj, bool showPrefix = true)
-        {
-            Verbal(obj.ToString(), showPrefix);
-        }
-
-        public static void Verbal(string message, bool showPrefix = true)
-        {
-            BaseLog(message, showPrefix, true, Thread.CurrentThread, null);
-        }
-
-        public static void Debug(object obj, bool showPrefix = true)
-        {
-            if (DebugUtils.IsDebuggerAttached) // check twice to prevent a string allocation
-                Debug(obj.ToString(), showPrefix);
-        }
-
-        public static void Debug(string message, bool showPrefix = true)
-        {
-            if (DebugUtils.IsDebuggerAttached)
-                BaseLog(message, showPrefix, true, Thread.CurrentThread, "DEBUG");
-        }
-
         public static void Info(object obj, bool showPrefix = true)
         {
             Info(obj == null ? "null" : obj.ToString(), showPrefix);
@@ -91,9 +70,28 @@ namespace GeneralShare
             BaseLog(message, showPrefix, true, Thread.CurrentThread, null);
         }
 
+        public static void Debug(object obj, bool showPrefix = true)
+        {
+            if (DebugUtils.IsTracing || DebugUtils.IsDebuggerAttached) // check here to prevent a string allocation
+                Debug(obj.ToString(), showPrefix);
+        }
+
+        public static void Debug(string message, bool showPrefix = true)
+        {
+            if (DebugUtils.IsTracing || DebugUtils.IsDebuggerAttached)
+                BaseLog(message, showPrefix, true, Thread.CurrentThread, "DEBUG");
+        }
+
+        public static void Trace(object obj, bool showPrefix = true)
+        {
+            if(DebugUtils.IsTracing) // check here to prevent a string allocation
+                Trace(obj.ToString(), showPrefix);
+        }
+
         public static void Trace(string message, bool showPrefix = true)
         {
-            BaseLog(message, showPrefix, true, Thread.CurrentThread, null);
+            if (DebugUtils.IsTracing)
+                BaseLog(message, showPrefix, true, Thread.CurrentThread, "TRACE");
         }
 
         private static void BaseLog(string message, bool showPrefix, bool showTime, Thread thread, string type)
@@ -151,6 +149,7 @@ namespace GeneralShare
             WriteLine(string.Empty);
         }
 
+        [DebuggerHidden]
         private static void AssertInitialized()
         {
             if (!IsInitialized)

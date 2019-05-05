@@ -95,20 +95,20 @@ namespace GeneralShare
             return length;
         }
 
-        public static int HexToByteSpan(Span<char> hex, int offset, int count, Span<byte> output)
+        public static int HexToByteSpan(Span<char> hex, Span<byte> output)
         {
-            if (count % 2 == 1)
+            if (hex.Length % 2 == 1)
                 throw GetKeyException();
 
-            int length = count / 2;
+            int length = hex.Length / 2;
             if (output.Length < length)
                 GetTooShortException();
 
             for (int i = 0; i < length; ++i)
             {
                 output[i] = (byte)(
-                    GetHexValue(hex[offset + i * 2]) * 16 +
-                    GetHexValue(hex[offset + i * 2 + 1]));
+                    GetHexValue(hex[i * 2]) * 16 +
+                    GetHexValue(hex[i * 2 + 1]));
             }
 
             return length;

@@ -19,13 +19,13 @@ namespace GeneralShare.UI
         private int _barThickness;
         private float _value;
         private Range<float> _range;
-        private Vector2 _destination;
+        private SizeF _destination;
         private Vector2 _headPos;
         private RectangleF _mainRect;
 
         public override RectangleF Boundaries { get { Purify(); return _boundaries; } }
         public int BackBarThickness { get => _barThickness; set => SetThickness(value); }
-        public Vector2 Destination { get => _destination; set => SetDestination(value); }
+        public SizeF Destination { get => _destination; set => SetDestination(value); }
         public RectangleF MainBarRect { get { Purify(); return _mainRect; } }
         public Vector2 BarHeadPosition { get { Purify(); return _headPos; } }
         public BarDirection Direction { get => _direction; set => SetDirection(value); }
@@ -88,7 +88,7 @@ namespace GeneralShare.UI
             MarkDirty(ref _direction, value, DirtMarkType.BarDirection);
         }
 
-        private void SetDestination(Vector2 value)
+        private void SetDestination(SizeF value)
         {
             MarkDirty(ref _destination, value, DirtMarkType.Destination);
         }
@@ -135,8 +135,8 @@ namespace GeneralShare.UI
 
         private void UpdateMainRect()
         {
-            float w = _destination.X * FillPercentage;
-            float h = _destination.Y / _mainBarRegion.Height;
+            float w = _destination.Width * FillPercentage;
+            float h = _destination.Height / _mainBarRegion.Height;
             Vector3 pos = GlobalPosition;
 
             switch (_direction)
@@ -149,7 +149,7 @@ namespace GeneralShare.UI
                     break;
 
                 case BarDirection.ToLeft:
-                    float headX = pos.X + _destination.X - w;
+                    float headX = pos.X + _destination.Width - w;
                     _headPos = new Vector2(headX, 0);
                     _mainRect = new RectangleF(headX, pos.Y, w, h);
                     break;
@@ -168,8 +168,8 @@ namespace GeneralShare.UI
             _boundaries.Y = pos.Y;
 
             Vector2 scale = GlobalScale;
-            _boundaries.Width = scale.X * _destination.X / _backBarRegion.Width;
-            _boundaries.Height = scale.Y * _destination.Y / _backBarRegion.Height;
+            _boundaries.Width = scale.X * _destination.Width / _backBarRegion.Width;
+            _boundaries.Height = scale.Y * _destination.Height / _backBarRegion.Height;
             InvokeMarkedDirty(DirtMarkType.Boundaries);
 
             CalculateMainSprite(_mainRect);

@@ -16,6 +16,7 @@ namespace GeneralShare
         public static bool IsDebuggerAttached => Debugger.IsAttached;
         public static long TotalMemoryUsage => GetTotalMemoryUsage();
         public static long ManagedMemoryUsage => GC.GetTotalMemory(false);
+        public static bool IsTracing { get; set; }
 
         static DebugUtils()
         {

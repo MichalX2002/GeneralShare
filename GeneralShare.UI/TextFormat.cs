@@ -175,7 +175,7 @@ namespace GeneralShare.UI
             buffer[3] = baseAlpha;
 
             int offset = sequence[0] == '#' ? 1 : 0;
-            StringHelper.HexToByteSpan(sequence, offset, count - offset, buffer);
+            StringHelper.HexToByteSpan(sequence.Slice(offset, count - offset), buffer);
             return new Color(buffer[0], buffer[1], buffer[2], buffer[3]);
         }
 
