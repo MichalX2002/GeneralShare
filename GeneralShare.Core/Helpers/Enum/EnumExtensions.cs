@@ -79,7 +79,7 @@ namespace GeneralShare
         /// </summary>
         /// <typeparam name="TEnum">The type of the enum.</typeparam>
         /// <param name="value">The value.</param>
-        /// <param name="flag">The flags.</param>
+        /// <param name="flags">The flags.</param>
         /// <returns>
         ///  <c>true</c> if the specified value has any flag; otherwise, <c>false</c>.
         /// </returns>
