@@ -267,9 +267,7 @@ namespace GeneralShare
             _lastKeysHeld.AddRange(_keysHeld);
             _keysHeld.Clear();
             for (int i = 0; i < _keysDown.Count; i++)
-            {
                 AddHeldKey(time.Delta, _keysDown[i]);
-            }
             _lastKeysHeld.Clear();
         }
 
@@ -282,7 +280,9 @@ namespace GeneralShare
                 {
                     last._time += delta;
                     _keysHeld.Add(last);
-                    return; // we only want one (the previous) HeldKey in the list
+                    
+                    // we only want one (the previous) HeldKey in the list
+                    return; 
                 }
             }
 
