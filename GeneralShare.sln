@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27703.2042
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29306.81
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeneralShare.UI", "GeneralShare.UI\GeneralShare.UI.csproj", "{2D3D1EB7-64FE-42F5-A3B2-5992C27A3FE7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeneralShare.Core", "GeneralShare.Core\GeneralShare.Core.csproj", "{5C2DE6A1-31DE-4B78-9808-547DD294F55C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeneralShare.GUI", "GeneralShare.GUI\GeneralShare.GUI.csproj", "{2DC9157E-7717-4725-AE7E-679C38E7FD11}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{5C2DE6A1-31DE-4B78-9808-547DD294F55C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5C2DE6A1-31DE-4B78-9808-547DD294F55C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5C2DE6A1-31DE-4B78-9808-547DD294F55C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2DC9157E-7717-4725-AE7E-679C38E7FD11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2DC9157E-7717-4725-AE7E-679C38E7FD11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2DC9157E-7717-4725-AE7E-679C38E7FD11}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2DC9157E-7717-4725-AE7E-679C38E7FD11}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

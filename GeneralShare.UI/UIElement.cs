@@ -41,16 +41,14 @@ namespace GeneralShare.UI
             InterceptCursor = true;
 
             if (manager != null)
-            {
                 PreferredSamplingMode = manager.PreferredSamplingMode;
-            }
             else
-            {
                 PreferredSamplingMode = SamplingMode.LinearClamp;
-            }
         }
 
-        public UIElement(UIManager manager) : this(null, manager) { }
+        public UIElement(UIManager manager) : this(null, manager)
+        {
+        }
 
         private void TriggerMouseHoverEvent(MouseState mouseState, MouseHoverDelegate action)
         {
@@ -118,6 +116,8 @@ namespace GeneralShare.UI
             TriggerGenericKeyboardEvent(key, OnKeyRelease);
         }
 
-        public virtual void Draw(GameTime time, SpriteBatch batch) { }
+        public virtual void Draw(GameTime time, SpriteBatch batch)
+        {
+        }
     }
 }
