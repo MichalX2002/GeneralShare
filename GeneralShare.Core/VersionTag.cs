@@ -1,74 +1,86 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.IO;
+using System.Reflection;
 
 namespace GeneralShare
 {
     [JsonObject]
     public class VersionTag
     {
-        public const string DEFAULT_FILENAME = "versiontag.json";
+        public const string ResourceFileName = "versiontag.json";
+        public const string DefaultValue = "0";
 
-        [JsonProperty("VersionMajor")]
-        private string _versionMajor;
+        private static VersionTag _undefined;
+        public static VersionTag Undefined
+        {
+            get
+            {
+                if(_undefined == null)
+                    _undefined = new VersionTag();
+                return _undefined;
+            }
+        }
 
-        [JsonProperty("VersionMinor")]
-        private string _versionMinor;
-
-        [JsonIgnore]
-        private string _version;
-
-        [JsonIgnore]
-        public string VersionMajor => _versionMajor;
-
-        [JsonIgnore]
-        public string VersionMinor => _versionMinor;
-
-        [JsonIgnore]
-        public string Version => _version;
+        [JsonIgnore] public string Value { get; private set; }
+        [JsonProperty] public string Major { get; private set; }
+        [JsonProperty] public string Minor { get; private set; }
+        [JsonProperty] public string Patch { get; private set; }
 
         [JsonConstructor]
-        public VersionTag(string versionMajor, string versionMinor)
+        public VersionTag(string major, string minor, string patch)
         {
-            _versionMajor = versionMajor;
-            _versionMinor = versionMinor;
+            if (string.IsNullOrWhiteSpace(major))
+                throw new ArgumentNullException(nameof(major));
+
+            if (string.IsNullOrWhiteSpace(minor))
+                minor = DefaultValue;
+
+            if (string.IsNullOrWhiteSpace(patch))
+                patch = DefaultValue;
+
+            Major = major;
+            Minor = minor;
+            Patch = patch;
             CombineVersion();
         }
 
         public VersionTag(string version)
         {
-            SetVersion(version);
-        }
-
-        /// <summary>
-        /// Constructs a new <see cref="VersionTag"/> with an 'undefined' version.
-        /// </summary>
-        public VersionTag()
-        {
-            _version = "undefined";
-            _versionMajor = _version;
-            _versionMinor = _version;
-        }
-
-        protected void SetVersion(string version)
-        {
             string[] split = version.Split('.');
-            if (split == null || split.Length != 2)
+            if (split == null || split.Length != 3)
                 throw new ArgumentException(
-                    "Could not split version into major and minor.", nameof(version));
+                    "Could not split version into major, minor and patch.");
 
-            _versionMajor = split[0].Trim();
-            _versionMinor = split[1].Trim();
+            Major = split[0];
+            Minor = split[1];
+            Patch = split[2];
             CombineVersion();
+        }
+        
+        private VersionTag()
+        {
+            Major = Minor = Patch = Value = "undefined";
         }
 
         private void CombineVersion()
         {
-            _version = $"{_versionMajor}.{_versionMinor}";
+            Value = $"{Major}.{Minor}.{Patch}";
         }
 
         public override string ToString()
         {
-            return _version;
+            return Value;
+        }
+
+        public static VersionTag LoadFrom(Assembly assembly)
+        {
+            var resourceName = assembly.GetName().Name + "." + ResourceFileName;
+            var stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream == null)
+                throw new ResourceNotFoundException("Version info cannot be found.", resourceName);
+
+            return JsonUtils.Deserialize<VersionTag>(stream);
         }
     }
 }

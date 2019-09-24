@@ -4,19 +4,17 @@ namespace GeneralShare
 {
     public class Random64
     {
-        private const long MBIG = long.MaxValue;
-        private const int MSEED = 161803398;
-        private const int MZ = 0;
+        private const long MBig = long.MaxValue;
+        private const int MSeed = 161803398;
 
-        private int inext;
-        private int inextp;
+        private int _inext;
+        private int _inextp;
         private readonly long[] _seedArray;
 
         public long Seed { get; }
         
-        public Random64() : this(DateTime.UtcNow.Ticks)
+        public Random64() : this(Environment.TickCount)
         {
-
         }
 
         public Random64(long seed)
@@ -24,9 +22,8 @@ namespace GeneralShare
             Seed = seed;
 
             long sub = (seed == long.MinValue) ? long.MaxValue : Math.Abs(seed);
-
             long ii;
-            long mj = MSEED - sub;
+            long mj = MSeed - sub;
             long mk = 1;
 
             _seedArray = new long[56];
@@ -37,7 +34,7 @@ namespace GeneralShare
                 _seedArray[ii] = mk;
                 mk = mj - mk;
                 if (mk < 0)
-                    mk += MBIG;
+                    mk += MBig;
                 mj = _seedArray[ii];
             }
             for (int k = 1; k < 5; k++)
@@ -46,18 +43,18 @@ namespace GeneralShare
                 {
                     _seedArray[i] -= _seedArray[1 + (i + 30) % 55];
                     if (_seedArray[i] < 0)
-                        _seedArray[i] += MBIG;
+                        _seedArray[i] += MBig;
                 }
             }
-            inext = 0;
-            inextp = 21;
+            _inext = 0;
+            _inextp = 21;
         }
 
-        private long IntegerSample()
+        private long LongSample()
         {
             long retVal;
-            int locINext = inext;
-            int locINextp = inextp;
+            int locINext = _inext;
+            int locINextp = _inextp;
 
             if (++locINext >= 56)
                 locINext = 1;
@@ -67,24 +64,24 @@ namespace GeneralShare
 
             retVal = _seedArray[locINext] - _seedArray[locINextp];
 
-            if (retVal == MBIG)
+            if (retVal == MBig)
                 retVal--;
 
             if (retVal < 0)
-                retVal += MBIG;
+                retVal += MBig;
 
             _seedArray[locINext] = retVal;
 
-            inext = locINext;
-            inextp = locINextp;
+            _inext = locINext;
+            _inextp = locINextp;
 
             return retVal;
         }
 
-        private double FloatSample()
+        public double NextDouble()
         {
-            long result = IntegerSample();
-            bool negative = (IntegerSample() % 2 == 0) ? true : false;
+            long result = LongSample();
+            bool negative = (LongSample() % 2 == 0) ? true : false;
             if (negative)
                 result = -result;
 
@@ -94,19 +91,14 @@ namespace GeneralShare
             return d;
         }
 
-        public double NextDouble()
-        {
-            return FloatSample();
-        }
-
         public float NextSingle()
         {
-            return (float)FloatSample(); 
+            return (float)NextDouble(); 
         }
 
         public long NextInt64()
         {
-            return IntegerSample();
+            return LongSample();
         }
 
         public long NextInt64(long maxValue)
@@ -114,12 +106,12 @@ namespace GeneralShare
             if (maxValue < 0)
                 throw new ArgumentOutOfRangeException(nameof(maxValue), "Value must be positive.");
 
-            return (long)(FloatSample() * maxValue);
+            return (long)(NextDouble() * maxValue);
         }
 
         public int NextInt32()
         {
-            return (int)(FloatSample() * int.MaxValue);
+            return (int)(NextDouble() * int.MaxValue);
         }
 
         public int NextInt32(int maxValue)
@@ -127,7 +119,7 @@ namespace GeneralShare
             if (maxValue < 0)
                 throw new ArgumentOutOfRangeException(nameof(maxValue), "Value must be positive.");
 
-            return (int)(FloatSample() * maxValue);
+            return (int)(NextDouble() * maxValue);
         }
 
         public int NextInt32(int minValue, int maxValue)
@@ -141,23 +133,42 @@ namespace GeneralShare
             long range = (long)maxValue - minValue;
             if (range <= int.MaxValue)
             {
-                return ((int)(FloatSample() * range) + minValue);
+                return ((int)(NextDouble() * range) + minValue);
             }
             else
             {
-                return (int)((long)(FloatSample() * range) + minValue);
+                return (int)((long)(NextDouble() * range) + minValue);
             }
         }
 
-        public virtual void NextBytes(byte[] buffer)
+        public void NextBytes(byte[] buffer)
         {
             if (buffer == null)
                 throw new ArgumentNullException(nameof(buffer));
 
-            for (int i = 0; i < buffer.Length; i++)
+            NextBytes(buffer, 0, buffer.Length);
+        }
+
+        public void NextBytes(byte[] buffer, int offset, int count)
+        {
+            if (buffer == null)
+                throw new ArgumentNullException(nameof(buffer));
+
+            if (count > buffer.Length)
+                throw new ArgumentOutOfRangeException(nameof(count));
+
+            if (offset + count > buffer.Length)
+                throw new ArgumentOutOfRangeException(nameof(offset));
+
+            for (int i = 0; i < count; i++)
             {
-                buffer[i] = (byte)(IntegerSample() % (byte.MaxValue + 1));
+                buffer[i + offset] = (byte)(LongSample() % (byte.MaxValue + 1));
             }
+        }
+
+        public byte NextByte()
+        {
+            return (byte)(LongSample() % (byte.MaxValue + 1));
         }
     }
 }

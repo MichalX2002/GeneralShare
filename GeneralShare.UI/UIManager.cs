@@ -2,7 +2,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using MonoGame.Extended;
 using MonoGame.Extended.TextureAtlases;
 using System;
 using System.Collections.Generic;
@@ -15,38 +14,25 @@ namespace GeneralShare.UI
 
         public event TransformListSortedDelegate TransformListSorted;
 
-        private static TextureRegion2D _grayscaleRegion;
-        private UIElement __selectedElement;
-        internal Viewport _lastViewport;
+        //private static TextureRegion2D _grayscaleRegion;
+
+        internal bool IsDisposing { get; private set; }
+        public bool IsDisposed { get; private set; }
 
         public GraphicsDevice GraphicsDevice { get; }
         public TextureRegion2D GrayscaleRegion { get; set; }
         public TextureRegion2D WhitePixelRegion { get; set; }
+        public SamplingMode PreferredSampling { get; set; }
+        public Viewport Viewport => GraphicsDevice.Viewport;
 
-        public bool Disposed { get; private set; }
-        public SamplingMode PreferredSamplingMode { get; set; }
-        public Viewport Viewport => _lastViewport;
-        public object SyncRoot { get; private set; }
         public bool TransformsNeedSorting { get; private set; }
         public ListArray<UITransform> Transforms { get; }
 
-        public UIElement SelectedElement
-        {
-            get
-            {
-                lock (SyncRoot)
-                    return __selectedElement;
-            }
-            set
-            {
-                lock (SyncRoot)
-                {
-                    if (__selectedElement != null)
-                        __selectedElement.IsSelected = false;
-                    __selectedElement = value;
-                }
-            }
-        }
+        /// <summary>
+        /// The currently selected <see cref="UIElement"/> (<see cref="UIElement.IsSelectable"/>
+        /// needs to be <see langword="true"/>) that receives keyboard and events.
+        /// </summary>
+        public UIElement SelectedElement { get; set; }
 
         /// <summary>
         /// Constructs a <see cref="UIManager"/> instance using an existing grayscale region.
@@ -57,51 +43,23 @@ namespace GeneralShare.UI
         /// (this can be larger as linear filtering can stretch the texture).
         /// This texture is mostly used for better shading on elements.
         /// </param>
-        public UIManager(GraphicsDevice device, TextureRegion2D grayscaleRegion)
+        public UIManager(GraphicsDevice device, TextureRegion2D grayscaleRegion, TextureRegion2D whitePixelRegion)
         {
             GrayscaleRegion = grayscaleRegion ?? throw new ArgumentNullException(nameof(grayscaleRegion));
-            if (GrayscaleRegion.Width < 1) throw new ArgumentException();
-            if (GrayscaleRegion.Height < 2) throw new ArgumentException();
+            if (GrayscaleRegion.Width < 1) throw new ArgumentException(nameof(grayscaleRegion));
+            if (GrayscaleRegion.Height < 2) throw new ArgumentException(nameof(grayscaleRegion));
 
-            WhitePixelRegion = new TextureRegion2D(grayscaleRegion.Texture, 0, 0, 1, 1);
-            GraphicsDevice = device;
+            WhitePixelRegion = whitePixelRegion ?? throw new ArgumentNullException(nameof(whitePixelRegion));
+            if (WhitePixelRegion.Width < 1) throw new ArgumentException(nameof(whitePixelRegion));
+            if (WhitePixelRegion.Height < 1) throw new ArgumentException(nameof(whitePixelRegion));
 
-            SyncRoot = new object();
+            GraphicsDevice = device ?? throw new ArgumentNullException(nameof(device));
+
             Transforms = new ListArray<UITransform>();
             Transforms.Changed += Transforms_Changed;
-            PreferredSamplingMode = SamplingMode.LinearClamp;
+            PreferredSampling = SamplingMode.LinearClamp;
 
             Input.TextInput += Input_TextInput;
-        }
-
-        /// <summary>
-        /// Constructs a <see cref="UIManager"/> instance with a static grayscale texture.
-        /// </summary>
-        /// <param name="device">
-        /// The <see cref="GraphicsDevice"/> to use for creating a
-        /// grayscale texture if the existing static texture is null.
-        /// </param>
-        public UIManager(GraphicsDevice device) : this(device, GetRegion(device))
-        {
-        }
-
-        private static TextureRegion2D GetRegion(GraphicsDevice device)
-        {
-            if (_grayscaleRegion == null)
-            {
-                Color[] colors = new Color[4];
-                for (int i = 0; i < 3; i++)
-                {
-                    colors[i] = Color.White;
-                }
-                colors[3] = Color.LightGray;
-
-                var tex = new Texture2D(device, 1, 4);
-                tex.SetData(colors);
-                _grayscaleRegion = new TextureRegion2D(tex, 0, 2, 1, 2);
-            }
-
-            return _grayscaleRegion;
         }
 
         private void Transforms_Changed(int oldVersion, int newVersion)
@@ -109,55 +67,37 @@ namespace GeneralShare.UI
             FlagForSort();
         }
 
-        private void Input_TextInput(TextInputEventArgs e)
+        private void Input_TextInput(TextInputEvent data)
         {
-            if (Disposed == false)
+            if (!IsDisposed)
             {
-                lock (SyncRoot)
-                {
-                    if (SelectedElement != null)
-                        SelectedElement.TriggerOnTextInput(e);
-                }
+                if (SelectedElement != null && SelectedElement.IsKeyboardEventTrigger)
+                    SelectedElement.TriggerOnTextInput(data);
             }
         }
 
-        private void FlagForSort()
+        public void Add(UITransform transform)
         {
-            if (Disposed == false)
-                TransformsNeedSorting = true;
-        }
-
-        public void SortTransforms()
-        {
-            lock (SyncRoot)
-            {
-                if (TransformsNeedSorting)
-                {
-                    Transforms.Sort(new UIDepthComparer());
-                    TransformListSorted?.Invoke();
-                    TransformsNeedSorting = false;
-                }
-            }
+            transform.Manager = this;
+            Transforms.Add(transform);
+            transform.OnMarkedDirty += Transform_MarkedDirty;
+            FlagForSort();
         }
 
         public bool GetElement(float x, float y, out UIElement output)
         {
-            lock (SyncRoot)
+            for (int i = 0, count = Transforms.Count; i < count; i++)
             {
-                for (int i = 0, length = Transforms.Count; i < length; i++)
+                UITransform transform = Transforms[i];
+                if (transform.IsActive && transform is UIElement element)
                 {
-                    UITransform item = Transforms[i];
-                    if (item is UIElement element)
+                    if (element.Boundaries.Contains(new PointF(x, y)))
                     {
-                        if (element.Boundaries.Contains(new PointF(x, y)))
-                        {
-                            output = element;
-                            return true;
-                        }
+                        output = element;
+                        return true;
                     }
                 }
             }
-
             output = null;
             return false;
         }
@@ -165,11 +105,6 @@ namespace GeneralShare.UI
         public bool GetElement(Vector2 position, out UIElement output)
         {
             return GetElement(position.X, position.Y, out output);
-        }
-
-        public bool GetElement(Point point, out UIElement output)
-        {
-            return GetElement(point.X, point.Y, out output);
         }
 
         public UIElement GetElement(float x, float y)
@@ -183,201 +118,184 @@ namespace GeneralShare.UI
             return GetElement(position.X, position.Y);
         }
 
-        private void Transform_MarkedDirty(DirtMarkType type)
-        {
-            if (type.HasFlags(DirtMarkType.Position))
-                FlagForSort();
-        }
-
-        public void Add(UITransform transform)
-        {
-            lock (SyncRoot)
-            {
-                Transforms.Add(transform);
-                transform.MarkedDirty += Transform_MarkedDirty;
-                FlagForSort();
-            }
-        }
-
         public bool Remove(UITransform transform)
         {
-            lock (SyncRoot)
+            int index = Transforms.FindIndex((x) => x == transform);
+            if (index != -1)
             {
-                int index = Transforms.FindIndex((x) => x == transform);
-                if (index == -1)
-                {
-                    return false;
-                }
-                else
-                {
-                    Transforms[index].MarkedDirty -= Transform_MarkedDirty;
-                    Transforms.RemoveAt(index);
-                    
-                    return true;
-                }
+                Transforms.GetAndRemoveAt(index).OnMarkedDirty -= Transform_MarkedDirty;
+                return true;
             }
+            return false;
         }
 
-        public ListArray<UITransform> GetSortedTransforms()
+        public void RemoveRange(IEnumerable<UITransform> transforms)
         {
-            if (Disposed)
+            foreach (var transform in transforms)
+                Remove(transform);
+        }
+
+        private void FlagForSort()
+        {
+            if (!IsDisposed)
+                TransformsNeedSorting = true;
+        }
+
+        private void Transform_MarkedDirty(UITransform transform, DirtMarkType type)
+        {
+            if (type.HasFlags(DirtMarkType.DrawOrder))
+                FlagForSort();
+        }
+
+        public ListArray<UITransform> SortAndGetTransforms()
+        {
+            if (IsDisposed)
                 throw new ObjectDisposedException(nameof(UIManager));
 
-            lock (SyncRoot)
+            if (TransformsNeedSorting)
             {
-                SortTransforms();
-                return Transforms;
+                Transforms.Sort(UIDrawOrderComparer.Instance);
+                TransformListSorted?.Invoke();
+                TransformsNeedSorting = false;
             }
+            return Transforms;
         }
 
-        public IEnumerable<UIElement> GetInputSensitiveElements()
+        public bool IsElementMouseSensitive(UIElement element)
         {
-            lock (SyncRoot)
-            {
-                ListArray<UITransform> transforms = GetSortedTransforms();
-                for (int i = 0, length = transforms.Count; i < length; i++)
-                {
-                    UITransform transform = transforms[i];
-                    if (transform.IsEnabled == false)
-                        continue;
-
-                    if (transform is UIElement element)
-                        if (IsElementInputSensitive(element))
-                            yield return element;
-                }
-            }
-        }
-
-        public bool IsElementInputSensitive(UIElement element)
-        {
-            return element.InterceptCursor || element.TriggerMouseEvents;
+            return element.IsIntercepting || element.IsMouseEventTrigger;
         }
 
         public void Update(GameTime time)
         {
-            Viewport freshViewport = GraphicsDevice.Viewport;
-            bool viewportChanged = Viewport.EqualsTo(freshViewport);
-            _lastViewport = freshViewport;
+            if (Input.IsAnyMouseDown(out _))
+                SelectedElement = null;
 
-            bool anyDown = Input.IsAnyMouseDown(out var down);
+            UpdateTransformsAndTriggerEvents(time);
+            TriggerKeyboardEvents(SelectedElement);
+        }
+
+        public void ViewportChanged(Viewport viewport)
+        {
+            foreach (var transform in SortAndGetTransforms())
+                transform.OnViewportChanged(viewport);
+        }
+
+        private void UpdateTransformsAndTriggerEvents(GameTime time)
+        {
+            bool anyDown = Input.IsAnyMouseDown(out _);
             bool anyPressed = Input.IsAnyMousePressed(out var pressed);
             bool anyReleased = Input.IsAnyMouseReleased(out var released);
 
-            MouseState mouseState = Input.NewMouseState;
-            Point mousePos = mouseState.Position;
+            var mouseState = Input.NewMouseState;
+            var mousePos = mouseState.Position;
+            float scroll = Input.MouseScroll;
 
-            lock (SyncRoot)
+            // a state used instead of breaking the loop as processing 
+            // the hover events "Enter" and "Leave" is important
+            bool cursorIntercepted = false;
+
+            foreach (var transform in SortAndGetTransforms())
             {
-                bool interceptionBroken = false;
-                // a state used instead of 'break'ing (the loop) as processing the 
-                // mouse hover events "Enter" and "Leave" is pretty important
+                if (!transform.IsActive)
+                    continue;
 
-                ListArray<UITransform> transforms = GetSortedTransforms();
-                for (int i = 0, count = transforms.Count; i < count; i++)
+                if (transform is UIElement element)
                 {
-                    UITransform transform = transforms[i];
-                    if (viewportChanged)
-                        transform.OnViewportChange(freshViewport);
+                    if (!IsElementMouseSensitive(element))
+                        goto EndOfLoop;
 
-                    if (transform.IsActive == false)
-                        continue;
-
-                    transform.Update(time);
-                    if (transform is UIElement element)
+                    bool lastHoveredOver = element.IsHovered;
+                    element.IsHovered = element.Boundaries.Contains(mousePos);
+                    if (element.IsMouseEventTrigger && element.IsHovered != lastHoveredOver)
                     {
-                        element.IsSelected = false;
-                        if (IsElementInputSensitive(element) == false)
-                            continue;
-
-                        lock (element.SyncRoot)
-                        {
-                            bool lastIsHovering = element.IsMouseHovering;
-                            element.IsMouseHovering = element.Boundaries.Contains(mousePos);
-
-                            if (element.IsMouseHovering != lastIsHovering)
-                            {
-                                if (element.IsMouseHovering && lastIsHovering == false)
-                                    element.TriggerOnMouseEnter(mouseState);
-                                else
-                                    element.TriggerOnMouseLeave(mouseState);
-                            }
-
-                            if (interceptionBroken)
-                                continue;
-
-                            if (element.IsMouseHovering)
-                            {
-                                if (element.TriggerMouseEvents)
-                                {
-                                    element.TriggerOnMouseHover(mouseState);
-
-                                    if (anyDown)
-                                        element.TriggerOnMouseDown(mouseState, pressed);
-
-                                    if (anyPressed)
-                                        element.TriggerOnMousePress(mouseState, pressed);
-
-                                    if (anyReleased)
-                                        element.TriggerOnMouseRelease(mouseState, released);
-                                }
-
-                                if (element.AllowSelection)
-                                {
-                                    if (Input.IsAnyMouseDown(out var temp))
-                                        SelectedElement = element;
-                                }
-
-                                if (element.InterceptCursor == true)
-                                    interceptionBroken = true; // instead of a 'break'
-                            }
-                        }
+                        if (element.IsHovered && !lastHoveredOver)
+                            element.TriggerOnMouseEnter(mouseState);
+                        else
+                            element.TriggerOnMouseLeave(mouseState);
                     }
+
+                    if (cursorIntercepted || !element.IsHovered)
+                        goto EndOfLoop;
+
+                    if (element.IsMouseEventTrigger)
+                    {
+                        element.TriggerOnMouseHover(mouseState);
+
+                        if (anyDown)
+                            element.TriggerOnMouseDown(mouseState, pressed);
+
+                        if (anyPressed)
+                            element.TriggerOnMousePress(mouseState, pressed);
+
+                        if (anyReleased)
+                            element.TriggerOnMouseRelease(mouseState, released);
+                    }
+
+                    if (scroll != 0)
+                        element.TriggerOnScroll(scroll);
+
+                    if (element.IsSelectable)
+                        if (Input.IsAnyMouseDown(out var temp))
+                            SelectedElement = element;
+
+                    if (element.IsIntercepting)
+                        cursorIntercepted = true; // instead of a 'break;'
                 }
 
-                var selectedE = SelectedElement;
-                if (selectedE != null)
-                {
-                    lock (selectedE.SyncRoot)
-                    {
-                        selectedE.IsSelected = true;
-                        if (selectedE.TriggerKeyEvents)
-                        {
-                            var keysDown = Input.KeysDown;
-                            var keysPressed = Input.KeysPressed;
-                            var keysReleased = Input.KeysReleased;
-
-                            for (int d = 0; d < keysDown.Count; d++)
-                                selectedE.TriggerOnKeyDown(keysDown[d]);
-
-                            for (int p = 0; p < keysPressed.Count; p++)
-                                selectedE.TriggerOnKeyPress(keysPressed[p]);
-
-                            for (int r = 0; r < keysReleased.Count; r++)
-                                selectedE.TriggerOnKeyRelease(keysReleased[r]);
-                        }
-                    }
-                }
+                // use a label+goto to update transform after invoking events to 
+                // give the transform fresh data one frame earlier
+                EndOfLoop:
+                transform.Update(time);
             }
+        }
+
+        private void TriggerKeyboardEvents(UIElement element)
+        {
+            if (element == null)
+                return;
+
+            if (!element.IsKeyboardEventTrigger)
+                return;
+
+            var keysHeld = Input.KeysHeld;
+            var keysDown = Input.KeysDown;
+            var keysPressed = Input.KeysPressed;
+            var keysReleased = Input.KeysReleased;
+
+            for (int h = 0; h < keysHeld.Count; h++)
+            {
+                var hk = keysHeld[h];
+                element.TriggerOnKeyRepeat(hk.Key, hk.Time);
+            }
+
+            for (int d = 0; d < keysDown.Count; d++)
+                element.TriggerOnKeyDown(keysDown[d]);
+
+            for (int p = 0; p < keysPressed.Count; p++)
+                element.TriggerOnKeyPress(keysPressed[p]);
+
+            for (int r = 0; r < keysReleased.Count; r++)
+                element.TriggerOnKeyRelease(keysReleased[r]);
         }
 
         protected virtual void Dispose(bool disposing)
         {
-            if(Disposed == false)
+            if (!IsDisposed)
             {
+                IsDisposing = true;
+
                 if (disposing)
                 {
-                    lock (SyncRoot)
-                    {
-                        for (int i = Transforms.Count; i-- > 0;)
-                        {
-                            Transforms[i]?.Dispose();
-                        }
+                    for (int i = Transforms.Count; i-- > 0;)
+                        Transforms[i].Dispose();
+                    Transforms.Clear();
 
-                        Input.TextInput -= Input_TextInput;
-                    }
+                    Input.TextInput -= Input_TextInput;
                 }
 
-                Disposed = true;
+                IsDisposing = false;
+                IsDisposed = true;
             }
         }
 

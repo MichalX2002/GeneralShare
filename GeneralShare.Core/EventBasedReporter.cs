@@ -2,7 +2,7 @@
 
 namespace GeneralShare
 {
-    public class EventBasedReporter<T> : IProgress<T>
+    public class EventProgress<T> : IProgress<T>
     {
         public delegate void ProgressDelegate(T value);
 

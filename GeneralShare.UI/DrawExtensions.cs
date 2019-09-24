@@ -5,9 +5,9 @@ namespace GeneralShare.UI
 {
     public static class DrawExtensions
     {
-        public static void Draw(this SpriteBatch batch, GameTime time, UIElement component)
+        public static void Draw(this SpriteBatch batch, GameTime time, UITransform transform)
         {
-            component.Draw(time, batch);
+            transform.Draw(time, batch);
         }
     }
 }

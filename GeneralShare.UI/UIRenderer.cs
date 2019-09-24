@@ -1,66 +1,49 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System.Collections.Generic;
 
 namespace GeneralShare.UI
 {
     public class UIRenderer
     {
-        protected Dictionary<SamplingMode, List<UIElement>> _elementQueue;
-
         public UIManager Manager { get; }
 
         public UIRenderer(UIManager manager)
         {
             Manager = manager;
-
-            _elementQueue = new Dictionary<SamplingMode, List<UIElement>>();
         }
 
         public virtual void Draw(GameTime time, SpriteBatch spriteBatch)
         {
-            FillQueue();
-            DrawQueue(time, spriteBatch);
-        }
+            bool isBatching = false;
+            SamplingMode lastSampling = SamplingMode.LinearClamp;
 
-        protected virtual void FillQueue()
-        {
-            lock (Manager.SyncRoot)
+            var transforms = Manager.SortAndGetTransforms();
+            for (int i = 0; i < transforms.Count; i++)
             {
-                var transforms = Manager.GetSortedTransforms();
-                for (int i = 0, count = transforms.Count; i < count; i++)
-                {
-                    UITransform transform = transforms[i];
-                    if (transform.IsActive == false || transform is UIContainer)
-                        continue;
+                var transform = transforms[i];
+                if (!transform.IsActive || !transform.IsDrawable)
+                    continue;
 
-                    if (transform is UIElement element)
+                if (lastSampling != transform.PreferredSampling)
+                {
+                    if (isBatching)
                     {
-                        if (_elementQueue.TryGetValue(element.PreferredSamplingMode, out var list) == false)
-                        {
-                            list = new List<UIElement>();
-                            _elementQueue.Add(element.PreferredSamplingMode, list);
-                        }
-                        list.Add(element);
+                        spriteBatch.End();
+                        isBatching = false;
                     }
+                    lastSampling = transform.PreferredSampling;
                 }
-            }
-        }
 
-        protected virtual void DrawQueue(GameTime time, SpriteBatch spriteBatch)
-        {
-            foreach (var entry in _elementQueue)
-            {
-                spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, GetSamplerState(entry.Key), DepthStencilState.Default);
-                var list = entry.Value;
-                for (int i = 0, count = list.Count; i < count; i++)
+                if (!isBatching)
                 {
-                    spriteBatch.Draw(time, list[i]);
+                    spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, GetSamplerState(lastSampling));
+                    isBatching = true;
                 }
-                spriteBatch.End();
 
-                list.Clear();
+                transform.Purify();
+                transform.Draw(time, spriteBatch);
             }
+            spriteBatch.End();
         }
 
         public SamplerState GetSamplerState(SamplingMode samplingMode)

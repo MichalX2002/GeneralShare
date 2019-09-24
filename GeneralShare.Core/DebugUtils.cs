@@ -13,9 +13,10 @@ namespace GeneralShare
         public static readonly DateTime StartTime;
 
         public static TimeSpan TimeSinceStart => DateTime.Now - StartTime;
-        public static bool DebuggerAttached => Debugger.IsAttached;
+        public static bool IsDebuggerAttached => Debugger.IsAttached;
         public static long TotalMemoryUsage => GetTotalMemoryUsage();
         public static long ManagedMemoryUsage => GC.GetTotalMemory(false);
+        public static bool IsTracing { get; set; }
 
         static DebugUtils()
         {
@@ -43,7 +44,7 @@ namespace GeneralShare
 
         public static void CollectGarbage()
         {
-            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true, true);
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: true);
         }
 
         public static void CollectLargeObjectHeap()

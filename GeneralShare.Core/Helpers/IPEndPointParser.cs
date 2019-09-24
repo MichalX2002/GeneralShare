@@ -36,13 +36,13 @@ namespace GeneralShare
         }
 
         /// <summary>
-        /// Converts a IPv4 or IPv6 address to an <see cref="IPEndPoint"/> instance.
+        /// Resolves a IPv4, IPv6 or URL address to an <see cref="IPEndPoint"/> instance.
         /// </summary>
-        /// <param name="value">value to parse</param>
+        /// <param name="address">Address to resolve.</param>
         /// <returns>the IPEndPoint</returns>
-        public static bool TryParse(string value, out IPEndPoint result)
+        public static bool TryResolve(string address, out IPEndPoint result)
         {
-            string[] ep = value.Split(':');
+            string[] ep = address.Split(':');
 
             int port = 0;
             IPAddress ip;
@@ -55,8 +55,8 @@ namespace GeneralShare
                     return false;
                 }
 
-                string address = string.Join(":", ep, 0, ep.Length - 1);
-                if (!IPAddress.TryParse(address, out ip) && !ResolveDNS(address, out ip))
+                string ipStr = string.Join(":", ep, 0, ep.Length - 1);
+                if (!IPAddress.TryParse(ipStr, out ip) && !ResolveDNS(ipStr, out ip))
                 {
                     result = null;
                     return false;
@@ -77,7 +77,7 @@ namespace GeneralShare
         
         public static IPEndPoint Parse(string value)
         {
-            if (TryParse(value, out IPEndPoint result))
+            if (TryResolve(value, out IPEndPoint result))
                 return result;
             throw new FormatException($"{nameof(value)} is not in the correct format.");
         }

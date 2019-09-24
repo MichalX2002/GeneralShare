@@ -99,7 +99,7 @@ namespace GeneralShare
         protected override void Dispose(bool disposing)
         {
             if (disposing)
-                if (_leaveOpen == false)
+                if (!_leaveOpen)
                     InnerStream.Dispose();
         }
     }
