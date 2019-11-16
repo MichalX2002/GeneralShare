@@ -11,18 +11,18 @@ namespace GeneralShare
         private static object _syncRoot = new object();
         private static StreamWriter _logWriter;
 
-        public static bool IsInitialized { get; private set; }
+        public static bool IsOpened { get; private set; }
 
-        public static void Initialize(string path)
+        public static void Open(string fileName)
         {
             lock (_syncRoot)
             {
-                if (path == null)
-                    throw new ArgumentNullException(nameof(path));
+                if (fileName == null)
+                    throw new ArgumentNullException(nameof(fileName));
 
-                _logWriter = new StreamWriter(new FileStream(path, FileMode.Create));
+                _logWriter = new StreamWriter(new FileStream(fileName, FileMode.Create));
                 _logWriter.AutoFlush = true;
-                IsInitialized = true;
+                IsOpened = true;
             }
         }
 
@@ -31,7 +31,7 @@ namespace GeneralShare
             lock (_syncRoot)
             {
                 _logWriter.Dispose();
-                IsInitialized = false;
+                IsOpened = false;
             }
         }
 
@@ -152,7 +152,7 @@ namespace GeneralShare
         [DebuggerHidden]
         private static void AssertInitialized()
         {
-            if (!IsInitialized)
+            if (!IsOpened)
                 throw new InvalidOperationException("The log is not initialized.");
         }
 
