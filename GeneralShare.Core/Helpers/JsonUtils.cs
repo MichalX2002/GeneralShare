@@ -12,6 +12,7 @@ namespace GeneralShare
 
         [ThreadStatic]
         private static JsonSerializer __defaultUniqueSerializer;
+
         private static JsonSerializer DefaultSerializer
         {
             get
@@ -28,7 +29,9 @@ namespace GeneralShare
         }
 
         #region Serialize
+
         #region Stream-based Serialize
+
         public static void Serialize<T>(T value, JsonSerializer serializer, Stream stream, bool leaveOpen = false)
         {
             using (var streamWriter = new StreamWriter(stream, Encoding.UTF8, 1024 * 4, leaveOpen))
@@ -50,9 +53,11 @@ namespace GeneralShare
         {
             Serialize(value, DefaultSerializer, stream, leaveOpen);
         }
+
         #endregion
 
         #region Path-based Serialize
+
         public static void Serialize<T>(T value, JsonSerializer serializer, string path)
         {
             using (var fs = new FileStream(path, FileMode.Create))
@@ -69,9 +74,11 @@ namespace GeneralShare
         {
             Serialize(value, DefaultSerializer, path);
         }
+
         #endregion
 
         #region FileInfo-based Serialize
+
         public static void Serialize<T>(T value, JsonSerializer serializer, FileInfo file)
         {
             Serialize(value, serializer, file.FullName);
@@ -86,11 +93,15 @@ namespace GeneralShare
         {
             Serialize(value, DefaultSerializer, file);
         }
+
         #endregion
+
         #endregion
 
         #region Deserialize
+
         #region String-based Deserialize 
+
         public static T DeserializeString<T>(JsonSerializer serializer, string json)
         {
             using (var sr = new StringReader(json))
@@ -102,9 +113,11 @@ namespace GeneralShare
         {
             return DeserializeString<T>(DefaultSerializer, json);
         }
+
         #endregion
 
         #region Stream-based Deserialize
+
         public static T Deserialize<T>(JsonSerializer serializer, Stream stream, bool leaveOpen = false)
         {
             return serializer.Deserialize<T>(stream, leaveOpen);
@@ -114,9 +127,11 @@ namespace GeneralShare
         {
             return Deserialize<T>(DefaultSerializer, stream, leaveOpen);
         }
+
         #endregion
 
         #region Path-based Deserialize
+
         public static T Deserialize<T>(JsonSerializer serializer, string path)
         {
             using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
@@ -127,9 +142,11 @@ namespace GeneralShare
         {
             return Deserialize<T>(DefaultSerializer, path);
         }
+
         #endregion
 
         #region FileInfo-based Deserialize
+
         public static T Deserialize<T>(JsonSerializer serializer, FileInfo file)
         {
             return Deserialize<T>(serializer, file.FullName);
@@ -139,7 +156,9 @@ namespace GeneralShare
         {
             return Deserialize<T>(DefaultSerializer, file);
         }
+
         #endregion
+
         #endregion
     }
 }
