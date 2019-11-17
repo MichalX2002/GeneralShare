@@ -13,26 +13,46 @@ namespace GeneralShare
 
         public static bool IsOpened { get; private set; }
 
-        public static void Open(string fileName)
+        public static void Open(Stream stream)
         {
             lock (_syncRoot)
             {
-                if (fileName == null)
-                    throw new ArgumentNullException(nameof(fileName));
+                if (stream == null)
+                    throw new ArgumentNullException(nameof(stream));
 
-                _logWriter = new StreamWriter(new FileStream(fileName, FileMode.Create));
+                if(IsOpened)
+                    throw new InvalidOperationException("The log is already open.");
+                
+                _logWriter = new StreamWriter(stream);
                 _logWriter.AutoFlush = true;
                 IsOpened = true;
             }
+        }
+
+        public static void Open(string fileName, FileMode fileMode = FileMode.CreateNew)
+        {
+            Open(new FileStream(fileName, fileMode));
         }
 
         public static void Close()
         {
             lock (_syncRoot)
             {
-                _logWriter.Dispose();
-                IsOpened = false;
+                try
+                {
+                    _logWriter?.Dispose();
+                }
+                finally
+                {
+                    _logWriter = null;
+                    IsOpened = false;
+                }
             }
+        }
+
+        public static void LineBreak()
+        {
+            WriteLine(Environment.NewLine);
         }
 
         public static void Error(object obj, bool showPrefix = true)
@@ -96,10 +116,8 @@ namespace GeneralShare
 
         private static void BaseLog(string message, bool showPrefix, bool showTime, Thread thread, string type)
         {
-            AssertInitialized();
-
             string prefix = null;
-            if (showPrefix && (showTime || thread != null || !string.IsNullOrWhiteSpace(type)))
+            if (IsOpened && showPrefix && (showTime || thread != null || !string.IsNullOrWhiteSpace(type)))
             {
                 string time = showTime ? GetTimeSinceStart() : null;
                 string typePart = string.IsNullOrWhiteSpace(type) ? null : type;
@@ -144,23 +162,18 @@ namespace GeneralShare
             return DebugUtils.TimeSinceStart.ToHMS();
         }
 
-        public static void LineBreak()
-        {
-            WriteLine(string.Empty);
-        }
-
         [DebuggerHidden]
-        private static void AssertInitialized()
+        private static void AssertOpen()
         {
             if (!IsOpened)
-                throw new InvalidOperationException("The log is not initialized.");
+                throw new InvalidOperationException("The log is not open.");
         }
 
         private static void WriteLine(string value)
         {
             lock (_syncRoot)
             {
-                AssertInitialized();
+                AssertOpen();
 
                 _logWriter.WriteLine(value);
                 Console.WriteLine(value);
